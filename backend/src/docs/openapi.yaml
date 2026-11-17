@@ -1,0 +1,687 @@
+openapi: 3.0.3
+info:
+  title: VetCare API · Citas y servicios veterinarios
+  version: 1.0.0
+  description: |
+    API REST del **Caso 06 – Citas y servicios veterinarios** (Programación Web, 5.º ciclo).
+    Autor: Javier Alexander Carrera Rodríguez.
+
+    **Autenticación:** `POST /auth/login` devuelve un JWT. Pulse *Authorize* y pegue el token.
+
+    **Roles:** `ADMIN` (administrador), `RECEPCION` y `VETERINARIO` (usuarios operativos).
+
+    **Respuestas de error** (siempre el mismo formato):
+    ```json
+    { "error": { "codigo": "RN01_CITA_SUPERPUESTA", "mensaje": "…", "detalles": [] } }
+    ```
+    | Código HTTP | Uso |
+    |---|---|
+    | 400 | Datos inválidos (validación de DTO) |
+    | 401 | Sin sesión o token inválido/expirado |
+    | 403 | Sin permisos para la operación |
+    | 404 | Recurso inexistente |
+    | 409 | Duplicado o conflicto de concurrencia |
+    | 422 | Violación de una regla de negocio |
+
+    **Credenciales de demostración:** `admin@vetcare.ec`, `recepcion@vetcare.ec`, `mvazquez@vetcare.ec` – contraseña `Vet12345*`.
+servers:
+  - url: http://localhost:3100/api
+    description: Desarrollo local
+tags:
+  - name: Autenticación
+  - name: Usuarios
+  - name: Propietarios
+  - name: Mascotas
+  - name: Historial clínico
+  - name: Especialidades
+  - name: Veterinarios
+  - name: Bloqueos de agenda
+  - name: Citas
+  - name: Consultas
+  - name: Vacunas
+  - name: Controles y calendario
+  - name: Notificaciones
+  - name: Reportes
+  - name: Auditoría
+  - name: Público
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    pagina: { name: pagina, in: query, schema: { type: integer, default: 1 } }
+    tamano: { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+    orden: { name: orden, in: query, schema: { type: string }, description: Campo de ordenamiento (lista blanca por recurso) }
+    direccion: { name: direccion, in: query, schema: { type: string, enum: [asc, desc] } }
+    q: { name: q, in: query, schema: { type: string }, description: Búsqueda de texto }
+    desde: { name: desde, in: query, schema: { type: string, format: date } }
+    hasta: { name: hasta, in: query, schema: { type: string, format: date } }
+  responses:
+    Error400: { description: Datos inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Error401: { description: No autenticado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Error403: { description: Acceso denegado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Error404: { description: No encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Error409: { description: Duplicado o conflicto, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Error422: { description: Regla de negocio incumplida, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            codigo: { type: string, example: RN01_CITA_SUPERPUESTA }
+            mensaje: { type: string }
+            detalles: { type: array, items: { type: object } }
+    Meta:
+      type: object
+      properties:
+        pagina: { type: integer }
+        tamano: { type: integer }
+        total: { type: integer }
+        totalPaginas: { type: integer }
+    Login:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, example: admin@vetcare.ec }
+        password: { type: string, example: Vet12345* }
+    Usuario:
+      type: object
+      required: [nombres, apellidos, email, rol, password]
+      properties:
+        nombres: { type: string }
+        apellidos: { type: string }
+        email: { type: string }
+        rol: { type: string, enum: [ADMIN, RECEPCION, VETERINARIO] }
+        password: { type: string, description: '8+ caracteres, mayúscula, minúscula, número y símbolo' }
+        activo: { type: boolean }
+    Propietario:
+      type: object
+      required: [cedula, nombres, apellidos, telefono]
+      properties:
+        cedula: { type: string, example: '0102030400', description: Cédula ecuatoriana válida (módulo 10) }
+        nombres: { type: string, example: Ana }
+        apellidos: { type: string, example: Pérez }
+        telefono: { type: string, example: '0991234567' }
+        email: { type: string, nullable: true }
+        direccion: { type: string, nullable: true }
+    Mascota:
+      type: object
+      required: [propietarioId, nombre, especie, sexo]
+      properties:
+        propietarioId: { type: integer, example: 1 }
+        nombre: { type: string, example: Firulais }
+        especie: { type: string, enum: [PERRO, GATO, AVE, CONEJO, REPTIL, OTRO] }
+        raza: { type: string, nullable: true }
+        sexo: { type: string, enum: [MACHO, HEMBRA] }
+        fechaNacimiento: { type: string, format: date, nullable: true }
+        pesoKg: { type: number, nullable: true }
+        color: { type: string, nullable: true }
+        esterilizado: { type: boolean }
+    Especialidad:
+      type: object
+      required: [nombre, duracionMin]
+      properties:
+        nombre: { type: string }
+        descripcion: { type: string, nullable: true }
+        duracionMin: { type: integer, example: 30 }
+        activo: { type: boolean }
+    Veterinario:
+      type: object
+      required: [cedula, nombres, apellidos, email, especialidades]
+      properties:
+        cedula: { type: string }
+        nombres: { type: string }
+        apellidos: { type: string }
+        registroSenescyt: { type: string, nullable: true }
+        telefono: { type: string, nullable: true }
+        email: { type: string }
+        usuarioId: { type: integer, nullable: true, description: Cuenta con rol VETERINARIO }
+        especialidades: { type: array, items: { type: integer }, example: [1, 5] }
+        activo: { type: boolean }
+    Horarios:
+      type: object
+      properties:
+        horarios:
+          type: array
+          items:
+            type: object
+            properties:
+              diaSemana: { type: integer, minimum: 1, maximum: 7, description: '1 = lunes … 7 = domingo' }
+              horaInicio: { type: string, example: '08:00' }
+              horaFin: { type: string, example: '12:30' }
+    Bloqueo:
+      type: object
+      required: [inicio, fin, motivo]
+      properties:
+        veterinarioId: { type: integer, nullable: true, description: 'null = toda la clínica' }
+        inicio: { type: string, example: '2026-12-24 08:00' }
+        fin: { type: string, example: '2026-12-24 18:00' }
+        motivo: { type: string }
+    CitaNueva:
+      type: object
+      required: [mascotaId, veterinarioId, especialidadId, inicio, motivo]
+      properties:
+        mascotaId: { type: integer, example: 1 }
+        veterinarioId: { type: integer, example: 1 }
+        especialidadId: { type: integer, example: 1 }
+        inicio: { type: string, example: '2026-11-23 10:00', description: 'La hora de fin se calcula con la duración de la especialidad' }
+        motivo: { type: string, example: Control general }
+    Reprogramar:
+      type: object
+      required: [veterinarioId, inicio, motivo, version]
+      properties:
+        veterinarioId: { type: integer }
+        inicio: { type: string }
+        motivo: { type: string }
+        version: { type: integer, description: Bloqueo optimista }
+    Consulta:
+      type: object
+      required: [mascotaId, motivo, diagnostico]
+      properties:
+        citaId: { type: integer, nullable: true }
+        mascotaId: { type: integer }
+        veterinarioId: { type: integer, nullable: true, description: Obligatorio si registra un ADMIN }
+        motivo: { type: string }
+        anamnesis: { type: string }
+        pesoKg: { type: number }
+        temperaturaC: { type: number }
+        frecuenciaCardiaca: { type: integer }
+        diagnostico: { type: string }
+        observaciones: { type: string }
+        tratamientos:
+          type: array
+          items:
+            type: object
+            properties:
+              medicamento: { type: string }
+              dosis: { type: string }
+              frecuencia: { type: string }
+              duracionDias: { type: integer }
+              indicaciones: { type: string }
+        proximoControl:
+          type: object
+          nullable: true
+          properties:
+            fecha: { type: string, format: date }
+            descripcion: { type: string }
+    VacunaAplicada:
+      type: object
+      required: [mascotaId, tipoVacunaId, fechaAplicacion]
+      properties:
+        mascotaId: { type: integer }
+        tipoVacunaId: { type: integer }
+        fechaAplicacion: { type: string, format: date }
+        veterinarioId: { type: integer, nullable: true, description: 'Responsable (RN04). Obligatorio si registra un ADMIN' }
+        lote: { type: string }
+        proximaDosis: { type: string, format: date, nullable: true, description: 'Si se omite se calcula con el intervalo del tipo' }
+        observaciones: { type: string }
+    TipoVacuna:
+      type: object
+      required: [nombre]
+      properties:
+        nombre: { type: string }
+        especie: { type: string, nullable: true, enum: [PERRO, GATO, AVE, CONEJO, REPTIL, OTRO] }
+        intervaloDias: { type: integer, nullable: true }
+        descripcion: { type: string }
+        activo: { type: boolean }
+    Control:
+      type: object
+      required: [mascotaId, tipo, descripcion, fechaProgramada]
+      properties:
+        mascotaId: { type: integer }
+        tipo: { type: string, enum: [VACUNA, DESPARASITACION, CONTROL_GENERAL] }
+        tipoVacunaId: { type: integer, nullable: true }
+        descripcion: { type: string }
+        fechaProgramada: { type: string, format: date }
+
+paths:
+  /salud:
+    get:
+      tags: [Público]
+      security: []
+      summary: Estado de la API y la base de datos
+      responses: { '200': { description: OK }, '503': { description: Sin conexión a BD } }
+
+  # ---------------- Autenticación ----------------
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      security: []
+      summary: Iniciar sesión (devuelve JWT)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Login' } } } }
+      responses:
+        '200': { description: Token y datos del usuario }
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '429': { description: Demasiados intentos }
+  /auth/perfil:
+    get: { tags: [Autenticación], summary: Usuario autenticado, responses: { '200': { description: OK }, '401': { $ref: '#/components/responses/Error401' } } }
+  /auth/logout:
+    post: { tags: [Autenticación], summary: Cerrar sesión (queda auditado), responses: { '204': { description: Sesión cerrada } } }
+  /auth/password:
+    put:
+      tags: [Autenticación]
+      summary: Cambiar la contraseña propia
+      requestBody: { content: { application/json: { schema: { type: object, properties: { actual: { type: string }, nueva: { type: string } } } } } }
+      responses: { '204': { description: Actualizada }, '422': { $ref: '#/components/responses/Error422' } }
+
+  # ---------------- Usuarios ----------------
+  /usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios (ADMIN)
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - $ref: '#/components/parameters/orden'
+        - $ref: '#/components/parameters/direccion'
+        - { name: rol, in: query, schema: { type: string, enum: [ADMIN, RECEPCION, VETERINARIO] } }
+        - { name: activo, in: query, schema: { type: boolean } }
+      responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Error403' } }
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Usuario' } } } }
+      responses: { '201': { description: Creado }, '400': { $ref: '#/components/responses/Error400' }, '409': { $ref: '#/components/responses/Error409' } }
+  /usuarios/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Usuarios], summary: Obtener usuario, responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error404' } } }
+    put:
+      tags: [Usuarios]
+      summary: Actualizar usuario
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Usuario' } } } }
+      responses: { '200': { description: OK }, '422': { $ref: '#/components/responses/Error422' } }
+    delete: { tags: [Usuarios], summary: Desactivar usuario, responses: { '204': { description: Desactivado }, '422': { $ref: '#/components/responses/Error422' } } }
+
+  # ---------------- Propietarios ----------------
+  /propietarios:
+    get:
+      tags: [Propietarios]
+      summary: Listar con búsqueda, filtros, orden y paginación
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: orden, in: query, schema: { type: string, enum: [apellidos, nombres, cedula, creadoEn] } }
+        - $ref: '#/components/parameters/direccion'
+        - { name: activo, in: query, schema: { type: boolean } }
+      responses: { '200': { description: 'Lista paginada { data, meta }' } }
+    post:
+      tags: [Propietarios]
+      summary: Registrar propietario (ADMIN, RECEPCION)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Propietario' } } } }
+      responses: { '201': { description: Creado }, '400': { $ref: '#/components/responses/Error400' }, '409': { $ref: '#/components/responses/Error409' } }
+  /propietarios/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Propietarios], summary: Propietario con sus mascotas, responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error404' } } }
+    put:
+      tags: [Propietarios]
+      summary: Actualizar propietario
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Propietario' } } } }
+      responses: { '200': { description: OK }, '409': { $ref: '#/components/responses/Error409' } }
+    delete: { tags: [Propietarios], summary: Desactivar (ADMIN). Rechaza si tiene citas programadas, responses: { '204': { description: OK }, '422': { $ref: '#/components/responses/Error422' } } }
+  /propietarios/{id}/reactivar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch: { tags: [Propietarios], summary: Reactivar (ADMIN), responses: { '200': { description: OK } } }
+
+  # ---------------- Mascotas ----------------
+  /mascotas:
+    get:
+      tags: [Mascotas]
+      summary: Listar mascotas
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: orden, in: query, schema: { type: string, enum: [nombre, especie, propietario, fechaNacimiento, creadoEn] } }
+        - $ref: '#/components/parameters/direccion'
+        - { name: especie, in: query, schema: { type: string } }
+        - { name: sexo, in: query, schema: { type: string } }
+        - { name: propietarioId, in: query, schema: { type: integer } }
+        - { name: activo, in: query, schema: { type: boolean } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Mascotas]
+      summary: 'Registrar mascota (RN02: debe tener propietario registrado)'
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Mascota' } } } }
+      responses: { '201': { description: Creada }, '409': { $ref: '#/components/responses/Error409' }, '422': { $ref: '#/components/responses/Error422' } }
+  /mascotas/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Mascotas], summary: Obtener mascota, responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error404' } } }
+    put:
+      tags: [Mascotas]
+      summary: Actualizar mascota
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Mascota' } } } }
+      responses: { '200': { description: OK } }
+    delete: { tags: [Mascotas], summary: 'Desactivar (RN05: no borra el historial; cancela citas futuras en transacción)', responses: { '204': { description: OK } } }
+  /mascotas/{id}/reactivar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch: { tags: [Mascotas], summary: Reactivar (ADMIN), responses: { '200': { description: OK } } }
+  /mascotas/{id}/historial:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Historial clínico], summary: 'Historial clínico: consultas, tratamientos, vacunas, citas y controles', responses: { '200': { description: OK } } }
+  /mascotas/{id}/historial/pdf:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [Historial clínico]
+      summary: 'INNOVACIÓN: historial clínico en PDF con código QR de verificación'
+      responses: { '200': { description: PDF, content: { application/pdf: { schema: { type: string, format: binary } } } } }
+
+  # ---------------- Especialidades ----------------
+  /especialidades:
+    get:
+      tags: [Especialidades]
+      summary: Listar especialidades
+      parameters: [{ $ref: '#/components/parameters/q' }, { name: activo, in: query, schema: { type: boolean } }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Especialidades]
+      summary: Crear (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Especialidad' } } } }
+      responses: { '201': { description: Creada }, '409': { $ref: '#/components/responses/Error409' } }
+  /especialidades/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Especialidades], summary: Obtener, responses: { '200': { description: OK } } }
+    put:
+      tags: [Especialidades]
+      summary: Actualizar (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Especialidad' } } } }
+      responses: { '200': { description: OK } }
+    delete: { tags: [Especialidades], summary: Eliminar si no está en uso (ADMIN), responses: { '204': { description: OK }, '409': { $ref: '#/components/responses/Error409' } } }
+
+  # ---------------- Veterinarios ----------------
+  /veterinarios:
+    get:
+      tags: [Veterinarios]
+      summary: Listar veterinarios con sus especialidades
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: especialidadId, in: query, schema: { type: integer } }
+        - { name: activo, in: query, schema: { type: boolean } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Veterinarios]
+      summary: Crear (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Veterinario' } } } }
+      responses: { '201': { description: Creado }, '409': { $ref: '#/components/responses/Error409' } }
+  /veterinarios/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Veterinarios], summary: Veterinario con especialidades y horario, responses: { '200': { description: OK } } }
+    put:
+      tags: [Veterinarios]
+      summary: Actualizar (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Veterinario' } } } }
+      responses: { '200': { description: OK } }
+    delete: { tags: [Veterinarios], summary: Desactivar (rechaza si tiene citas futuras), responses: { '204': { description: OK }, '422': { $ref: '#/components/responses/Error422' } } }
+  /veterinarios/{id}/horarios:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    put:
+      tags: [Veterinarios]
+      summary: Reemplazar el horario laboral semanal (transacción)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Horarios' } } } }
+      responses: { '200': { description: OK }, '422': { $ref: '#/components/responses/Error422' } }
+
+  # ---------------- Bloqueos ----------------
+  /bloqueos:
+    get:
+      tags: [Bloqueos de agenda]
+      summary: Listar bloqueos
+      parameters: [{ name: veterinarioId, in: query, schema: { type: integer } }, { $ref: '#/components/parameters/desde' }, { $ref: '#/components/parameters/hasta' }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Bloqueos de agenda]
+      summary: Bloquear agenda (ADMIN). Rechaza si hay citas programadas en el período
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Bloqueo' } } } }
+      responses: { '201': { description: Creado }, '409': { $ref: '#/components/responses/Error409' } }
+  /bloqueos/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    delete: { tags: [Bloqueos de agenda], summary: Eliminar bloqueo (ADMIN), responses: { '204': { description: OK } } }
+
+  # ---------------- Citas ----------------
+  /citas:
+    get:
+      tags: [Citas]
+      summary: Listar citas (el VETERINARIO solo ve su agenda)
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: orden, in: query, schema: { type: string, enum: [inicio, estado, mascota, veterinario, creadoEn] } }
+        - $ref: '#/components/parameters/direccion'
+        - { name: estado, in: query, schema: { type: string, enum: [PROGRAMADA, ATENDIDA, CANCELADA, NO_ASISTIO] } }
+        - { name: veterinarioId, in: query, schema: { type: integer } }
+        - { name: mascotaId, in: query, schema: { type: integer } }
+        - { name: especialidadId, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Citas]
+      summary: 'Agendar cita (RN01, RN03, RN07, RN08 + bloqueo FOR UPDATE)'
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/CitaNueva' } } } }
+      responses:
+        '201': { description: Creada }
+        '409': { description: 'RN01_CITA_SUPERPUESTA / RN07_MASCOTA_OCUPADA', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: 'RN03_FUERA_DE_HORARIO / RN03_HORARIO_BLOQUEADO / CITA_EN_PASADO / RN08', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /citas/disponibilidad:
+    get:
+      tags: [Citas]
+      summary: Espacios libres de un veterinario en una fecha
+      parameters:
+        - { name: veterinarioId, in: query, required: true, schema: { type: integer } }
+        - { name: especialidadId, in: query, required: true, schema: { type: integer } }
+        - { name: fecha, in: query, required: true, schema: { type: string, format: date } }
+      responses: { '200': { description: OK } }
+  /citas/sugerencias:
+    get:
+      tags: [Citas]
+      summary: 'INNOVACIÓN: algoritmo de asignación de horarios (mejores espacios y balance de carga)'
+      parameters:
+        - { name: especialidadId, in: query, required: true, schema: { type: integer } }
+        - { name: veterinarioId, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/desde'
+        - { name: cantidad, in: query, schema: { type: integer, default: 8 } }
+      responses: { '200': { description: OK } }
+  /citas/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Citas], summary: Obtener cita, responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Error403' }, '404': { $ref: '#/components/responses/Error404' } } }
+    put:
+      tags: [Citas]
+      summary: Reprogramar (bloqueo optimista con version)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Reprogramar' } } } }
+      responses: { '200': { description: OK }, '409': { $ref: '#/components/responses/Error409' } }
+  /citas/{id}/cancelar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch:
+      tags: [Citas]
+      summary: Cancelar cita
+      requestBody: { content: { application/json: { schema: { type: object, properties: { motivo: { type: string }, version: { type: integer } } } } } }
+      responses: { '200': { description: OK }, '422': { $ref: '#/components/responses/Error422' } }
+  /citas/{id}/no-asistio:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch:
+      tags: [Citas]
+      summary: Marcar inasistencia
+      requestBody: { content: { application/json: { schema: { type: object, properties: { version: { type: integer } } } } } }
+      responses: { '200': { description: OK } }
+
+  # ---------------- Consultas ----------------
+  /consultas:
+    get:
+      tags: [Consultas]
+      summary: Listar consultas
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: mascotaId, in: query, schema: { type: integer } }
+        - { name: veterinarioId, in: query, schema: { type: integer } }
+        - { name: soloMias, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Consultas]
+      summary: 'Registrar consulta + diagnóstico + tratamientos (transacción; marca la cita ATENDIDA)'
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Consulta' } } } }
+      responses: { '201': { description: Creada }, '409': { description: CITA_YA_ATENDIDA }, '422': { $ref: '#/components/responses/Error422' } }
+  /consultas/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get: { tags: [Consultas], summary: Consulta con tratamientos, responses: { '200': { description: OK } } }
+    delete: { tags: [Consultas], summary: 'RN05: siempre rechazado (historial no eliminable)', responses: { '422': { $ref: '#/components/responses/Error422' } } }
+
+  # ---------------- Vacunas ----------------
+  /tipos-vacuna:
+    get: { tags: [Vacunas], summary: Listar tipos de vacuna, parameters: [{ name: especie, in: query, schema: { type: string } }], responses: { '200': { description: OK } } }
+    post:
+      tags: [Vacunas]
+      summary: Crear tipo (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/TipoVacuna' } } } }
+      responses: { '201': { description: Creado } }
+  /tipos-vacuna/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    put:
+      tags: [Vacunas]
+      summary: Actualizar tipo (ADMIN)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/TipoVacuna' } } } }
+      responses: { '200': { description: OK } }
+  /vacunas:
+    get:
+      tags: [Vacunas]
+      summary: Listar vacunas aplicadas
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: mascotaId, in: query, schema: { type: integer } }
+        - { name: tipoVacunaId, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Vacunas]
+      summary: 'Aplicar vacuna (RN04, RN09, RN10; programa el refuerzo en el calendario)'
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/VacunaAplicada' } } } }
+      responses: { '201': { description: Registrada }, '409': { description: RN10_VACUNA_DUPLICADA }, '422': { $ref: '#/components/responses/Error422' } }
+  /vacunas/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    delete: { tags: [Vacunas], summary: 'RN05: siempre rechazado', responses: { '422': { $ref: '#/components/responses/Error422' } } }
+
+  # ---------------- Controles y calendario ----------------
+  /controles:
+    get:
+      tags: [Controles y calendario]
+      summary: Listar controles periódicos (estado VENCIDO = pendientes atrasados)
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: mascotaId, in: query, schema: { type: integer } }
+        - { name: tipo, in: query, schema: { type: string, enum: [VACUNA, DESPARASITACION, CONTROL_GENERAL] } }
+        - { name: estado, in: query, schema: { type: string, enum: [PENDIENTE, REALIZADO, CANCELADO, VENCIDO] } }
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Controles y calendario]
+      summary: Programar un control
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/Control' } } } }
+      responses: { '201': { description: Creado } }
+  /controles/{id}/realizado:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch: { tags: [Controles y calendario], summary: Marcar realizado, responses: { '200': { description: OK }, '409': { $ref: '#/components/responses/Error409' } } }
+  /controles/{id}/cancelar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch: { tags: [Controles y calendario], summary: Cancelar control, responses: { '200': { description: OK } } }
+  /controles/{id}/reprogramar:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch:
+      tags: [Controles y calendario]
+      summary: Reprogramar control
+      requestBody: { content: { application/json: { schema: { type: object, properties: { fechaProgramada: { type: string, format: date } } } } } }
+      responses: { '200': { description: OK } }
+  /calendario:
+    get:
+      tags: [Controles y calendario]
+      summary: 'INNOVACIÓN: eventos del calendario de vacunación (controles con semáforo + citas)'
+      parameters:
+        - { name: desde, in: query, required: true, schema: { type: string, format: date } }
+        - { name: hasta, in: query, required: true, schema: { type: string, format: date } }
+        - { name: tipo, in: query, schema: { type: string } }
+        - { name: incluirCitas, in: query, schema: { type: boolean, default: true } }
+      responses: { '200': { description: OK } }
+  /calendario/alertas:
+    get: { tags: [Controles y calendario], summary: Controles vencidos y próximos, responses: { '200': { description: OK } } }
+
+  # ---------------- Notificaciones ----------------
+  /notificaciones:
+    get:
+      tags: [Notificaciones]
+      summary: Listar notificaciones automáticas
+      parameters: [{ name: leida, in: query, schema: { type: boolean } }, { name: tipo, in: query, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /notificaciones/resumen:
+    get: { tags: [Notificaciones], summary: Cantidad de no leídas, responses: { '200': { description: OK } } }
+  /notificaciones/leer-todas:
+    patch: { tags: [Notificaciones], summary: Marcar todas como leídas, responses: { '200': { description: OK } } }
+  /notificaciones/{id}/leida:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    patch: { tags: [Notificaciones], summary: Marcar como leída, responses: { '204': { description: OK } } }
+  /notificaciones/generar:
+    post: { tags: [Notificaciones], summary: Ejecutar ahora el proceso automático de alertas (ADMIN), responses: { '200': { description: OK } } }
+
+  # ---------------- Reportes ----------------
+  /reportes/indicadores:
+    get:
+      tags: [Reportes]
+      summary: Indicadores del panel (totales, citas por estado/veterinario/especialidad/día, cobertura de vacunación)
+      parameters: [{ $ref: '#/components/parameters/desde' }, { $ref: '#/components/parameters/hasta' }, { name: veterinarioId, in: query, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+  /reportes/citas:
+    get:
+      tags: [Reportes]
+      summary: Reporte de citas con filtros avanzados y exportación CSV (ADMIN)
+      parameters:
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+        - { name: veterinarioId, in: query, schema: { type: integer } }
+        - { name: especialidadId, in: query, schema: { type: integer } }
+        - { name: estado, in: query, schema: { type: string } }
+        - { name: formato, in: query, schema: { type: string, enum: [json, csv] } }
+      responses: { '200': { description: OK } }
+
+  # ---------------- Auditoría ----------------
+  /auditoria:
+    get:
+      tags: [Auditoría]
+      summary: Bitácora de operaciones (ADMIN)
+      parameters:
+        - $ref: '#/components/parameters/pagina'
+        - $ref: '#/components/parameters/tamano'
+        - $ref: '#/components/parameters/q'
+        - { name: accion, in: query, schema: { type: string } }
+        - { name: entidad, in: query, schema: { type: string } }
+        - { name: usuarioId, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/desde'
+        - $ref: '#/components/parameters/hasta'
+      responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Error403' } }
+
+  # ---------------- Público ----------------
+  /publico/carnet/{codigo}:
+    get:
+      tags: [Público]
+      security: []
+      summary: Verificación pública del carnet de vacunación (destino del QR)
+      parameters: [{ name: codigo, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/Error404' } }
