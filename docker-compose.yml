@@ -1,0 +1,26 @@
+# Base de datos MySQL para desarrollo (opcional si ya tiene MySQL instalado).
+#   1) Copie .env.example como .env y defina DB_PASSWORD
+#   2) docker compose up -d
+# Los scripts de /database se ejecutan automáticamente la primera vez.
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: vetcare-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD en el archivo .env}
+      TZ: America/Guayaquil
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_spanish_ci", "--default-time-zone=-05:00"]
+    ports:
+      - "${DB_PORT_HOST:-3307}:3306"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d:ro
+      - vetcare-datos:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vetcare-datos:

@@ -1,0 +1,17 @@
+# Dependencias y compilados
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Variables de entorno (credenciales): NUNCA subir
+.env
+.env.*
+!.env.example
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+*.log
+.vscode/*
+!.vscode/extensions.json
