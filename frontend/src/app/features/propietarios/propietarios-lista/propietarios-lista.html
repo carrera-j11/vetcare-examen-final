@@ -1,0 +1,71 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Registro</p>
+    <h1>Propietarios</h1>
+    <p class="descripcion">Dueños de las mascotas atendidas en la clínica.</p>
+  </div>
+  @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+    <div class="acciones"><a routerLink="/propietarios/nuevo" class="btn btn-primario">+ Nuevo propietario</a></div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" (ngModelChange)="buscar($event)" placeholder="Cédula, nombres, apellidos o teléfono" />
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="activo" [(ngModel)]="filtros.activo" (change)="filtrar()">
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+      <option value="">Todos</option>
+    </select>
+  </label>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length"
+                  textoVacio="No se encontraron propietarios con esos criterios." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <caption class="solo-lector">Listado de propietarios</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('apellidos')">Propietario{{ indicador('apellidos') }}</button></th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('cedula')">Cédula{{ indicador('cedula') }}</button></th>
+          <th scope="col">Contacto</th>
+          <th scope="col" class="num">Mascotas</th>
+          <th scope="col">Estado</th>
+          <th scope="col"><span class="solo-lector">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of lista(); track p.id) {
+          <tr [class.inactivo]="!p.activo">
+            <td><a [routerLink]="['/propietarios', p.id]" class="fuerte">{{ p.apellidos }} {{ p.nombres }}</a><span class="sub">{{ p.direccion || 'Sin dirección' }}</span></td>
+            <td>{{ p.cedula }}</td>
+            <td>{{ p.telefono }}<span class="sub">{{ p.email || '—' }}</span></td>
+            <td class="num">{{ p.totalMascotas }}</td>
+            <td><span class="badge" [class]="p.activo ? 'badge badge-activo' : 'badge badge-inactivo'">{{ p.activo ? 'Activo' : 'Inactivo' }}</span></td>
+            <td class="acciones-fila">
+              <a [routerLink]="['/propietarios', p.id]" class="btn btn-texto btn-chico">Ver</a>
+              @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+                <a [routerLink]="['/propietarios', p.id, 'editar']" class="btn btn-texto btn-chico">Editar</a>
+              }
+              @if (auth.tieneRol('ADMIN')) {
+                @if (p.activo) {
+                  <button type="button" class="btn btn-chico" (click)="desactivar(p)" [attr.aria-label]="'Desactivar a ' + p.nombreCompleto">Desactivar</button>
+                } @else {
+                  <button type="button" class="btn btn-chico" (click)="reactivar(p)">Reactivar</button>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

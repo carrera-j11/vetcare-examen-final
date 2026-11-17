@@ -1,0 +1,9 @@
+<section class="tarjeta" style="max-width: 560px; margin: 3rem auto; text-align: center;">
+  <p style="font-size: 3rem; margin: 0;" aria-hidden="true">⛔</p>
+  <h1>Acceso denegado</h1>
+  <p class="texto-suave">
+    Su perfil ({{ auth.rol() }}) no tiene permisos para esta sección.
+    Si cree que es un error, solicite acceso al administrador.
+  </p>
+  <a routerLink="/panel" class="btn btn-primario">Ir al panel</a>
+</section>

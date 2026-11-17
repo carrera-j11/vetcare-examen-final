@@ -1,0 +1,70 @@
+.estructura { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+/* Menú lateral */
+.lateral {
+  background: #0b3b37; color: #d7efec; padding: 1rem .75rem; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.marca { display: flex; gap: .6rem; align-items: center; color: #fff; text-decoration: none; padding: .25rem .5rem 1rem; }
+.marca small { display: block; font-size: .7rem; color: #9fd3cc; }
+.logo { font-size: 1.6rem; }
+.grupo { margin: 1rem .6rem .35rem; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: #7fb9b1; font-weight: 700; }
+ul { list-style: none; margin: 0; padding: 0; }
+nav a {
+  display: flex; align-items: center; gap: .6rem; padding: .5rem .65rem; border-radius: 8px;
+  color: #d7efec; text-decoration: none; font-size: .9rem;
+}
+nav a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+nav a.activo { background: var(--primario); color: #fff; font-weight: 600; }
+.icono { width: 1.3rem; text-align: center; }
+
+/* Barra superior */
+.principal { min-width: 0; display: flex; flex-direction: column; }
+.superior {
+  position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: .6rem;
+  background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--borde); padding: .55rem 1.25rem;
+}
+.espaciador { flex: 1; }
+.hamburguesa { display: none; }
+.usuario { display: flex; align-items: center; gap: .5rem; }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--primario-suave); color: var(--primario-oscuro); font-weight: 700; font-size: .8rem;
+}
+.datos-usuario { display: flex; flex-direction: column; line-height: 1.15; }
+.datos-usuario small { color: var(--texto-suave); font-size: .75rem; }
+
+/* Campana y panel de alertas */
+.alertas { position: relative; }
+.campana { position: relative; font-size: 1.05rem; }
+.contador {
+  position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 999px; background: var(--peligro); color: #fff; font-size: .7rem; font-weight: 700;
+  display: grid; place-items: center;
+}
+.panel-alertas {
+  position: absolute; right: 0; top: calc(100% + 8px); width: min(380px, calc(100vw - 24px));
+  background: #fff; border: 1px solid var(--borde); border-radius: 12px; box-shadow: var(--sombra-alta);
+  max-height: 70vh; overflow-y: auto; z-index: 60;
+}
+.panel-cabecera { display: flex; justify-content: space-between; align-items: center; padding: .75rem 1rem; border-bottom: 1px solid var(--borde); }
+.notificacion { display: flex; flex-direction: column; gap: .2rem; padding: .7rem 1rem; border-bottom: 1px solid #eef2f1; text-decoration: none; color: var(--texto); font-size: .85rem; }
+.notificacion:hover { background: #f6fbfa; }
+.notificacion .badge { align-self: flex-start; }
+.notificacion span:last-child { color: var(--texto-suave); }
+.sin-alertas { padding: 1rem; margin: 0; color: var(--texto-suave); text-align: center; }
+.ver-todas { display: block; padding: .7rem 1rem; text-align: center; font-weight: 600; font-size: .85rem; }
+
+.contenido { padding: 1.5rem; max-width: 1400px; width: 100%; margin: 0 auto; outline: none; }
+.velo { display: none; }
+
+/* Responsivo: menú desplegable en pantallas pequeñas */
+@media (max-width: 960px) {
+  .estructura { grid-template-columns: 1fr; }
+  .lateral { position: fixed; left: 0; top: 0; z-index: 80; width: 260px; transform: translateX(-100%); transition: transform .2s; }
+  .menu-abierto .lateral { transform: none; }
+  .menu-abierto .velo { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 70; }
+  .hamburguesa { display: inline-flex; }
+  .datos-usuario { display: none; }
+  .contenido { padding: 1rem; }
+}

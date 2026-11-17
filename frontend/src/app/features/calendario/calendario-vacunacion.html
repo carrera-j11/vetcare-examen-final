@@ -1,0 +1,124 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Innovación</p>
+    <h1>Calendario de vacunación</h1>
+    <p class="descripcion">Refuerzos de vacunas, desparasitaciones y controles con alertas de vencimiento.</p>
+  </div>
+  @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
+    <div class="acciones"><a routerLink="/vacunas/aplicar" class="btn btn-primario">💉 Aplicar vacuna</a></div>
+  }
+</header>
+
+<!-- Alertas destacadas -->
+@if (alertas(); as a) {
+  @if (a.vencidos.length || a.proximos.length) {
+    <section class="alertas-resumen" aria-label="Alertas de controles">
+      @if (a.vencidos.length) {
+        <div class="alerta alerta-error">
+          <strong>⚠ {{ a.vencidos.length }} control(es) vencido(s):</strong>
+          @for (c of a.vencidos; track c.id) {
+            <button type="button" class="enlace-alerta" (click)="irAFecha(c.fechaProgramada)">{{ c.mascota }} – {{ c.descripcion }} ({{ c.fechaProgramada | date: 'dd/MM' }})</button>
+          }
+        </div>
+      }
+      @if (a.proximos.length) {
+        <div class="alerta alerta-advertencia">
+          <strong>⏰ {{ a.proximos.length }} control(es) en los próximos {{ a.diasAnticipacion }} días:</strong>
+          @for (c of a.proximos; track c.id) {
+            <button type="button" class="enlace-alerta" (click)="irAFecha(c.fechaProgramada)">{{ c.mascota }} – {{ c.descripcion }} ({{ c.fechaProgramada | date: 'dd/MM' }})</button>
+          }
+        </div>
+      }
+    </section>
+  }
+}
+
+<div class="calendario-disposicion">
+  <section class="tarjeta">
+    <div class="barra">
+      <div class="navegacion">
+        <button type="button" class="btn btn-icono" (click)="moverMes(-1)" aria-label="Mes anterior">‹</button>
+        <h2 class="mes" aria-live="polite">{{ mes() | date: 'MMMM yyyy' }}</h2>
+        <button type="button" class="btn btn-icono" (click)="moverMes(1)" aria-label="Mes siguiente">›</button>
+        <button type="button" class="btn btn-chico" (click)="irHoy()">Hoy</button>
+      </div>
+      <div class="opciones">
+        <select [(ngModel)]="filtroTipo" (change)="cargar()" aria-label="Filtrar por tipo">
+          <option value="">Todos los controles</option>
+          <option value="VACUNA">Vacunas</option>
+          <option value="DESPARASITACION">Desparasitación</option>
+          <option value="CONTROL_GENERAL">Controles generales</option>
+        </select>
+        <label class="check"><input type="checkbox" [(ngModel)]="incluirCitas" (change)="cargar()" /> Mostrar citas</label>
+      </div>
+    </div>
+
+    <ul class="leyenda" aria-label="Leyenda">
+      <li><span class="punto vencido"></span>Vencido ({{ resumen().vencidos }})</li>
+      <li><span class="punto proximo"></span>Próximo ({{ resumen().proximos }})</li>
+      <li><span class="punto programado"></span>Programado ({{ resumen().programados }})</li>
+      <li><span class="punto realizado"></span>Realizado ({{ resumen().realizados }})</li>
+      @if (incluirCitas) { <li><span class="punto cita"></span>Cita</li> }
+    </ul>
+
+    <app-estado-vista [cargando]="cargando()" [error]="error()" (reintentar)="cargar()" />
+
+    @if (!cargando() && !error()) {
+      <div class="cuadricula" role="grid" aria-label="Calendario mensual">
+        @for (d of diasSemana; track d) { <div class="encabezado-dia" role="columnheader">{{ d }}</div> }
+        @for (d of dias(); track d.fecha) {
+          <button type="button" class="dia" role="gridcell"
+                  [class.fuera]="!d.delMes" [class.hoy]="d.fecha === hoy" [class.seleccionado]="d.fecha === diaSel()"
+                  (click)="diaSel.set(d.fecha)" [attr.aria-label]="d.fecha + ': ' + d.eventos.length + ' evento(s)'">
+            <span class="numero">{{ d.numero }}</span>
+            @for (e of d.eventos.slice(0, 3); track e.id) {
+              <span class="evento" [class]="'evento ' + e.semaforo">{{ e.titulo }}</span>
+            }
+            @if (d.eventos.length > 3) { <span class="mas">+{{ d.eventos.length - 3 }} más</span> }
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Panel del día -->
+  <aside class="tarjeta panel-dia" aria-live="polite">
+    <h2>{{ diaSel() | date: "EEEE dd 'de' MMMM" }}</h2>
+    @for (e of eventosDia(); track e.id) {
+      <article class="item" [class]="'item ' + e.semaforo">
+        <p class="titulo-item">
+          <span class="badge" [class]="'badge badge-' + e.semaforo">{{ e.origen === 'CITA' ? 'Cita' : e.semaforo }}</span>
+          {{ e.titulo }}
+        </p>
+        @if (e.propietario) { <p class="sub">{{ e.propietario }} · <a [href]="'tel:' + e.telefono">{{ e.telefono }}</a></p> }
+        <div class="acciones-item">
+          <a [routerLink]="['/mascotas', e.mascotaId, 'historial']" class="btn btn-texto btn-chico">Historial</a>
+          @if (e.origen === 'CONTROL' && e.estado === 'PENDIENTE') {
+            @if (e.tipo === 'VACUNA' && auth.tieneRol('ADMIN', 'VETERINARIO')) {
+              <a routerLink="/vacunas/aplicar" [queryParams]="{ mascotaId: e.mascotaId }" class="btn btn-primario btn-chico">Aplicar</a>
+            }
+            @if (e.tipo !== 'VACUNA' && auth.tieneRol('ADMIN', 'VETERINARIO')) {
+              <button type="button" class="btn btn-chico" (click)="realizado(e)">Realizado</button>
+            }
+            <button type="button" class="btn btn-chico" (click)="iniciarReprogramacion(e)">Reprogramar</button>
+            @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
+              <button type="button" class="btn btn-texto btn-chico" (click)="cancelar(e)">Cancelar</button>
+            }
+          }
+          @if (e.origen === 'CITA' && auth.tieneRol('ADMIN', 'RECEPCION')) {
+            <a [routerLink]="['/citas', e.referenciaId, 'reprogramar']" class="btn btn-texto btn-chico">Reprogramar cita</a>
+          }
+        </div>
+        @if (reprogramandoId() === e.referenciaId && e.origen === 'CONTROL') {
+          <div class="reprogramar">
+            <label class="campo"><span>Nueva fecha</span><input type="date" [(ngModel)]="nuevaFecha" [min]="hoy" /></label>
+            <button type="button" class="btn btn-primario btn-chico" (click)="reprogramar(e)">Guardar</button>
+            <button type="button" class="btn btn-chico" (click)="reprogramandoId.set(null)">Cerrar</button>
+          </div>
+        }
+      </article>
+    } @empty {
+      <p class="vacio-texto">Sin eventos este día.</p>
+    }
+  </aside>
+</div>

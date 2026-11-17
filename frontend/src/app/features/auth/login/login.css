@@ -1,0 +1,19 @@
+.login { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
+.presentacion {
+  background: linear-gradient(150deg, #0b3b37, var(--primario)); color: #e6fffb;
+  display: grid; place-items: center; padding: 3rem;
+}
+.presentacion h2 { color: #fff; font-size: 2.2rem; margin: .5rem 0; }
+.presentacion p { max-width: 34ch; color: #c7f0ea; }
+.presentacion ul { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: .6rem; }
+.logo { font-size: 3rem; }
+.formulario-login { align-self: center; justify-self: center; width: min(420px, calc(100% - 32px)); margin: 2rem 0; }
+.con-boton { display: flex; gap: .4rem; }
+.demo { margin-top: 1.25rem; font-size: .85rem; color: var(--texto-suave); }
+.demo summary { cursor: pointer; font-weight: 600; }
+.demo ul { padding-left: 1.1rem; }
+code { background: var(--superficie-2); padding: .1rem .35rem; border-radius: 4px; }
+@media (max-width: 860px) {
+  .login { grid-template-columns: 1fr; }
+  .presentacion { display: none; }
+}

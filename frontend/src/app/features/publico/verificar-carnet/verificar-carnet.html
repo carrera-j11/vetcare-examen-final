@@ -1,0 +1,42 @@
+<main class="pagina">
+  <section class="tarjeta carnet">
+    <p class="sobre">🐾 VetCare · Verificación pública</p>
+    <h1>Carnet de vacunación</h1>
+
+    @if (cargando()) {
+      <p role="status">Verificando carnet…</p>
+    } @else if (error()) {
+      <div class="alerta alerta-error" role="alert">✖ {{ error() }}. El código QR no corresponde a un carnet válido.</div>
+    } @else if (carnet(); as c) {
+      <div class="alerta alerta-exito" role="status">✔ Carnet auténtico emitido por la clínica.</div>
+      <dl class="datos">
+        <div><dt>Paciente</dt><dd>{{ c.mascota.nombre }}</dd></div>
+        <div><dt>Especie</dt><dd>{{ c.mascota.especie | titlecase }}</dd></div>
+        <div><dt>Raza</dt><dd>{{ c.mascota.raza || '—' }}</dd></div>
+        <div><dt>Propietario</dt><dd>{{ c.propietario }}</dd></div>
+      </dl>
+
+      <h2 class="mt-1">Vacunas registradas</h2>
+      @if (c.vacunas.length) {
+        <div class="tabla-cont">
+          <table class="tabla">
+            <thead><tr><th>Vacuna</th><th>Aplicada</th><th>Próxima dosis</th><th>Estado</th></tr></thead>
+            <tbody>
+              @for (v of c.vacunas; track $index) {
+                <tr>
+                  <td>{{ v.vacuna }}</td>
+                  <td>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ v.proximaDosis ? (v.proximaDosis | date: 'dd/MM/yyyy') : 'Dosis única' }}</td>
+                  <td><span class="badge" [class]="v.vigente ? 'badge badge-activo' : 'badge badge-vencido'">{{ v.vigente ? 'Vigente' : 'Vencida' }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="vacio-texto">La mascota no tiene vacunas registradas.</p>
+      }
+      <p class="texto-suave mt-1">Verificado el {{ c.verificadoEn | date: 'dd/MM/yyyy HH:mm' }}</p>
+    }
+  </section>
+</main>

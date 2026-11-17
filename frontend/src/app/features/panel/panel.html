@@ -1,0 +1,163 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Panel de control</p>
+    <h1>Hola, {{ auth.usuario()?.nombres }} 👋</h1>
+    @if (datos(); as d) {
+      <p class="descripcion">Indicadores del {{ d.rango.desde | date: 'dd/MM/yyyy' }} al {{ d.rango.hasta | date: 'dd/MM/yyyy' }}.</p>
+    }
+  </div>
+  <div class="acciones">
+    @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+      <a routerLink="/citas/nueva" class="btn btn-primario">+ Nueva cita</a>
+    }
+    @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
+      <a routerLink="/vacunas/aplicar" class="btn">💉 Aplicar vacuna</a>
+    }
+  </div>
+</header>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" (reintentar)="cargar()" />
+
+@if (!cargando() && datos(); as d) {
+  <!-- Indicadores principales -->
+  <section class="rejilla rejilla-4 kpis" aria-label="Indicadores principales">
+    <article class="kpi"><span class="kpi-icono">🐶</span><div><p class="kpi-valor">{{ d.totales.mascotasActivas }}</p><p class="kpi-texto">Mascotas activas</p></div></article>
+    <article class="kpi"><span class="kpi-icono">🗓️</span><div><p class="kpi-valor">{{ d.totales.citasHoy }}</p><p class="kpi-texto">Citas hoy · {{ d.totales.citasProximos7Dias }} en 7 días</p></div></article>
+    <article class="kpi"><span class="kpi-icono">🩺</span><div><p class="kpi-valor">{{ d.totales.consultasMes }}</p><p class="kpi-texto">Consultas este mes</p></div></article>
+    <article class="kpi"><span class="kpi-icono">💉</span><div><p class="kpi-valor">{{ d.totales.vacunasMes }}</p><p class="kpi-texto">Vacunas este mes</p></div></article>
+    <article class="kpi kpi-alerta"><span class="kpi-icono">⚠️</span><div><p class="kpi-valor">{{ d.totales.controlesVencidos }}</p><p class="kpi-texto">Controles vencidos</p></div></article>
+    <article class="kpi kpi-aviso"><span class="kpi-icono">⏰</span><div><p class="kpi-valor">{{ d.totales.controlesProximos }}</p><p class="kpi-texto">Controles en 7 días</p></div></article>
+    <article class="kpi"><span class="kpi-icono">✅</span><div><p class="kpi-valor">{{ d.totales.tasaAsistencia !== null ? (d.totales.tasaAsistencia | number: '1.0-1') + '%' : '—' }}</p><p class="kpi-texto">Tasa de asistencia</p></div></article>
+    <article class="kpi"><span class="kpi-icono">🛡️</span><div><p class="kpi-valor">{{ d.totales.coberturaVacunacion !== null ? (d.totales.coberturaVacunacion | number: '1.0-1') + '%' : '—' }}</p><p class="kpi-texto">Mascotas con vacunas al día</p></div></article>
+  </section>
+
+  <div class="rejilla rejilla-2 mt-1">
+    <!-- Alertas del calendario de vacunación -->
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2>Alertas de vacunación</h2>
+        <a routerLink="/calendario" class="btn btn-texto btn-chico">Ver calendario →</a>
+      </div>
+      @if (alertas(); as a) {
+        @if (!a.vencidos.length && !a.proximos.length) {
+          <p class="vacio-texto">Sin controles vencidos ni próximos. 🎉</p>
+        }
+        <ul class="lista-alertas">
+          @for (c of a.vencidos; track c.id) {
+            <li class="vencido">
+              <span class="badge badge-vencido">Vencido hace {{ -c.diasRestantes }} d</span>
+              <span><strong>{{ c.mascota }}</strong> · {{ c.descripcion }}</span>
+              <span class="sub">{{ c.propietario }} · {{ c.propietarioTelefono }}</span>
+            </li>
+          }
+          @for (c of a.proximos; track c.id) {
+            <li>
+              <span class="badge badge-proximo">{{ c.diasRestantes === 0 ? 'Hoy' : 'En ' + c.diasRestantes + ' d' }}</span>
+              <span><strong>{{ c.mascota }}</strong> · {{ c.descripcion }}</span>
+              <span class="sub">{{ c.fechaProgramada | date: 'EEEE dd/MM' }} · {{ c.propietario }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- Agenda próxima -->
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2>Próximas citas</h2>
+        <a routerLink="/citas" class="btn btn-texto btn-chico">Ver todas →</a>
+      </div>
+      @if (agenda().length) {
+        <ul class="agenda">
+          @for (c of agenda(); track c.id) {
+            <li>
+              <time [attr.datetime]="c.inicio">{{ c.inicio | date: 'EEE dd/MM' }}<strong>{{ c.inicio | date: 'HH:mm' }}</strong></time>
+              <div><strong>{{ c.mascota.nombre }}</strong> · {{ c.especialidad.nombre }}<span class="sub">{{ c.veterinario.nombreCompleto }} · {{ c.motivo }}</span></div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="vacio-texto">No hay citas programadas en los próximos 7 días.</p>
+      }
+    </section>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="rejilla rejilla-2 mt-1">
+    <section class="tarjeta">
+      <h2>Citas por estado</h2>
+      <ul class="barras" aria-label="Citas por estado">
+        @for (e of d.citasPorEstado; track e.estado) {
+          <li>
+            <span class="etiqueta">{{ nombresEstado[e.estado] || e.estado }}</span>
+            <span class="barra"><span class="relleno" [class]="'relleno relleno-' + e.estado" [style.width.%]="porcentaje(e.total, maxEstado())"></span></span>
+            <span class="valor">{{ e.total }}</span>
+          </li>
+        } @empty { <li class="vacio-texto">Sin datos</li> }
+      </ul>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Demanda por especialidad</h2>
+      <ul class="barras" aria-label="Citas por especialidad">
+        @for (e of d.citasPorEspecialidad; track e.especialidad) {
+          <li>
+            <span class="etiqueta">{{ e.especialidad }}</span>
+            <span class="barra"><span class="relleno" [style.width.%]="porcentaje(e.total, maxEspecialidad())"></span></span>
+            <span class="valor">{{ e.total }}</span>
+          </li>
+        } @empty { <li class="vacio-texto">Sin datos</li> }
+      </ul>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Citas por día</h2>
+      <div class="columnas" role="img" [attr.aria-label]="'Citas por día en el período'">
+        @for (c of d.citasPorDia; track c.fecha) {
+          <div class="columna" [title]="(c.fecha | date: 'dd/MM') + ': ' + c.total + ' citas'">
+            <span class="col-valor">{{ c.total }}</span>
+            <span class="col-barra" [style.height.%]="porcentaje(c.total, maxDia())"></span>
+            <span class="col-etiqueta">{{ c.fecha | date: 'dd/MM' }}</span>
+          </div>
+        } @empty { <p class="vacio-texto">Sin datos</p> }
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Mascotas por especie</h2>
+      <ul class="barras" aria-label="Mascotas por especie">
+        @for (e of d.mascotasPorEspecie; track e.especie) {
+          <li>
+            <span class="etiqueta">{{ e.especie }}</span>
+            <span class="barra"><span class="relleno relleno-suave" [style.width.%]="porcentaje(e.total, maxEspecie())"></span></span>
+            <span class="valor">{{ e.total }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+
+  <!-- Productividad -->
+  <section class="tarjeta mt-1">
+    <h2>Productividad por veterinario</h2>
+    <div class="tabla-cont">
+      <table class="tabla">
+        <thead><tr><th>Veterinario</th><th class="num">Total</th><th class="num">Atendidas</th><th class="num">Programadas</th><th class="num">Canceladas</th><th class="num">No asistió</th><th class="num">Asistencia</th><th class="num">Horas</th></tr></thead>
+        <tbody>
+          @for (v of d.citasPorVeterinario; track v.veterinarioId) {
+            <tr>
+              <td>{{ v.veterinario }}</td>
+              <td class="num">{{ v.total }}</td>
+              <td class="num">{{ v.atendidas }}</td>
+              <td class="num">{{ v.programadas }}</td>
+              <td class="num">{{ v.canceladas }}</td>
+              <td class="num">{{ v.noAsistio }}</td>
+              <td class="num">{{ v.tasaAsistencia !== null ? v.tasaAsistencia + '%' : '—' }}</td>
+              <td class="num">{{ v.horasAgendadas }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

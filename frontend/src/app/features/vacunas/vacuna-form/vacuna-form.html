@@ -1,0 +1,88 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/vacunas">Vacunas</a></p>
+    <h1>Aplicar vacuna</h1>
+    <p class="descripcion">Se registra fecha, tipo y responsable (RN04). El refuerzo se agenda automáticamente en el calendario.</p>
+  </div>
+</header>
+
+<form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  <fieldset class="bloque">
+    <legend class="etiqueta">Mascota <span class="requerido">*</span></legend>
+    @if (mascota(); as m) {
+      <div class="seleccionado">
+        <span>🐾 <strong>{{ m.nombre }}</strong> · {{ m.especie }} · {{ m.propietario?.nombreCompleto }}</span>
+        <button type="button" class="btn btn-texto btn-chico" (click)="mascota.set(null)">Cambiar</button>
+      </div>
+    } @else {
+      <div class="buscador">
+        <input type="search" [(ngModel)]="textoMascota" [ngModelOptions]="{ standalone: true }" (input)="buscarMascota()"
+               placeholder="Nombre de la mascota o cédula del propietario" aria-label="Buscar mascota" autocomplete="off" />
+        @if (resultados().length) {
+          <ul class="resultados">
+            @for (r of resultados(); track r.id) {
+              <li><button type="button" (click)="elegirMascota(r)">{{ r.nombre }} <small>{{ r.especie }} · {{ r.propietario?.nombreCompleto }}</small></button></li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </fieldset>
+
+  <div class="fila-campos">
+    <label class="campo">
+      <span>Tipo de vacuna <span class="requerido">*</span></span>
+      <select formControlName="tipoVacunaId" (change)="calcularProxima()">
+        <option [ngValue]="0" disabled>Seleccione…</option>
+        @for (t of tiposCompatibles(); track t.id) {
+          <option [ngValue]="t.id">{{ t.nombre }}{{ t.intervaloDias ? ' · refuerzo cada ' + t.intervaloDias + ' días' : ' · dosis única' }}</option>
+        }
+      </select>
+      @if (mascota()) { <span class="ayuda">Solo se muestran vacunas para {{ mascota()!.especie.toLowerCase() }} o de uso general (RN09).</span> }
+      <app-campo-error [control]="form.controls.tipoVacunaId" />
+    </label>
+    <label class="campo">
+      <span>Fecha de aplicación <span class="requerido">*</span></span>
+      <input type="date" formControlName="fechaAplicacion" [max]="hoy" (change)="calcularProxima()" />
+      <app-campo-error [control]="form.controls.fechaAplicacion" />
+    </label>
+    @if (auth.tieneRol('ADMIN')) {
+      <label class="campo">
+        <span>Responsable <span class="requerido">*</span></span>
+        <select formControlName="veterinarioId">
+          <option [ngValue]="0" disabled>Seleccione…</option>
+          @for (v of veterinarios(); track v.id) { <option [ngValue]="v.id">{{ v.nombreCompleto }}</option> }
+        </select>
+        <app-campo-error [control]="form.controls.veterinarioId" />
+      </label>
+    } @else {
+      <div class="campo">
+        <span class="etiqueta">Responsable</span>
+        <p class="responsable">👩‍⚕️ {{ auth.usuario()?.nombreCompleto }}</p>
+      </div>
+    }
+  </div>
+
+  <div class="fila-campos">
+    <label class="campo">
+      <span>Lote</span>
+      <input formControlName="lote" placeholder="RAB-24-0001" />
+      <app-campo-error [control]="form.controls.lote" />
+    </label>
+    <label class="campo">
+      <span>Próxima dosis</span>
+      <input type="date" formControlName="proximaDosis" />
+      <span class="ayuda">Calculada según el tipo de vacuna; puede modificarse.</span>
+      <app-campo-error [control]="form.controls.proximaDosis" />
+    </label>
+  </div>
+  <label class="campo">
+    <span>Observaciones</span>
+    <textarea formControlName="observaciones" rows="2" maxlength="250"></textarea>
+  </label>
+
+  <div class="pie-formulario">
+    <a routerLink="/vacunas" class="btn">Cancelar</a>
+    <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Registrando…' : 'Registrar vacuna' }}</button>
+  </div>
+</form>

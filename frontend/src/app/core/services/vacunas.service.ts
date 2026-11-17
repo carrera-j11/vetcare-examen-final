@@ -1,0 +1,34 @@
+import { Injectable, inject } from '@angular/core';
+import { FiltrosListado } from '../models/api.models';
+import { Alertas, Control, EventoCalendario, TipoVacuna, VacunaAplicada, VacunaNueva } from '../models/vacuna.model';
+import { ApiService } from './api.service';
+
+/** Vacunas, tipos de vacuna, controles periódicos y calendario de vacunación */
+@Injectable({ providedIn: 'root' })
+export class VacunasService {
+  private readonly api = inject(ApiService);
+
+  // Tipos de vacuna
+  tipos(f: FiltrosListado = { tamano: 100 }) { return this.api.listar<TipoVacuna>('/tipos-vacuna', f); }
+  crearTipo(d: Partial<TipoVacuna>) { return this.api.crear<TipoVacuna>('/tipos-vacuna', d); }
+  actualizarTipo(id: number, d: Partial<TipoVacuna>) { return this.api.actualizar<TipoVacuna>(`/tipos-vacuna/${id}`, d); }
+
+  // Vacunas aplicadas
+  listar(f: FiltrosListado) { return this.api.listar<VacunaAplicada>('/vacunas', f); }
+  aplicar(d: VacunaNueva) { return this.api.crear<VacunaAplicada>('/vacunas', d); }
+
+  // Controles periódicos
+  controles(f: FiltrosListado) { return this.api.listar<Control>('/controles', f); }
+  crearControl(d: { mascotaId: number; tipo: string; tipoVacunaId?: number | null; descripcion: string; fechaProgramada: string }) {
+    return this.api.crear<Control>('/controles', d);
+  }
+  marcarRealizado(id: number) { return this.api.parche<Control>(`/controles/${id}/realizado`); }
+  cancelarControl(id: number) { return this.api.parche<Control>(`/controles/${id}/cancelar`); }
+  reprogramarControl(id: number, fechaProgramada: string) { return this.api.parche<Control>(`/controles/${id}/reprogramar`, { fechaProgramada }); }
+
+  // Calendario y alertas (innovación)
+  calendario(desde: string, hasta: string, tipo?: string, incluirCitas = true) {
+    return this.api.obtener<{ desde: string; hasta: string; eventos: EventoCalendario[] }>('/calendario', { desde, hasta, tipo, incluirCitas });
+  }
+  alertas() { return this.api.obtener<Alertas>('/calendario/alertas'); }
+}

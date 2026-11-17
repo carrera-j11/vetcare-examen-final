@@ -1,0 +1,15 @@
+.estado {
+  display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  padding: 2.25rem 1rem; text-align: center; color: var(--texto-suave);
+  background: var(--superficie); border: 1px dashed var(--borde); border-radius: var(--radio);
+  margin-bottom: 1rem;
+}
+.estado p { margin: 0; }
+.estado-error { color: var(--peligro); border-color: #fca5a5; background: #fff7f7; }
+.icono { font-size: 1.8rem; }
+.spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid var(--primario-suave); border-top-color: var(--primario);
+  animation: girar .8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }

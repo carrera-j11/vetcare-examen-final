@@ -1,0 +1,99 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/veterinarios">Veterinarios</a></p>
+    <h1>{{ editando ? 'Editar veterinario' : 'Nuevo veterinario' }}</h1>
+  </div>
+</header>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" />
+
+@if (!cargando() && !error()) {
+  <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <section class="tarjeta formulario">
+      <h2>Datos personales</h2>
+      <div class="fila-campos">
+        <label class="campo">
+          <span>Cédula <span class="requerido">*</span></span>
+          <input formControlName="cedula" maxlength="10" inputmode="numeric" />
+          <app-campo-error [control]="form.controls.cedula" />
+        </label>
+        <label class="campo">
+          <span>Nombres <span class="requerido">*</span></span>
+          <input formControlName="nombres" />
+          <app-campo-error [control]="form.controls.nombres" />
+        </label>
+        <label class="campo">
+          <span>Apellidos <span class="requerido">*</span></span>
+          <input formControlName="apellidos" />
+          <app-campo-error [control]="form.controls.apellidos" />
+        </label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo">
+          <span>Correo <span class="requerido">*</span></span>
+          <input type="email" formControlName="email" />
+          <app-campo-error [control]="form.controls.email" />
+        </label>
+        <label class="campo">
+          <span>Teléfono</span>
+          <input formControlName="telefono" inputmode="tel" maxlength="10" />
+          <app-campo-error [control]="form.controls.telefono" />
+        </label>
+        <label class="campo">
+          <span>Registro SENESCYT</span>
+          <input formControlName="registroSenescyt" />
+        </label>
+        <label class="campo">
+          <span>Cuenta de acceso (rol VETERINARIO)</span>
+          <select formControlName="usuarioId">
+            <option value="">Sin cuenta vinculada</option>
+            @for (c of cuentas(); track c.id) { <option [value]="c.id">{{ c.nombreCompleto }} · {{ c.email }}</option> }
+          </select>
+          <span class="ayuda">Permite que el veterinario inicie sesión y vea su propia agenda.</span>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" formControlName="activo" /> Activo</label>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Especialidades <span class="requerido">*</span></h2>
+      <div class="chips" role="group" aria-label="Especialidades que atiende">
+        @for (e of especialidades(); track e.id) {
+          <label class="chip" [class.marcado]="seleccionadas().has(e.id)">
+            <input type="checkbox" [checked]="seleccionadas().has(e.id)" (change)="alternarEspecialidad(e.id)" />
+            {{ e.nombre }} <small>{{ e.duracionMin }} min</small>
+          </label>
+        }
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2>Horario laboral (disponibilidad)</h2>
+        <button type="button" class="btn btn-chico" (click)="agregarBloque()">+ Agregar bloque</button>
+      </div>
+      <p class="texto-suave">Las citas solo pueden agendarse dentro de estos bloques (RN03).</p>
+      <div formArrayName="horarios" class="bloques">
+        @for (g of horarios.controls; track $index; let i = $index) {
+          <div class="bloque" [formGroupName]="i">
+            <select formControlName="diaSemana" aria-label="Día">
+              @for (d of dias; track d.valor) { <option [ngValue]="d.valor">{{ d.nombre }}</option> }
+            </select>
+            <input type="time" formControlName="horaInicio" aria-label="Hora de inicio" />
+            <span aria-hidden="true">a</span>
+            <input type="time" formControlName="horaFin" aria-label="Hora de fin" />
+            <button type="button" class="btn btn-texto btn-chico" (click)="quitarBloque(i)" aria-label="Quitar bloque">✕</button>
+            @if (g.value.horaInicio >= g.value.horaFin) { <span class="error-campo">Inicio debe ser menor que fin</span> }
+          </div>
+        } @empty {
+          <p class="vacio-texto">Sin horario: el veterinario no podrá recibir citas.</p>
+        }
+      </div>
+    </section>
+
+    <div class="pie-formulario">
+      <a routerLink="/veterinarios" class="btn">Cancelar</a>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+}

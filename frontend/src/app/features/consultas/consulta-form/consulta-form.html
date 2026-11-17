@@ -1,0 +1,121 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/consultas">Consultas</a></p>
+    <h1>Registrar consulta</h1>
+    @if (cita(); as c) {
+      <p class="descripcion">Atención de la cita #{{ c.id }} · {{ c.especialidad.nombre }} · {{ c.veterinario.nombreCompleto }}</p>
+    }
+  </div>
+</header>
+
+<form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+  <section class="tarjeta formulario">
+    <h2>Paciente</h2>
+    @if (mascota(); as m) {
+      <div class="seleccionado">
+        <span>🐾 <strong>{{ m.nombre }}</strong> · {{ m.especie }} · {{ m.raza || 'sin raza' }} · {{ m.edad || '' }} · Propietario: {{ m.propietario?.nombreCompleto }}</span>
+        @if (!cita()) { <button type="button" class="btn btn-texto btn-chico" (click)="mascota.set(null)">Cambiar</button> }
+      </div>
+    } @else {
+      <div class="buscador">
+        <input type="search" [(ngModel)]="textoMascota" [ngModelOptions]="{ standalone: true }" (input)="buscarMascota()"
+               placeholder="Buscar mascota por nombre o cédula del propietario" aria-label="Buscar mascota" autocomplete="off" />
+        @if (resultados().length) {
+          <ul class="resultados">
+            @for (r of resultados(); track r.id) {
+              <li><button type="button" (click)="elegirMascota(r)">{{ r.nombre }} <small>{{ r.especie }} · {{ r.propietario?.nombreCompleto }}</small></button></li>
+            }
+          </ul>
+        }
+      </div>
+    }
+    @if (auth.tieneRol('ADMIN')) {
+      <label class="campo">
+        <span>Veterinario responsable <span class="requerido">*</span></span>
+        <select formControlName="veterinarioId">
+          <option [ngValue]="0" disabled>Seleccione…</option>
+          @for (v of veterinarios(); track v.id) { <option [ngValue]="v.id">{{ v.nombreCompleto }}</option> }
+        </select>
+        <app-campo-error [control]="form.controls.veterinarioId" />
+      </label>
+    }
+  </section>
+
+  <section class="tarjeta formulario">
+    <h2>Evaluación clínica</h2>
+    <label class="campo">
+      <span>Motivo de la consulta <span class="requerido">*</span></span>
+      <input formControlName="motivo" />
+      <app-campo-error [control]="form.controls.motivo" />
+    </label>
+    <label class="campo">
+      <span>Anamnesis</span>
+      <textarea formControlName="anamnesis" rows="3" placeholder="Historia relatada por el propietario, síntomas, evolución…"></textarea>
+    </label>
+    <div class="fila-campos">
+      <label class="campo">
+        <span>Peso (kg)</span>
+        <input type="number" step="0.01" formControlName="pesoKg" />
+        <app-campo-error [control]="form.controls.pesoKg" />
+      </label>
+      <label class="campo">
+        <span>Temperatura (°C)</span>
+        <input type="number" step="0.1" formControlName="temperaturaC" />
+        <app-campo-error [control]="form.controls.temperaturaC" />
+      </label>
+      <label class="campo">
+        <span>Frecuencia cardiaca (lpm)</span>
+        <input type="number" formControlName="frecuenciaCardiaca" />
+        <app-campo-error [control]="form.controls.frecuenciaCardiaca" />
+      </label>
+    </div>
+    <label class="campo">
+      <span>Diagnóstico <span class="requerido">*</span></span>
+      <textarea formControlName="diagnostico" rows="3"></textarea>
+      <app-campo-error [control]="form.controls.diagnostico" />
+    </label>
+    <label class="campo">
+      <span>Observaciones</span>
+      <textarea formControlName="observaciones" rows="2"></textarea>
+    </label>
+  </section>
+
+  <section class="tarjeta">
+    <div class="tarjeta-titulo">
+      <h2>Tratamiento</h2>
+      <button type="button" class="btn btn-chico" (click)="agregarTratamiento()">+ Agregar medicamento</button>
+    </div>
+    <div formArrayName="tratamientos" class="tratamientos">
+      @for (t of tratamientos.controls; track $index; let i = $index) {
+        <fieldset class="tratamiento" [formGroupName]="i">
+          <legend>Medicamento {{ i + 1 }}</legend>
+          <div class="fila-campos">
+            <label class="campo"><span>Medicamento *</span><input formControlName="medicamento" /><app-campo-error [control]="t.get('medicamento')" /></label>
+            <label class="campo"><span>Dosis *</span><input formControlName="dosis" placeholder="10 mg/kg" /><app-campo-error [control]="t.get('dosis')" /></label>
+            <label class="campo"><span>Frecuencia *</span><input formControlName="frecuencia" placeholder="Cada 12 horas" /><app-campo-error [control]="t.get('frecuencia')" /></label>
+            <label class="campo"><span>Duración (días) *</span><input type="number" formControlName="duracionDias" min="1" max="365" /><app-campo-error [control]="t.get('duracionDias')" /></label>
+          </div>
+          <label class="campo"><span>Indicaciones</span><input formControlName="indicaciones" /></label>
+          <button type="button" class="btn btn-texto btn-chico quitar" (click)="quitarTratamiento(i)">Quitar</button>
+        </fieldset>
+      } @empty {
+        <p class="vacio-texto">Sin medicamentos prescritos.</p>
+      }
+    </div>
+  </section>
+
+  <section class="tarjeta formulario">
+    <label class="check"><input type="checkbox" [checked]="programarControl()" (change)="programarControl.set(!programarControl())" /> Programar próximo control (aparecerá en el calendario y generará alertas)</label>
+    @if (programarControl()) {
+      <div class="fila-campos">
+        <label class="campo"><span>Fecha del control *</span><input type="date" formControlName="controlFecha" [min]="manana" /></label>
+        <label class="campo"><span>Descripción *</span><input formControlName="controlDescripcion" placeholder="Ej.: Control post tratamiento" /></label>
+      </div>
+    }
+  </section>
+
+  <div class="pie-formulario">
+    <a routerLink="/consultas" class="btn">Cancelar</a>
+    <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Registrar consulta' }}</button>
+  </div>
+</form>

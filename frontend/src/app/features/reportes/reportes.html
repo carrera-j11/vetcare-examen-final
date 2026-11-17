@@ -1,0 +1,97 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Administración</p>
+    <h1>Reporte de citas</h1>
+    <p class="descripcion">Filtros combinados por fechas, veterinario, especialidad y estado. Exportable a Excel (CSV).</p>
+  </div>
+  <div class="acciones no-imprimir">
+    <button type="button" class="btn" (click)="imprimir()">🖨️ Imprimir</button>
+    <button type="button" class="btn btn-primario" (click)="exportar()" [disabled]="exportando()">⬇ {{ exportando() ? 'Exportando…' : 'Exportar CSV' }}</button>
+  </div>
+</header>
+
+<form class="filtros no-imprimir" (ngSubmit)="generar()">
+  <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" /></label>
+  <label class="campo">
+    <span>Veterinario</span>
+    <select name="veterinarioId" [(ngModel)]="filtros.veterinarioId">
+      <option value="">Todos</option>
+      @for (v of veterinarios(); track v.id) { <option [value]="v.id">{{ v.nombreCompleto }}</option> }
+    </select>
+  </label>
+  <label class="campo">
+    <span>Especialidad</span>
+    <select name="especialidadId" [(ngModel)]="filtros.especialidadId">
+      <option value="">Todas</option>
+      @for (e of especialidades(); track e.id) { <option [value]="e.id">{{ e.nombre }}</option> }
+    </select>
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="estado" [(ngModel)]="filtros.estado">
+      <option value="">Todos</option>
+      <option value="PROGRAMADA">Programada</option>
+      <option value="ATENDIDA">Atendida</option>
+      <option value="CANCELADA">Cancelada</option>
+      <option value="NO_ASISTIO">No asistió</option>
+    </select>
+  </label>
+  <button type="submit" class="btn btn-primario">Generar reporte</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" (reintentar)="generar()" />
+
+@if (!cargando() && reporte(); as r) {
+  <p class="texto-suave">Período: {{ r.rango.desde | date: 'dd/MM/yyyy' }} – {{ r.rango.hasta | date: 'dd/MM/yyyy' }} · {{ total() }} cita(s)</p>
+
+  <div class="rejilla rejilla-2">
+    <section class="tarjeta">
+      <h2>Resumen por estado</h2>
+      <table class="tabla">
+        <thead><tr><th>Estado</th><th class="num">Citas</th><th class="num">%</th></tr></thead>
+        <tbody>
+          @for (e of r.resumen.porEstado; track e.estado) {
+            <tr><td><span class="badge" [class]="'badge badge-' + e.estado">{{ e.estado }}</span></td><td class="num">{{ e.total }}</td><td class="num">{{ porcentaje(e.total) }}%</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    <section class="tarjeta">
+      <h2>Productividad por veterinario</h2>
+      <table class="tabla">
+        <thead><tr><th>Veterinario</th><th class="num">Total</th><th class="num">Atendidas</th><th class="num">Asistencia</th><th class="num">Horas</th></tr></thead>
+        <tbody>
+          @for (v of r.resumen.porVeterinario; track v.veterinarioId) {
+            <tr><td>{{ v.veterinario }}</td><td class="num">{{ v.total }}</td><td class="num">{{ v.atendidas }}</td><td class="num">{{ v.tasaAsistencia !== null ? v.tasaAsistencia + '%' : '—' }}</td><td class="num">{{ v.horasAgendadas }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="tarjeta mt-1">
+    <h2>Detalle ({{ r.detalle.length }})</h2>
+    @if (r.detalle.length) {
+      <div class="tabla-cont">
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Mascota</th><th>Propietario</th><th>Veterinario</th><th>Especialidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            @for (d of r.detalle; track d.id) {
+              <tr>
+                <td>{{ d.inicio | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ d.mascota }}<span class="sub">{{ d.especie }}</span></td>
+                <td>{{ d.propietario }}<span class="sub">{{ d.telefono }}</span></td>
+                <td>{{ d.veterinario }}</td>
+                <td>{{ d.especialidad }}</td>
+                <td><span class="badge" [class]="'badge badge-' + d.estado">{{ d.estado }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="vacio-texto">No hay citas con los filtros seleccionados.</p>
+    }
+  </section>
+}

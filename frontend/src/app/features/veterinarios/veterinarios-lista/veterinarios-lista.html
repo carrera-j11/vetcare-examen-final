@@ -1,0 +1,71 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Clínica</p>
+    <h1>Veterinarios</h1>
+    <p class="descripcion">Médicos veterinarios, sus especialidades y horario de atención.</p>
+  </div>
+  @if (auth.tieneRol('ADMIN')) {
+    <div class="acciones"><a routerLink="/veterinarios/nuevo" class="btn btn-primario">+ Nuevo veterinario</a></div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Nombre o cédula" />
+  </label>
+  <label class="campo">
+    <span>Especialidad</span>
+    <select name="especialidadId" [(ngModel)]="filtros.especialidadId" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (e of especialidades(); track e.id) { <option [value]="e.id">{{ e.nombre }}</option> }
+    </select>
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="activo" [(ngModel)]="filtros.activo" (change)="filtrar()">
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+      <option value="">Todos</option>
+    </select>
+  </label>
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay veterinarios con esos filtros." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <thead><tr><th>Veterinario</th><th>Especialidades</th><th>Contacto</th><th>Estado</th><th><span class="solo-lector">Acciones</span></th></tr></thead>
+      <tbody>
+        @for (v of lista(); track v.id) {
+          <tr [class.inactivo]="!v.activo">
+            <td class="fuerte">{{ v.nombreCompleto }}<span class="sub">C.I. {{ v.cedula }} · Reg. {{ v.registroSenescyt || '—' }}</span></td>
+            <td>@for (e of v.especialidades; track e.id) { <span class="badge badge-VETERINARIO">{{ e.nombre }}</span> {{ ' ' }} }</td>
+            <td>{{ v.email }}<span class="sub">{{ v.telefono || '—' }}</span></td>
+            <td><span class="badge" [class]="v.activo ? 'badge badge-activo' : 'badge badge-inactivo'">{{ v.activo ? 'Activo' : 'Inactivo' }}</span></td>
+            <td class="acciones-fila">
+              <button type="button" class="btn btn-texto btn-chico" (click)="verHorario(v)" [attr.aria-expanded]="detalle()?.id === v.id">Horario</button>
+              @if (auth.tieneRol('ADMIN')) {
+                <a [routerLink]="['/veterinarios', v.id, 'editar']" class="btn btn-texto btn-chico">Editar</a>
+                @if (v.activo) { <button type="button" class="btn btn-chico" (click)="desactivar(v)">Desactivar</button> }
+              }
+            </td>
+          </tr>
+          @if (detalle()?.id === v.id) {
+            <tr>
+              <td colspan="5">
+                <strong>Horario laboral de {{ v.nombres }}:</strong>
+                @for (h of detalle()?.horarios; track $index) {
+                  <span class="badge">{{ dias[h.diaSemana] }} {{ h.horaInicio }}–{{ h.horaFin }}</span> {{ ' ' }}
+                } @empty { <span class="vacio-texto">Sin horario configurado</span> }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

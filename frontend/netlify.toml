@@ -1,0 +1,13 @@
+# Alternativa a Vercel. Defina API_URL en Site settings → Environment variables.
+[build]
+  command = "npm run build:prod"
+  publish = "dist/frontend/browser"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA: todas las rutas de Angular se sirven con index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

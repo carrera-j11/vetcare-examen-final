@@ -1,0 +1,25 @@
+@if (servicio.actual(); as d) {
+  <div class="fondo" (click)="cancelar()" aria-hidden="true"></div>
+  <div class="dialogo" role="alertdialog" aria-modal="true" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-mensaje">
+    <h2 id="dialogo-titulo">{{ d.titulo }}</h2>
+    <p id="dialogo-mensaje">{{ d.mensaje }}</p>
+
+    @if (d.pedirMotivo; as pm) {
+      <label class="campo">
+        <span>{{ pm.etiqueta }} <span class="requerido">*</span></span>
+        <textarea rows="3" [value]="motivo()" (input)="escribir($event)" maxlength="250"></textarea>
+        @if (!motivoValido() && motivo().length > 0) {
+          <span class="error-campo">Escriba al menos {{ pm.minimo }} caracteres</span>
+        }
+      </label>
+    }
+
+    <div class="pie">
+      <button #botonCancelar type="button" class="btn" (click)="cancelar()">Volver</button>
+      <button type="button" class="btn" [class.btn-peligro]="d.peligro" [class.btn-primario]="!d.peligro"
+              [disabled]="!motivoValido()" (click)="confirmar()">
+        {{ d.textoConfirmar || 'Confirmar' }}
+      </button>
+    </div>
+  </div>
+}

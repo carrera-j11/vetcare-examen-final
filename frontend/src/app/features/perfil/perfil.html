@@ -1,0 +1,43 @@
+<header class="cabecera">
+  <div><p class="sobre">Cuenta</p><h1>Mi cuenta</h1></div>
+</header>
+
+<div class="rejilla rejilla-2">
+  @if (auth.usuario(); as u) {
+    <section class="tarjeta">
+      <h2>Datos del usuario</h2>
+      <dl class="datos">
+        <div><dt>Nombre</dt><dd>{{ u.nombreCompleto }}</dd></div>
+        <div><dt>Correo</dt><dd>{{ u.email }}</dd></div>
+        <div><dt>Rol</dt><dd><span class="badge" [class]="'badge badge-' + u.rol">{{ u.rol }}</span></dd></div>
+      </dl>
+    </section>
+  }
+
+  <section class="tarjeta">
+    <h2>Cambiar contraseña</h2>
+    <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <label class="campo">
+        <span>Contraseña actual <span class="requerido">*</span></span>
+        <input type="password" formControlName="actual" autocomplete="current-password" />
+        <app-campo-error [control]="form.controls.actual" />
+      </label>
+      <label class="campo">
+        <span>Nueva contraseña <span class="requerido">*</span></span>
+        <input type="password" formControlName="nueva" autocomplete="new-password" />
+        <span class="ayuda">Mínimo 8 caracteres con mayúscula, minúscula, número y símbolo.</span>
+        <app-campo-error [control]="form.controls.nueva" />
+      </label>
+      <label class="campo">
+        <span>Confirmar contraseña <span class="requerido">*</span></span>
+        <input type="password" formControlName="confirmar" autocomplete="new-password" />
+        @if (form.hasError('noCoinciden') && form.controls.confirmar.touched) {
+          <p class="error-campo">Las contraseñas no coinciden</p>
+        }
+      </label>
+      <div class="pie-formulario">
+        <button type="submit" class="btn btn-primario" [disabled]="enviando()">{{ enviando() ? 'Guardando…' : 'Actualizar contraseña' }}</button>
+      </div>
+    </form>
+  </section>
+</div>

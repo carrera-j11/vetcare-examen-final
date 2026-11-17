@@ -1,0 +1,87 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Clínica · Disponibilidad</p>
+    <h1>Bloqueos de agenda</h1>
+    <p class="descripcion">Períodos en los que no se pueden agendar citas (RN03): vacaciones, capacitaciones o feriados.</p>
+  </div>
+</header>
+
+<div class="rejilla" [class.rejilla-2]="auth.tieneRol('ADMIN')">
+  <section>
+    <form class="filtros" (ngSubmit)="filtrar()">
+      <label class="campo">
+        <span>Veterinario</span>
+        <select name="veterinarioId" [(ngModel)]="filtros.veterinarioId" (change)="filtrar()">
+          <option value="">Todos</option>
+          @for (v of veterinarios(); track v.id) { <option [value]="v.id">{{ v.nombreCompleto }}</option> }
+        </select>
+      </label>
+      <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+      <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+    </form>
+
+    <app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay bloqueos en el período." (reintentar)="cargar()" />
+    @if (!cargando() && lista().length) {
+      <div class="tabla-cont">
+        <table class="tabla">
+          <thead><tr><th>Período</th><th>Afecta a</th><th>Motivo</th>@if (auth.tieneRol('ADMIN')) { <th></th> }</tr></thead>
+          <tbody>
+            @for (b of lista(); track b.id) {
+              <tr>
+                <td>{{ b.inicio | date: 'dd/MM/yyyy HH:mm' }}<span class="sub">hasta {{ b.fin | date: 'dd/MM/yyyy HH:mm' }}</span></td>
+                <td>@if (b.veterinarioId) { {{ b.veterinario }} } @else { <span class="badge badge-proximo">Toda la clínica</span> }</td>
+                <td>{{ b.motivo }}<span class="sub">Registrado por {{ b.creadoPor }}</span></td>
+                @if (auth.tieneRol('ADMIN')) {
+                  <td class="acciones-fila"><button type="button" class="btn btn-chico" (click)="eliminar(b)">Eliminar</button></td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+    }
+  </section>
+
+  @if (auth.tieneRol('ADMIN')) {
+    <section class="tarjeta">
+      <h2>Bloquear agenda</h2>
+      @if (conflictos().length) {
+        <div class="alerta alerta-advertencia" role="alert">
+          <strong>Hay citas programadas en ese período:</strong>
+          <ul>@for (c of conflictos(); track c.id) { <li>{{ c.inicio | date: 'dd/MM HH:mm' }} · {{ c.mascota }}</li> }</ul>
+          Reprográmelas antes de bloquear la agenda.
+        </div>
+      }
+      <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <label class="campo">
+          <span>Veterinario</span>
+          <select formControlName="veterinarioId">
+            <option value="">Toda la clínica (feriado)</option>
+            @for (v of veterinarios(); track v.id) { <option [value]="v.id">{{ v.nombreCompleto }}</option> }
+          </select>
+        </label>
+        <div class="fila-campos">
+          <label class="campo">
+            <span>Inicio <span class="requerido">*</span></span>
+            <input type="datetime-local" formControlName="inicio" />
+            <app-campo-error [control]="form.controls.inicio" />
+          </label>
+          <label class="campo">
+            <span>Fin <span class="requerido">*</span></span>
+            <input type="datetime-local" formControlName="fin" />
+            <app-campo-error [control]="form.controls.fin" />
+          </label>
+        </div>
+        <label class="campo">
+          <span>Motivo <span class="requerido">*</span></span>
+          <input formControlName="motivo" placeholder="Ej.: Capacitación, vacaciones, feriado" />
+          <app-campo-error [control]="form.controls.motivo" />
+        </label>
+        <div class="pie-formulario">
+          <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Bloquear' }}</button>
+        </div>
+      </form>
+    </section>
+  }
+</div>

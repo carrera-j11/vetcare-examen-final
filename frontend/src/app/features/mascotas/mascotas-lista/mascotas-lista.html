@@ -1,0 +1,85 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Registro</p>
+    <h1>Mascotas</h1>
+    <p class="descripcion">Pacientes de la clínica y acceso a su historial clínico.</p>
+  </div>
+  @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+    <div class="acciones"><a routerLink="/mascotas/nueva" class="btn btn-primario">+ Nueva mascota</a></div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" (ngModelChange)="buscar($event)" placeholder="Nombre, raza, cédula o apellido del propietario" />
+  </label>
+  <label class="campo">
+    <span>Especie</span>
+    <select name="especie" [(ngModel)]="filtros.especie" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (e of especies; track e) { <option [value]="e">{{ e }}</option> }
+    </select>
+  </label>
+  <label class="campo">
+    <span>Sexo</span>
+    <select name="sexo" [(ngModel)]="filtros.sexo" (change)="filtrar()">
+      <option value="">Todos</option>
+      <option value="MACHO">Macho</option>
+      <option value="HEMBRA">Hembra</option>
+    </select>
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="activo" [(ngModel)]="filtros.activo" (change)="filtrar()">
+      <option value="true">Activas</option>
+      <option value="false">Inactivas</option>
+      <option value="">Todas</option>
+    </select>
+  </label>
+  <button type="button" class="btn" (click)="limpiar()">Limpiar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length"
+                  textoVacio="No hay mascotas que coincidan con los filtros." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <caption class="solo-lector">Listado de mascotas</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('nombre')">Mascota{{ indicador('nombre') }}</button></th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('especie')">Especie{{ indicador('especie') }}</button></th>
+          <th scope="col">Sexo / edad</th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('propietario')">Propietario{{ indicador('propietario') }}</button></th>
+          <th scope="col">Estado</th>
+          <th scope="col"><span class="solo-lector">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of lista(); track m.id) {
+          <tr [class.inactivo]="!m.activo">
+            <td><a [routerLink]="['/mascotas', m.id, 'historial']" class="fuerte">{{ m.nombre }}</a><span class="sub">{{ m.raza || 'Sin raza' }} · {{ m.color || '—' }}</span></td>
+            <td>{{ m.especie }}</td>
+            <td>{{ m.sexo === 'MACHO' ? 'Macho' : 'Hembra' }}<span class="sub">{{ m.edad || 'Edad desconocida' }}</span></td>
+            <td><a [routerLink]="['/propietarios', m.propietario?.id]">{{ m.propietario?.nombreCompleto }}</a><span class="sub">{{ m.propietario?.telefono }}</span></td>
+            <td><span class="badge" [class]="m.activo ? 'badge badge-activo' : 'badge badge-inactivo'">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
+            <td class="acciones-fila">
+              <a [routerLink]="['/mascotas', m.id, 'historial']" class="btn btn-texto btn-chico">Historial</a>
+              <a [routerLink]="['/mascotas', m.id, 'editar']" class="btn btn-texto btn-chico">Editar</a>
+              @if (auth.tieneRol('ADMIN')) {
+                @if (m.activo) {
+                  <button type="button" class="btn btn-chico" (click)="desactivar(m)">Desactivar</button>
+                } @else {
+                  <button type="button" class="btn btn-chico" (click)="reactivar(m)">Reactivar</button>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

@@ -1,0 +1,58 @@
+<main class="login">
+  <section class="presentacion" aria-hidden="true">
+    <div>
+      <span class="logo">🐾</span>
+      <h2>VetCare</h2>
+      <p>Citas, historial clínico y calendario de vacunación en un solo lugar.</p>
+      <ul>
+        <li>📅 Calendario de vacunación con alertas</li>
+        <li>🧠 Sugerencia inteligente de horarios</li>
+        <li>📄 Historial clínico en PDF con código QR</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="tarjeta formulario-login">
+    <h1>Iniciar sesión</h1>
+    <p class="texto-suave">Ingrese con su cuenta institucional.</p>
+
+    @if (expirada()) {
+      <div class="alerta alerta-advertencia" role="status">Su sesión expiró. Ingrese nuevamente.</div>
+    }
+    @if (error()) {
+      <div class="alerta alerta-error" role="alert">{{ error() }}</div>
+    }
+
+    <form class="formulario" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
+      <label class="campo">
+        <span>Correo electrónico <span class="requerido">*</span></span>
+        <input type="email" formControlName="email" autocomplete="username" placeholder="usuario@vetcare.ec" />
+        <app-campo-error [control]="form.controls.email" />
+      </label>
+
+      <label class="campo">
+        <span>Contraseña <span class="requerido">*</span></span>
+        <div class="con-boton">
+          <input [type]="verPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" />
+          <button type="button" class="btn btn-texto btn-chico" (click)="verPassword.set(!verPassword())"
+                  [attr.aria-pressed]="verPassword()">{{ verPassword() ? 'Ocultar' : 'Mostrar' }}</button>
+        </div>
+        <app-campo-error [control]="form.controls.password" />
+      </label>
+
+      <button type="submit" class="btn btn-primario" [disabled]="enviando()">
+        {{ enviando() ? 'Verificando…' : 'Ingresar' }}
+      </button>
+    </form>
+
+    <details class="demo">
+      <summary>Cuentas de demostración</summary>
+      <ul>
+        <li><strong>Administrador:</strong> admin&#64;vetcare.ec</li>
+        <li><strong>Recepción:</strong> recepcion&#64;vetcare.ec</li>
+        <li><strong>Veterinaria:</strong> mvazquez&#64;vetcare.ec</li>
+      </ul>
+      <p>Contraseña: <code>Vet12345*</code></p>
+    </details>
+  </section>
+</main>

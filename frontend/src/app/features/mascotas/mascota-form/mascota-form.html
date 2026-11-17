@@ -1,0 +1,86 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/mascotas">Mascotas</a></p>
+    <h1>{{ editando ? 'Editar mascota' : 'Nueva mascota' }}</h1>
+  </div>
+</header>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" />
+
+@if (!cargando() && !error()) {
+  <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <!-- RN02: propietario obligatorio -->
+    <fieldset class="propietario">
+      <legend class="etiqueta">Propietario <span class="requerido">*</span></legend>
+      @if (propietarioSel(); as p) {
+        <div class="seleccionado">
+          <span>👤 <strong>{{ p.nombreCompleto }}</strong> · C.I. {{ p.cedula }}</span>
+          <button type="button" class="btn btn-texto btn-chico" (click)="quitarPropietario()">Cambiar</button>
+        </div>
+      } @else {
+        <div class="buscador">
+          <input type="search" [(ngModel)]="textoBusqueda" [ngModelOptions]="{ standalone: true }" (input)="buscarPropietario()"
+                 placeholder="Escriba la cédula o el apellido del propietario" aria-label="Buscar propietario" autocomplete="off" />
+          @if (resultados().length) {
+            <ul class="resultados" role="listbox">
+              @for (r of resultados(); track r.id) {
+                <li><button type="button" (click)="seleccionar(r)">{{ r.nombreCompleto }} <small>C.I. {{ r.cedula }}</small></button></li>
+              }
+            </ul>
+          }
+        </div>
+        <p class="ayuda">¿No existe? <a routerLink="/propietarios/nuevo">Registre primero al propietario</a>.</p>
+        @if (form.controls.propietarioId.touched && form.controls.propietarioId.invalid) {
+          <p class="error-campo" role="alert">Seleccione un propietario registrado</p>
+        }
+      }
+    </fieldset>
+
+    <div class="fila-campos">
+      <label class="campo">
+        <span>Nombre <span class="requerido">*</span></span>
+        <input formControlName="nombre" />
+        <app-campo-error [control]="form.controls.nombre" />
+      </label>
+      <label class="campo">
+        <span>Especie <span class="requerido">*</span></span>
+        <select formControlName="especie">
+          @for (e of especies; track e) { <option [value]="e">{{ e }}</option> }
+        </select>
+      </label>
+      <label class="campo">
+        <span>Raza</span>
+        <input formControlName="raza" />
+      </label>
+    </div>
+    <div class="fila-campos">
+      <label class="campo">
+        <span>Sexo <span class="requerido">*</span></span>
+        <select formControlName="sexo">
+          <option value="MACHO">Macho</option>
+          <option value="HEMBRA">Hembra</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Fecha de nacimiento</span>
+        <input type="date" formControlName="fechaNacimiento" [max]="hoy" />
+        <app-campo-error [control]="form.controls.fechaNacimiento" />
+      </label>
+      <label class="campo">
+        <span>Peso (kg)</span>
+        <input type="number" step="0.01" min="0" formControlName="pesoKg" />
+        <app-campo-error [control]="form.controls.pesoKg" />
+      </label>
+      <label class="campo">
+        <span>Color</span>
+        <input formControlName="color" />
+      </label>
+    </div>
+    <label class="check"><input type="checkbox" formControlName="esterilizado" /> Esterilizado/a</label>
+
+    <div class="pie-formulario">
+      <a routerLink="/mascotas" class="btn">Cancelar</a>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+}

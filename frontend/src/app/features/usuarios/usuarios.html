@@ -1,0 +1,77 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Administración · Seguridad</p>
+    <h1>Usuarios</h1>
+    <p class="descripcion">Perfiles: administrador y usuarios operativos (recepción y veterinario). Las contraseñas se guardan con hash bcrypt.</p>
+  </div>
+</header>
+
+<div class="rejilla rejilla-2">
+  <section>
+    <form class="filtros" (ngSubmit)="filtrar()" role="search">
+      <label class="campo crece"><span>Buscar</span><input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Nombre o correo" /></label>
+      <label class="campo">
+        <span>Rol</span>
+        <select name="rol" [(ngModel)]="filtros.rol" (change)="filtrar()">
+          <option value="">Todos</option>
+          @for (r of roles; track r.valor) { <option [value]="r.valor">{{ r.texto }}</option> }
+        </select>
+      </label>
+      <label class="campo">
+        <span>Estado</span>
+        <select name="activo" [(ngModel)]="filtros.activo" (change)="filtrar()">
+          <option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option>
+        </select>
+      </label>
+    </form>
+
+    <app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" (reintentar)="cargar()" />
+    @if (!cargando() && lista().length) {
+      <div class="tabla-cont">
+        <table class="tabla">
+          <thead><tr><th>Usuario</th><th>Rol</th><th>Último acceso</th><th></th></tr></thead>
+          <tbody>
+            @for (u of lista(); track u.id) {
+              <tr [class.inactivo]="!u.activo">
+                <td class="fuerte">{{ u.nombreCompleto }}<span class="sub">{{ u.email }}</span></td>
+                <td><span class="badge" [class]="'badge badge-' + u.rol">{{ u.rol }}</span>@if (!u.activo) { <span class="badge badge-inactivo">Inactivo</span> }</td>
+                <td>{{ u.ultimoAcceso ? (u.ultimoAcceso | date: 'dd/MM/yyyy HH:mm') : 'Nunca' }}</td>
+                <td class="acciones-fila">
+                  <button type="button" class="btn btn-texto btn-chico" (click)="editar(u)">Editar</button>
+                  @if (u.activo && u.id !== auth.usuario()?.id) { <button type="button" class="btn btn-chico" (click)="desactivar(u)">Desactivar</button> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+    }
+  </section>
+
+  <section class="tarjeta">
+    <h2>{{ editando() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+    <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <div class="fila-campos">
+        <label class="campo"><span>Nombres *</span><input formControlName="nombres" /><app-campo-error [control]="form.controls.nombres" /></label>
+        <label class="campo"><span>Apellidos *</span><input formControlName="apellidos" /><app-campo-error [control]="form.controls.apellidos" /></label>
+      </div>
+      <label class="campo"><span>Correo *</span><input type="email" formControlName="email" autocomplete="off" /><app-campo-error [control]="form.controls.email" /></label>
+      <label class="campo">
+        <span>Rol *</span>
+        <select formControlName="rol">@for (r of roles; track r.valor) { <option [value]="r.valor">{{ r.texto }}</option> }</select>
+      </label>
+      <label class="campo">
+        <span>{{ editando() ? 'Nueva contraseña (opcional)' : 'Contraseña *' }}</span>
+        <input type="password" formControlName="password" autocomplete="new-password" />
+        <span class="ayuda">8+ caracteres con mayúscula, minúscula, número y símbolo.</span>
+        <app-campo-error [control]="form.controls.password" />
+      </label>
+      @if (editando()) { <label class="check"><input type="checkbox" formControlName="activo" /> Cuenta activa</label> }
+      <div class="pie-formulario">
+        @if (editando()) { <button type="button" class="btn" (click)="nuevo()">Cancelar edición</button> }
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </section>
+</div>

@@ -1,0 +1,18 @@
+@if (cargando()) {
+  <div class="estado" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>{{ textoCargando() }}</span>
+  </div>
+} @else if (error()) {
+  <div class="estado estado-error" role="alert">
+    <span class="icono" aria-hidden="true">⚠</span>
+    <p>{{ error() }}</p>
+    <button type="button" class="btn btn-chico" (click)="reintentar.emit()">Reintentar</button>
+  </div>
+} @else if (vacio()) {
+  <div class="estado estado-vacio">
+    <span class="icono" aria-hidden="true">🐾</span>
+    <p>{{ textoVacio() }}</p>
+    <ng-content />
+  </div>
+}

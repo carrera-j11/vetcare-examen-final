@@ -1,0 +1,56 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Administración · Seguridad</p>
+    <h1>Auditoría</h1>
+    <p class="descripcion">Registro inmutable de operaciones importantes: quién, cuándo, qué acción y sobre qué registro.</p>
+  </div>
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece"><span>Usuario o ID de registro</span><input type="search" name="q" [(ngModel)]="filtros.q" /></label>
+  <label class="campo">
+    <span>Acción</span>
+    <select name="accion" [(ngModel)]="filtros.accion" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (a of acciones; track a) { <option [value]="a">{{ a }}</option> }
+    </select>
+  </label>
+  <label class="campo">
+    <span>Entidad</span>
+    <select name="entidad" [(ngModel)]="filtros.entidad" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (e of entidades; track e) { <option [value]="e">{{ e }}</option> }
+    </select>
+  </label>
+  <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="Sin registros de auditoría." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Registro afectado</th><th>IP</th><th></th></tr></thead>
+      <tbody>
+        @for (a of lista(); track a.id) {
+          <tr>
+            <td>{{ a.fecha | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ a.usuarioEmail || 'Sistema' }}</td>
+            <td><span class="badge" [class.badge-vencido]="a.accion === 'LOGIN_FALLIDO'">{{ a.accion }}</span></td>
+            <td>{{ a.entidad }} {{ a.entidadId ? '#' + a.entidadId : '' }}</td>
+            <td>{{ a.ip || '—' }}</td>
+            <td class="acciones-fila">
+              @if (a.detalle) { <button type="button" class="btn btn-texto btn-chico" (click)="alternar(a.id)" [attr.aria-expanded]="abierto() === a.id">Detalle</button> }
+            </td>
+          </tr>
+          @if (abierto() === a.id) {
+            <tr><td colspan="6"><pre style="margin:0; white-space:pre-wrap; font-size:.8rem;">{{ a.detalle | json }}</pre></td></tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

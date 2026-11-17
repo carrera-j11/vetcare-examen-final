@@ -1,0 +1,19 @@
+.resumen .tarjeta { text-align: center; padding: .9rem; }
+.resumen p { margin: 0; color: var(--texto-suave); font-size: .85rem; }
+.resumen .numero { font-size: 1.7rem; font-weight: 800; color: var(--texto); }
+.alerta-borde { border-color: #fca5a5; }
+
+.pestanas { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 2px solid var(--borde); margin-bottom: 1rem; }
+.pestanas button {
+  border: 0; background: none; font: inherit; font-weight: 600; color: var(--texto-suave);
+  padding: .6rem .9rem; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.pestanas button[aria-selected='true'] { color: var(--primario); border-bottom-color: var(--primario); }
+
+.consulta { border: 1px solid var(--borde); border-left: 4px solid var(--primario); border-radius: 8px; padding: .9rem 1rem; margin-bottom: .75rem; }
+.consulta header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-bottom: .4rem; }
+.consulta h3 { margin: 0; }
+.consulta p { margin: .3rem 0; }
+.signos { display: flex; flex-wrap: wrap; gap: 1rem; color: var(--texto-suave); font-size: .88rem; }
+.tratamientos { margin: .2rem 0 0; padding-left: 1.2rem; }
+.nota { margin: 1rem 0 0; font-size: .82rem; color: var(--texto-suave); }

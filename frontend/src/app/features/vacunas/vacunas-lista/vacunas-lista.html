@@ -1,0 +1,64 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Atención</p>
+    <h1>Vacunas aplicadas</h1>
+    <p class="descripcion">Cada vacuna registra fecha, tipo y responsable (RN04) y programa su refuerzo en el calendario.</p>
+  </div>
+  <div class="acciones">
+    <a routerLink="/calendario" class="btn">📅 Calendario</a>
+    @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
+      <a routerLink="/vacunas/aplicar" class="btn btn-primario">💉 Aplicar vacuna</a>
+    }
+  </div>
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Mascota, lote o apellido del propietario" />
+  </label>
+  <label class="campo">
+    <span>Tipo de vacuna</span>
+    <select name="tipoVacunaId" [(ngModel)]="filtros.tipoVacunaId" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (t of tipos(); track t.id) { <option [value]="t.id">{{ t.nombre }}</option> }
+    </select>
+  </label>
+  <label class="campo"><span>Aplicada desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay vacunas registradas con esos filtros." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th><button type="button" class="th-orden" (click)="ordenar('fechaAplicacion')">Aplicada{{ indicador('fechaAplicacion') }}</button></th>
+          <th><button type="button" class="th-orden" (click)="ordenar('tipoVacuna')">Vacuna{{ indicador('tipoVacuna') }}</button></th>
+          <th><button type="button" class="th-orden" (click)="ordenar('mascota')">Mascota{{ indicador('mascota') }}</button></th>
+          <th>Responsable</th>
+          <th><button type="button" class="th-orden" (click)="ordenar('proximaDosis')">Próxima dosis{{ indicador('proximaDosis') }}</button></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (v of lista(); track v.id) {
+          <tr>
+            <td>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</td>
+            <td class="fuerte">{{ v.tipoVacuna }}<span class="sub">Lote {{ v.lote || '—' }}</span></td>
+            <td><a [routerLink]="['/mascotas', v.mascotaId, 'historial']">{{ v.mascota }}</a><span class="sub">{{ v.especie }} · {{ v.propietario }}</span></td>
+            <td>{{ v.veterinario }}</td>
+            <td>
+              @if (v.proximaDosis) {
+                <span class="badge" [class]="v.proximaDosis < hoy ? 'badge badge-vencido' : 'badge badge-programado'">{{ v.proximaDosis | date: 'dd/MM/yyyy' }}</span>
+              } @else { Dosis única }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

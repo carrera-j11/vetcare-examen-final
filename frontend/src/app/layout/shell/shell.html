@@ -1,0 +1,82 @@
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="estructura" [class.menu-abierto]="menuAbierto()">
+  <!-- Menú lateral -->
+  <aside class="lateral" aria-label="Menú principal">
+    <a routerLink="/panel" class="marca">
+      <span class="logo" aria-hidden="true">🐾</span>
+      <span><strong>VetCare</strong><small>Citas y servicios veterinarios</small></span>
+    </a>
+    <nav>
+      @for (g of menu(); track g.titulo) {
+        <p class="grupo">{{ g.titulo }}</p>
+        <ul>
+          @for (i of g.items; track i.ruta) {
+            <li>
+              <a [routerLink]="i.ruta" routerLinkActive="activo" ariaCurrentWhenActive="page">
+                <span class="icono" aria-hidden="true">{{ i.icono }}</span>{{ i.texto }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </nav>
+  </aside>
+  <div class="velo" (click)="menuAbierto.set(false)" aria-hidden="true"></div>
+
+  <!-- Contenido -->
+  <div class="principal">
+    <header class="superior">
+      <button type="button" class="btn btn-icono hamburguesa" (click)="menuAbierto.set(!menuAbierto())"
+              [attr.aria-expanded]="menuAbierto()" aria-label="Abrir o cerrar el menú">☰</button>
+
+      <div class="espaciador"></div>
+
+      <!-- Campana de alertas automáticas -->
+      <div class="alertas">
+        <button type="button" class="btn btn-icono campana" (click)="alternarAlertas()"
+                [attr.aria-expanded]="panelAlertas()" aria-controls="panel-alertas"
+                [attr.aria-label]="'Notificaciones: ' + notificaciones.noLeidas() + ' sin leer'">
+          🔔
+          @if (notificaciones.noLeidas() > 0) {
+            <span class="contador">{{ notificaciones.noLeidas() > 99 ? '99+' : notificaciones.noLeidas() }}</span>
+          }
+        </button>
+        @if (panelAlertas()) {
+          <div id="panel-alertas" class="panel-alertas" role="region" aria-label="Últimas notificaciones">
+            <div class="panel-cabecera">
+              <strong>Alertas</strong>
+              @if (ultimas().length) { <button type="button" class="btn btn-texto btn-chico" (click)="marcarTodas()">Marcar todas como leídas</button> }
+            </div>
+            @for (n of ultimas(); track n.id) {
+              <a class="notificacion" [routerLink]="n.referenciaTipo === 'cita' ? ['/citas'] : ['/calendario']">
+                <span class="badge" [class]="'badge badge-' + n.tipo">{{ n.tipo === 'CITA_PROXIMA' ? 'Cita' : n.tipo === 'CONTROL_VENCIDO' ? 'Vencido' : 'Próximo' }}</span>
+                <strong>{{ n.titulo }}</strong>
+                <span>{{ n.mensaje }}</span>
+              </a>
+            } @empty {
+              <p class="sin-alertas">No hay alertas pendientes 🎉</p>
+            }
+            <a routerLink="/notificaciones" class="ver-todas">Ver todas las notificaciones →</a>
+          </div>
+        }
+      </div>
+
+      @if (auth.usuario(); as u) {
+        <div class="usuario">
+          <span class="avatar" aria-hidden="true">{{ u.nombres[0] }}{{ u.apellidos[0] }}</span>
+          <span class="datos-usuario">
+            <strong>{{ u.nombreCompleto }}</strong>
+            <small>{{ nombreRol[u.rol] }}</small>
+          </span>
+        </div>
+      }
+      <a routerLink="/perfil" class="btn btn-texto btn-chico">Mi cuenta</a>
+      <button type="button" class="btn btn-chico" (click)="cerrarSesion()">Salir</button>
+    </header>
+
+    <main id="contenido" class="contenido" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

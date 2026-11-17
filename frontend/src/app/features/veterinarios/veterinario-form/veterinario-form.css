@@ -1,0 +1,12 @@
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .8rem; border-radius: 999px;
+  border: 1px solid var(--borde); cursor: pointer; font-size: .9rem; background: #fff;
+}
+.chip input { width: 16px; min-height: 16px; accent-color: var(--primario); }
+.chip small { color: var(--texto-suave); }
+.chip.marcado { background: var(--primario-suave); border-color: var(--primario); }
+.bloques { display: grid; gap: .5rem; }
+.bloque { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.bloque select { width: 140px; }
+.bloque input { width: 130px; }

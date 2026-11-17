@@ -1,0 +1,62 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Clínica</p>
+    <h1>Tipos de vacuna</h1>
+    <p class="descripcion">El intervalo de refuerzo se usa para programar automáticamente la próxima dosis.</p>
+  </div>
+</header>
+
+<div class="rejilla rejilla-2">
+  <section>
+    <app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" (reintentar)="cargar()" />
+    @if (!cargando() && lista().length) {
+      <div class="tabla-cont">
+        <table class="tabla">
+          <thead><tr><th>Vacuna</th><th>Especie</th><th class="num">Refuerzo</th><th class="num">Aplicadas</th><th></th></tr></thead>
+          <tbody>
+            @for (t of lista(); track t.id) {
+              <tr [class.inactivo]="!t.activo">
+                <td class="fuerte">{{ t.nombre }}<span class="sub">{{ t.descripcion || '—' }}</span></td>
+                <td>{{ t.especie || 'Todas' }}</td>
+                <td class="num">{{ t.intervaloDias ? t.intervaloDias + ' días' : 'Única' }}</td>
+                <td class="num">{{ t.totalAplicadas }}</td>
+                <td class="acciones-fila"><button type="button" class="btn btn-texto btn-chico" (click)="editar(t)">Editar</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="tarjeta">
+    <h2>{{ editandoId() ? 'Editar tipo de vacuna' : 'Nuevo tipo de vacuna' }}</h2>
+    <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <label class="campo">
+        <span>Nombre <span class="requerido">*</span></span>
+        <input formControlName="nombre" />
+        <app-campo-error [control]="form.controls.nombre" />
+      </label>
+      <div class="fila-campos">
+        <label class="campo">
+          <span>Especie</span>
+          <select formControlName="especie">
+            <option value="">Todas las especies</option>
+            @for (e of especies; track e) { <option [value]="e">{{ e }}</option> }
+          </select>
+        </label>
+        <label class="campo">
+          <span>Refuerzo cada (días)</span>
+          <input type="number" formControlName="intervaloDias" min="7" max="1095" placeholder="Vacío = dosis única" />
+          <app-campo-error [control]="form.controls.intervaloDias" />
+        </label>
+      </div>
+      <label class="campo"><span>Descripción</span><textarea formControlName="descripcion" rows="2"></textarea></label>
+      <label class="check"><input type="checkbox" formControlName="activo" /> Activo</label>
+      <div class="pie-formulario">
+        @if (editandoId()) { <button type="button" class="btn" (click)="nuevo()">Cancelar edición</button> }
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </section>
+</div>

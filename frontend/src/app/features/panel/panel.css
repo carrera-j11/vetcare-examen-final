@@ -1,0 +1,35 @@
+.kpi {
+  display: flex; gap: .85rem; align-items: center; background: var(--superficie);
+  border: 1px solid var(--borde); border-radius: var(--radio); padding: 1rem; box-shadow: var(--sombra);
+}
+.kpi-icono { font-size: 1.6rem; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--primario-suave); }
+.kpi-valor { margin: 0; font-size: 1.55rem; font-weight: 800; line-height: 1.1; }
+.kpi-texto { margin: 0; color: var(--texto-suave); font-size: .82rem; }
+.kpi-alerta .kpi-icono { background: var(--peligro-suave); }
+.kpi-alerta .kpi-valor { color: var(--peligro); }
+.kpi-aviso .kpi-icono { background: var(--advertencia-suave); }
+.kpi-aviso .kpi-valor { color: var(--advertencia); }
+
+.lista-alertas, .agenda, .barras { list-style: none; margin: 0; padding: 0; }
+.lista-alertas li { display: grid; gap: .15rem; padding: .6rem 0; border-bottom: 1px solid #eef2f1; }
+.lista-alertas .badge { justify-self: start; }
+.agenda li { display: flex; gap: .9rem; padding: .55rem 0; border-bottom: 1px solid #eef2f1; align-items: center; }
+.agenda time { min-width: 68px; display: flex; flex-direction: column; font-size: .78rem; color: var(--texto-suave); text-transform: capitalize; }
+.agenda time strong { font-size: 1rem; color: var(--primario); }
+
+.barras li { display: grid; grid-template-columns: 130px 1fr 36px; gap: .6rem; align-items: center; padding: .3rem 0; }
+.etiqueta { font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra { height: 12px; background: #eef2f1; border-radius: 999px; overflow: hidden; }
+.relleno { display: block; height: 100%; background: var(--primario); border-radius: 999px; }
+.relleno-ATENDIDA { background: var(--exito); }
+.relleno-CANCELADA { background: #9ca3af; }
+.relleno-NO_ASISTIO { background: var(--peligro); }
+.relleno-PROGRAMADA { background: var(--info); }
+.relleno-suave { background: #2dd4bf; }
+.valor { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.columnas { display: flex; align-items: flex-end; gap: 4px; height: 180px; overflow-x: auto; padding-top: 1rem; }
+.columna { flex: 1 0 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.col-barra { width: 70%; min-height: 2px; background: var(--primario); border-radius: 4px 4px 0 0; }
+.col-valor { font-size: .7rem; color: var(--texto-suave); }
+.col-etiqueta { font-size: .62rem; color: var(--texto-suave); margin-top: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }

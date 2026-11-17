@@ -1,0 +1,92 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Atención</p>
+    <h1>{{ auth.tieneRol('VETERINARIO') ? 'Mi agenda' : 'Citas' }}</h1>
+    <p class="descripcion">Gestión de citas y disponibilidad. Un veterinario no puede tener citas superpuestas (RN01).</p>
+  </div>
+  @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+    <div class="acciones"><a routerLink="/citas/nueva" class="btn btn-primario">+ Nueva cita</a></div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Mascota, propietario, cédula o motivo" />
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="estado" [(ngModel)]="filtros.estado" (change)="filtrar()">
+      <option value="">Todos</option>
+      @for (e of estados; track e) { <option [value]="e">{{ nombresEstado[e] }}</option> }
+    </select>
+  </label>
+  @if (!auth.tieneRol('VETERINARIO')) {
+    <label class="campo">
+      <span>Veterinario</span>
+      <select name="veterinarioId" [(ngModel)]="filtros.veterinarioId" (change)="filtrar()">
+        <option value="">Todos</option>
+        @for (v of veterinarios(); track v.id) { <option [value]="v.id">{{ v.nombreCompleto }}</option> }
+      </select>
+    </label>
+  }
+  <label class="campo">
+    <span>Especialidad</span>
+    <select name="especialidadId" [(ngModel)]="filtros.especialidadId" (change)="filtrar()">
+      <option value="">Todas</option>
+      @for (e of especialidades(); track e.id) { <option [value]="e.id">{{ e.nombre }}</option> }
+    </select>
+  </label>
+  <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+  <button type="submit" class="btn">Buscar</button>
+  <button type="button" class="btn btn-texto" (click)="limpiar()">Limpiar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay citas con esos filtros." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <caption class="solo-lector">Listado de citas</caption>
+      <thead>
+        <tr>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('inicio')">Fecha y hora{{ indicador('inicio') }}</button></th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('mascota')">Mascota{{ indicador('mascota') }}</button></th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('veterinario')">Veterinario{{ indicador('veterinario') }}</button></th>
+          <th scope="col">Motivo</th>
+          <th scope="col"><button type="button" class="th-orden" (click)="ordenar('estado')">Estado{{ indicador('estado') }}</button></th>
+          <th scope="col"><span class="solo-lector">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of lista(); track c.id) {
+          <tr>
+            <td class="fuerte">{{ c.inicio | date: 'EEE dd/MM/yyyy' }}<span class="sub">{{ c.inicio | date: 'HH:mm' }} – {{ c.fin | date: 'HH:mm' }}</span></td>
+            <td><a [routerLink]="['/mascotas', c.mascota.id, 'historial']">{{ c.mascota.nombre }}</a><span class="sub">{{ c.propietario.nombreCompleto }} · {{ c.propietario.telefono }}</span></td>
+            <td>{{ c.veterinario.nombreCompleto }}<span class="sub">{{ c.especialidad.nombre }}</span></td>
+            <td>{{ c.motivo }}@if (c.motivoCancelacion) { <span class="sub">Cancelación: {{ c.motivoCancelacion }}</span> }</td>
+            <td><span class="badge" [class]="'badge badge-' + c.estado">{{ nombresEstado[c.estado] }}</span></td>
+            <td class="acciones-fila">
+              @if (c.estado === 'PROGRAMADA') {
+                @if (auth.tieneRol('ADMIN', 'VETERINARIO') && esHoyOAntes(c)) {
+                  <a routerLink="/consultas/nueva" [queryParams]="{ citaId: c.id, mascotaId: c.mascota.id }" class="btn btn-primario btn-chico">Atender</a>
+                }
+                @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+                  <a [routerLink]="['/citas', c.id, 'reprogramar']" class="btn btn-texto btn-chico">Reprogramar</a>
+                  <button type="button" class="btn btn-chico" (click)="cancelar(c)">Cancelar</button>
+                }
+                @if (yaPaso(c)) {
+                  <button type="button" class="btn btn-chico" (click)="noAsistio(c)">No asistió</button>
+                }
+              } @else if (c.consultaId) {
+                <a [routerLink]="['/consultas', c.consultaId]" class="btn btn-texto btn-chico">Ver consulta</a>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

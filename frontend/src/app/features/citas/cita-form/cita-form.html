@@ -1,0 +1,133 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/citas">Citas</a></p>
+    <h1>{{ reprogramando ? 'Reprogramar cita' : 'Nueva cita' }}</h1>
+    <p class="descripcion">Elija un espacio libre o use la sugerencia inteligente de horarios.</p>
+  </div>
+</header>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" />
+
+@if (!cargando() && !error()) {
+  @if (errorRegla()) {
+    <div class="alerta alerta-error" role="alert"><strong>Regla de negocio:</strong> {{ errorRegla() }}</div>
+  }
+
+  <div class="rejilla disposicion">
+    <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <!-- 1. Mascota -->
+      <fieldset class="paso">
+        <legend>1. Mascota <span class="requerido">*</span></legend>
+        @if (mascotaSel(); as m) {
+          <div class="seleccionado">
+            <span>🐾 <strong>{{ m.nombre }}</strong> ({{ m.especie }}) · {{ m.propietario?.nombreCompleto }}</span>
+            @if (!reprogramando) { <button type="button" class="btn btn-texto btn-chico" (click)="mascotaSel.set(null)">Cambiar</button> }
+          </div>
+        } @else {
+          <div class="buscador">
+            <input type="search" [(ngModel)]="textoMascota" [ngModelOptions]="{ standalone: true }" (input)="buscarMascota()"
+                   placeholder="Nombre de la mascota o cédula del propietario" aria-label="Buscar mascota" autocomplete="off" />
+            @if (resultadosMascota().length) {
+              <ul class="resultados">
+                @for (r of resultadosMascota(); track r.id) {
+                  <li><button type="button" (click)="elegirMascota(r)">{{ r.nombre }} <small>{{ r.especie }} · {{ r.propietario?.nombreCompleto }}</small></button></li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </fieldset>
+
+      <!-- 2. Servicio -->
+      <fieldset class="paso">
+        <legend>2. Servicio y veterinario</legend>
+        <div class="fila-campos">
+          <label class="campo">
+            <span>Especialidad <span class="requerido">*</span></span>
+            <select formControlName="especialidadId" (change)="cambioEspecialidad()">
+              <option [ngValue]="0" disabled>Seleccione…</option>
+              @for (e of especialidades(); track e.id) { <option [ngValue]="e.id">{{ e.nombre }} ({{ e.duracionMin }} min)</option> }
+            </select>
+            <app-campo-error [control]="form.controls.especialidadId" />
+          </label>
+          <label class="campo">
+            <span>Veterinario <span class="requerido">*</span></span>
+            <select formControlName="veterinarioId" (change)="cargarEspacios()">
+              <option [ngValue]="0" disabled>Seleccione…</option>
+              @for (v of veterinariosFiltrados(); track v.id) { <option [ngValue]="v.id">{{ v.nombreCompleto }}</option> }
+            </select>
+            <app-campo-error [control]="form.controls.veterinarioId" />
+          </label>
+        </div>
+        <button type="button" class="btn sugerir" (click)="sugerir()" [disabled]="cargandoSugerencias() || !especialidadIdSel()">
+          🧠 {{ cargandoSugerencias() ? 'Buscando…' : 'Sugerir mejores horarios' }}
+        </button>
+      </fieldset>
+
+      <!-- 3. Fecha y hora -->
+      <fieldset class="paso">
+        <legend>3. Fecha y hora</legend>
+        <label class="campo fecha">
+          <span>Fecha <span class="requerido">*</span></span>
+          <input type="date" formControlName="fecha" [min]="hoy" (change)="cargarEspacios()" />
+        </label>
+        @if (cargandoEspacios()) {
+          <p class="texto-suave" role="status">Consultando disponibilidad…</p>
+        } @else if (form.controls.veterinarioId.value) {
+          @if (espacios().length) {
+            <div class="espacios" role="radiogroup" aria-label="Horarios disponibles">
+              @for (e of espacios(); track e.inicio) {
+                <button type="button" role="radio" class="espacio" [class.elegido]="form.controls.hora.value === e.inicio.slice(11, 16)"
+                        [attr.aria-checked]="form.controls.hora.value === e.inicio.slice(11, 16)" (click)="elegirEspacio(e.inicio)">
+                  {{ e.inicio.slice(11, 16) }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="alerta alerta-advertencia">Sin espacios libres ese día (no laborable, bloqueado o agenda llena). Pruebe otra fecha o use la sugerencia.</div>
+          }
+        }
+        <label class="campo hora">
+          <span>Hora seleccionada <span class="requerido">*</span></span>
+          <input type="time" formControlName="hora" step="900" />
+          <span class="ayuda">Puede escribir otra hora: el Backend validará horario laboral, bloqueos y superposición.</span>
+          <app-campo-error [control]="form.controls.hora" />
+        </label>
+      </fieldset>
+
+      <label class="campo">
+        <span>Motivo de la cita <span class="requerido">*</span></span>
+        <textarea formControlName="motivo" rows="2" maxlength="250"></textarea>
+        <app-campo-error [control]="form.controls.motivo" />
+      </label>
+
+      <div class="pie-formulario">
+        <a routerLink="/citas" class="btn">Cancelar</a>
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : (reprogramando ? 'Reprogramar' : 'Agendar cita') }}</button>
+      </div>
+    </form>
+
+    <!-- Panel de sugerencias (algoritmo de asignación) -->
+    <aside class="tarjeta panel-sugerencias" aria-live="polite">
+      <h2>🧠 Sugerencias</h2>
+      @if (sugerencias(); as s) {
+        <p class="texto-suave">{{ s.especialidad.nombre }} · {{ s.especialidad.duracionMin }} min. Ordenadas por cercanía y menor carga del veterinario.</p>
+        @if (s.mensaje) { <p class="vacio-texto">{{ s.mensaje }}</p> }
+        <ul class="lista-sugerencias">
+          @for (x of s.sugerencias; track x.inicio + x.veterinarioId) {
+            <li [class.recomendada]="x.recomendada">
+              <div>
+                <strong>{{ x.inicio | date: 'EEE dd/MM · HH:mm' }}</strong>
+                <span class="sub">{{ x.veterinario }} · {{ x.cargaDelDia }} cita(s) ese día</span>
+                @if (x.recomendada) { <span class="badge badge-activo">Recomendada</span> }
+              </div>
+              <button type="button" class="btn btn-chico" (click)="usarSugerencia(x)">Usar</button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="texto-suave">Seleccione la especialidad y pulse <strong>“Sugerir mejores horarios”</strong>. El sistema analiza horarios laborales, bloqueos y citas existentes de todos los veterinarios que atienden esa especialidad.</p>
+      }
+    </aside>
+  </div>
+}

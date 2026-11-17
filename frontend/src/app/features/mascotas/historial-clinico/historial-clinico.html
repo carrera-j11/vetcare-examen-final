@@ -1,0 +1,141 @@
+<app-estado-vista [cargando]="cargando()" [error]="error()" (reintentar)="cargar()" />
+
+@if (historial(); as h) {
+  <header class="cabecera">
+    <div>
+      <p class="sobre"><a routerLink="/mascotas">Mascotas</a> · Historial clínico</p>
+      <h1>{{ h.mascota.nombre }} @if (!h.mascota.activo) { <span class="badge badge-inactivo">Inactiva</span> }</h1>
+      <p class="descripcion">
+        {{ h.mascota.especie }} · {{ h.mascota.raza || 'Sin raza' }} · {{ h.mascota.sexo === 'MACHO' ? 'Macho' : 'Hembra' }}
+        · {{ h.mascota.edad || 'edad desconocida' }} · {{ h.mascota.pesoKg ? h.mascota.pesoKg + ' kg' : 'sin peso' }}
+      </p>
+    </div>
+    <div class="acciones">
+      <button type="button" class="btn" (click)="descargarPdf()" [disabled]="descargando()">
+        📄 {{ descargando() ? 'Generando PDF…' : 'Descargar PDF con QR' }}
+      </button>
+      @if (h.mascota.activo && auth.tieneRol('ADMIN', 'RECEPCION')) {
+        <a routerLink="/citas/nueva" [queryParams]="{ mascotaId: h.mascota.id }" class="btn">🗓️ Agendar cita</a>
+      }
+      @if (h.mascota.activo && auth.tieneRol('ADMIN', 'VETERINARIO')) {
+        <a routerLink="/vacunas/aplicar" [queryParams]="{ mascotaId: h.mascota.id }" class="btn">💉 Aplicar vacuna</a>
+        <a routerLink="/consultas/nueva" [queryParams]="{ mascotaId: h.mascota.id }" class="btn btn-primario">🩺 Registrar consulta</a>
+      }
+    </div>
+  </header>
+
+  <section class="rejilla rejilla-4 resumen">
+    <div class="tarjeta"><p class="numero">{{ h.resumen.totalConsultas }}</p><p>Consultas</p></div>
+    <div class="tarjeta"><p class="numero">{{ h.resumen.totalVacunas }}</p><p>Vacunas aplicadas</p></div>
+    <div class="tarjeta"><p class="numero">{{ h.resumen.controlesPendientes }}</p><p>Controles pendientes</p></div>
+    <div class="tarjeta" [class.alerta-borde]="h.resumen.controlesVencidos > 0">
+      <p class="numero" [class.texto-peligro]="h.resumen.controlesVencidos > 0">{{ h.resumen.controlesVencidos }}</p><p>Controles vencidos</p>
+    </div>
+  </section>
+
+  <section class="tarjeta mt-1">
+    <p class="texto-suave">
+      Propietario: <a [routerLink]="['/propietarios', h.mascota.propietario?.id]">{{ h.mascota.propietario?.nombreCompleto }}</a>
+      · {{ h.mascota.propietario?.telefono }}
+    </p>
+
+    <div class="pestanas" role="tablist" aria-label="Secciones del historial">
+      <button type="button" role="tab" [attr.aria-selected]="pestana() === 'consultas'" (click)="pestana.set('consultas')">Consultas ({{ h.consultas.length }})</button>
+      <button type="button" role="tab" [attr.aria-selected]="pestana() === 'vacunas'" (click)="pestana.set('vacunas')">Vacunas ({{ h.vacunas.length }})</button>
+      <button type="button" role="tab" [attr.aria-selected]="pestana() === 'controles'" (click)="pestana.set('controles')">Controles ({{ h.controles.length }})</button>
+      <button type="button" role="tab" [attr.aria-selected]="pestana() === 'citas'" (click)="pestana.set('citas')">Citas ({{ h.citas.length }})</button>
+    </div>
+
+    <div role="tabpanel">
+      @switch (pestana()) {
+        @case ('consultas') {
+          @for (c of h.consultas; track c.id) {
+            <article class="consulta">
+              <header>
+                <h3>{{ c.fecha | date: 'dd/MM/yyyy HH:mm' }} · {{ c.motivo }}</h3>
+                <span class="texto-suave">{{ c.veterinario }}</span>
+              </header>
+              <p class="signos">
+                <span>⚖️ {{ c.pesoKg ?? '—' }} kg</span><span>🌡️ {{ c.temperaturaC ?? '—' }} °C</span><span>❤️ {{ c.frecuenciaCardiaca ?? '—' }} lpm</span>
+              </p>
+              @if (c.anamnesis) { <p><strong>Anamnesis:</strong> {{ c.anamnesis }}</p> }
+              <p><strong>Diagnóstico:</strong> {{ c.diagnostico }}</p>
+              @if (c.observaciones) { <p><strong>Observaciones:</strong> {{ c.observaciones }}</p> }
+              @if (c.tratamientos.length) {
+                <p class="fuerte">Tratamiento</p>
+                <ul class="tratamientos">
+                  @for (t of c.tratamientos; track t.id) {
+                    <li><strong>{{ t.medicamento }}</strong> — {{ t.dosis }}, {{ t.frecuencia }}, {{ t.duracionDias }} día(s) @if (t.indicaciones) { <span class="sub">{{ t.indicaciones }}</span> }</li>
+                  }
+                </ul>
+              }
+            </article>
+          } @empty { <p class="vacio-texto">Sin consultas registradas.</p> }
+        }
+        @case ('vacunas') {
+          @if (h.vacunas.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Fecha</th><th>Vacuna</th><th>Lote</th><th>Responsable</th><th>Próxima dosis</th></tr></thead>
+                <tbody>
+                  @for (v of h.vacunas; track v.id) {
+                    <tr>
+                      <td>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</td>
+                      <td class="fuerte">{{ v.tipoVacuna }}</td>
+                      <td>{{ v.lote || '—' }}</td>
+                      <td>{{ v.veterinario }}</td>
+                      <td>@if (v.proximaDosis) { <span [class.texto-peligro]="v.proximaDosis < hoy">{{ v.proximaDosis | date: 'dd/MM/yyyy' }}</span> } @else { Dosis única }</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">Sin vacunas registradas.</p> }
+        }
+        @case ('controles') {
+          @if (h.controles.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Estado</th></tr></thead>
+                <tbody>
+                  @for (c of h.controles; track c.id) {
+                    <tr>
+                      <td>{{ c.fechaProgramada | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ c.tipo }}</td>
+                      <td>{{ c.descripcion }}</td>
+                      <td>
+                        @if (c.estado === 'PENDIENTE' && c.fechaProgramada < hoy) { <span class="badge badge-vencido">Vencido</span> }
+                        @else { <span class="badge" [class]="'badge badge-' + c.estado">{{ c.estado }}</span> }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">Sin controles programados.</p> }
+        }
+        @case ('citas') {
+          @if (h.citas.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Fecha</th><th>Especialidad</th><th>Veterinario</th><th>Motivo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  @for (c of h.citas; track c.id) {
+                    <tr>
+                      <td>{{ c.inicio | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ c.especialidad }}</td>
+                      <td>{{ c.veterinario }}</td>
+                      <td>{{ c.motivo }}</td>
+                      <td><span class="badge" [class]="'badge badge-' + c.estado">{{ c.estado }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">Sin citas.</p> }
+        }
+      }
+    </div>
+    <p class="nota">🔒 El historial clínico no puede eliminarse (RN05). Las correcciones se registran como una nueva consulta.</p>
+  </section>
+}

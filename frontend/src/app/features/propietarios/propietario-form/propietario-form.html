@@ -1,0 +1,52 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre"><a routerLink="/propietarios">Propietarios</a></p>
+    <h1>{{ editando ? 'Editar propietario' : 'Nuevo propietario' }}</h1>
+  </div>
+</header>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" />
+
+@if (!cargando() && !error()) {
+  <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="fila-campos">
+      <label class="campo">
+        <span>Cédula <span class="requerido">*</span></span>
+        <input formControlName="cedula" maxlength="10" inputmode="numeric" placeholder="0102030405" autocomplete="off" />
+        <app-campo-error [control]="form.controls.cedula" />
+      </label>
+      <label class="campo">
+        <span>Nombres <span class="requerido">*</span></span>
+        <input formControlName="nombres" autocomplete="given-name" />
+        <app-campo-error [control]="form.controls.nombres" />
+      </label>
+      <label class="campo">
+        <span>Apellidos <span class="requerido">*</span></span>
+        <input formControlName="apellidos" autocomplete="family-name" />
+        <app-campo-error [control]="form.controls.apellidos" />
+      </label>
+    </div>
+    <div class="fila-campos">
+      <label class="campo">
+        <span>Teléfono <span class="requerido">*</span></span>
+        <input formControlName="telefono" inputmode="tel" maxlength="10" placeholder="0991234567" autocomplete="tel" />
+        <app-campo-error [control]="form.controls.telefono" />
+      </label>
+      <label class="campo">
+        <span>Correo electrónico</span>
+        <input type="email" formControlName="email" autocomplete="email" />
+        <app-campo-error [control]="form.controls.email" />
+      </label>
+    </div>
+    <label class="campo">
+      <span>Dirección</span>
+      <input formControlName="direccion" autocomplete="street-address" />
+      <app-campo-error [control]="form.controls.direccion" />
+    </label>
+
+    <div class="pie-formulario">
+      <a routerLink="/propietarios" class="btn">Cancelar</a>
+      <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+}

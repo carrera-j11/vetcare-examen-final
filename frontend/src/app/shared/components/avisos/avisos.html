@@ -1,0 +1,9 @@
+<div class="avisos" aria-live="polite" aria-atomic="false">
+  @for (a of servicio.avisos(); track a.id) {
+    <div class="aviso" [class]="'aviso aviso-' + a.tipo" [attr.role]="a.tipo === 'error' ? 'alert' : 'status'">
+      <span class="icono" aria-hidden="true">{{ iconos[a.tipo] }}</span>
+      <p>{{ a.mensaje }}</p>
+      <button type="button" class="cerrar" (click)="servicio.cerrar(a.id)" aria-label="Cerrar mensaje">×</button>
+    </div>
+  }
+</div>

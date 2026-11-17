@@ -1,0 +1,31 @@
+.disposicion { grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); align-items: start; }
+.paso { border: 0; border-top: 1px solid var(--borde); padding: .75rem 0 0; margin: 0; display: grid; gap: .75rem; }
+.paso:first-of-type { border-top: 0; padding-top: 0; }
+.paso legend { font-weight: 700; color: var(--primario); padding: 0; margin-bottom: .25rem; }
+.seleccionado { display: flex; justify-content: space-between; align-items: center; gap: .5rem; background: var(--primario-suave); padding: .55rem .8rem; border-radius: 8px; }
+.buscador { position: relative; }
+.resultados {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: .25rem;
+  background: #fff; border: 1px solid var(--borde); border-radius: 8px; box-shadow: var(--sombra-alta);
+}
+.resultados button { width: 100%; text-align: left; border: 0; background: none; padding: .5rem .6rem; border-radius: 6px; cursor: pointer; font: inherit; }
+.resultados button:hover, .resultados button:focus { background: var(--primario-suave); }
+.resultados small { color: var(--texto-suave); }
+.sugerir { justify-self: start; }
+.fecha, .hora { max-width: 260px; }
+.espacios { display: flex; flex-wrap: wrap; gap: .4rem; }
+.espacio {
+  border: 1px solid var(--borde); background: #fff; border-radius: 8px; padding: .35rem .7rem;
+  font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.espacio:hover { border-color: var(--primario); }
+.espacio.elegido { background: var(--primario); border-color: var(--primario); color: #fff; }
+.panel-sugerencias { position: sticky; top: 76px; }
+.lista-sugerencias { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.lista-sugerencias li { display: flex; justify-content: space-between; align-items: center; gap: .5rem; border: 1px solid var(--borde); border-radius: 8px; padding: .55rem .7rem; }
+.lista-sugerencias li strong { text-transform: capitalize; }
+.lista-sugerencias .recomendada { border-color: var(--primario); background: #f0fdfa; }
+@media (max-width: 900px) {
+  .disposicion { grid-template-columns: 1fr; }
+  .panel-sugerencias { position: static; }
+}

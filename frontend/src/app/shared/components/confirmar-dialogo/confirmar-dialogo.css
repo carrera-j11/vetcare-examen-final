@@ -1,0 +1,10 @@
+.fondo { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); z-index: 900; }
+.dialogo {
+  position: fixed; z-index: 901; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 32px)); background: var(--superficie);
+  border-radius: 12px; box-shadow: var(--sombra-alta); padding: 1.5rem;
+}
+.dialogo h2 { font-size: 1.15rem; }
+.dialogo p { color: var(--texto-suave); }
+.campo { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .75rem; }
+.pie { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }

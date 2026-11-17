@@ -1,0 +1,60 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Atención · Historial clínico</p>
+    <h1>Consultas</h1>
+    <p class="descripcion">Consultas, diagnósticos y tratamientos registrados. El historial no se elimina (RN05).</p>
+  </div>
+  @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
+    <div class="acciones"><a routerLink="/consultas/nueva" class="btn btn-primario">+ Registrar consulta</a></div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece">
+    <span>Buscar</span>
+    <input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Diagnóstico, motivo o mascota" />
+  </label>
+  @if (auth.tieneRol('VETERINARIO')) {
+    <label class="campo">
+      <span>Mostrar</span>
+      <select name="soloMias" [(ngModel)]="filtros.soloMias" (change)="filtrar()">
+        <option value="true">Solo mis consultas</option>
+        <option value="false">Todas</option>
+      </select>
+    </label>
+  } @else {
+    <label class="campo">
+      <span>Veterinario</span>
+      <select name="veterinarioId" [(ngModel)]="filtros.veterinarioId" (change)="filtrar()">
+        <option value="">Todos</option>
+        @for (v of veterinarios(); track v.id) { <option [value]="v.id">{{ v.nombreCompleto }}</option> }
+      </select>
+    </label>
+  }
+  <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay consultas registradas con esos filtros." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Mascota</th><th>Diagnóstico</th><th>Veterinario</th><th class="num">Medicamentos</th><th></th></tr></thead>
+      <tbody>
+        @for (c of lista(); track c.id) {
+          <tr>
+            <td class="fuerte">{{ c.fecha | date: 'dd/MM/yyyy' }}<span class="sub">{{ c.fecha | date: 'HH:mm' }}</span></td>
+            <td><a [routerLink]="['/mascotas', c.mascotaId, 'historial']">{{ c.mascota }}</a><span class="sub">{{ c.especie }} · {{ c.propietario }}</span></td>
+            <td>{{ c.diagnostico.length > 90 ? c.diagnostico.slice(0, 90) + '…' : c.diagnostico }}<span class="sub">Motivo: {{ c.motivo }}</span></td>
+            <td>{{ c.veterinario }}</td>
+            <td class="num">{{ c.totalTratamientos }}</td>
+            <td class="acciones-fila"><a [routerLink]="['/consultas', c.id]" class="btn btn-texto btn-chico">Ver detalle</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}
