@@ -44,6 +44,7 @@ const COLUMNAS_CSV = {
   citas: ['id', 'inicio', 'fin', 'estado', 'especialidad', 'veterinario', 'mascota', 'especie', 'propietario', 'telefono', 'motivo'],
   vacunas: ['id', 'fechaAplicacion', 'tipoVacuna', 'mascota', 'especie', 'propietario', 'veterinario', 'lote', 'proximaDosis'],
   consultas: ['id', 'fecha', 'mascota', 'especie', 'propietario', 'veterinario', 'motivo', 'diagnostico', 'totalTratamientos'],
+  ingresos: ['numero', 'fecha', 'origen', 'propietario', 'mascota', 'conceptos', 'subtotal', 'iva', 'total'],
 };
 
 function aCsv(filas, seccion = 'citas') {
@@ -63,9 +64,9 @@ function aCsv(filas, seccion = 'citas') {
  */
 async function reporteCitas(filtros) {
   const f = rangoPorDefecto(filtros);
-  const [detalle, porVeterinario, porEstado, vacunas, vacunasPorTipo, consultas] = await Promise.all([
+  const [detalle, porVeterinario, porEstado, vacunas, vacunasPorTipo, consultas, ingresos] = await Promise.all([
     repo.detalleCitas(f), repo.citasPorVeterinario(f), repo.citasPorEstado(f),
-    repo.detalleVacunas(f), repo.vacunasPorTipo(f), repo.detalleConsultas(f),
+    repo.detalleVacunas(f), repo.vacunasPorTipo(f), repo.detalleConsultas(f), repo.ingresos(f),
   ]);
   return {
     rango: { desde: f.desde, hasta: f.hasta },
@@ -73,6 +74,7 @@ async function reporteCitas(filtros) {
     detalle,
     vacunas: { porTipo: vacunasPorTipo, detalle: vacunas },
     consultas: { detalle: consultas },
+    ingresos,
   };
 }
 

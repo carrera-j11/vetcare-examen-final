@@ -154,6 +154,10 @@ paginación real (`pagina`, `tamano`)** en el servidor. La documentación comple
 | RN08 | El veterinario debe atender la especialidad solicitada | Relación N:M veterinario–especialidad | 422 `RN08_ESPECIALIDAD_NO_OFRECIDA` |
 | RN09 | La vacuna debe corresponder a la especie | `tipos_vacuna.especie` | 422 `RN09_ESPECIE_INCOMPATIBLE` |
 | RN10 | No duplicar la misma vacuna el mismo día | Verificación + índice único | 409 `RN10_VACUNA_DUPLICADA` |
+| RN11 | Una atención se factura una sola vez | Índice único (origen, referencia) + verificación con `FOR UPDATE` | 409 `FACTURA_DUPLICADA` |
+| RN12 | Las facturas no se eliminan, solo se anulan con motivo (ADMIN) | Trigger `BEFORE DELETE` + endpoint de anulación | 422 / 403 |
+| RN13 | Lote de vacuna automático y consecutivo (PRE-AA-NNNN) | Conteo por tipo y año con bloqueo del tipo de vacuna | — |
+| RN14 | Peluquería: se completa sin consulta y no antes de su fecha | `completarServicio` | 422 `CITA_FUTURA` / `SERVICIO_CLINICO` |
 
 ### 7.1 Transacciones
 `config/db.js → transaccion()` envuelve `BEGIN / COMMIT / ROLLBACK`. Se usa en:
@@ -280,6 +284,11 @@ Ejecución: `cd backend && npm test` → **33 pruebas, 33 aprobadas** (además, 
 5. **Panel de indicadores y reportes con filtros avanzados** (asistencia, cobertura de vacunación,
    productividad por veterinario) con secciones de citas, vacunas aplicadas y consultas, cada una
    exportable a CSV para Excel.
+6. **Facturación automática por correo.** Cada consulta, vacuna o servicio de peluquería genera, en la
+   misma transacción, una factura con subtotal, IVA (configurable, 15 %) y total. Al confirmarse se envía
+   el PDF adjunto al correo del propietario desde el correo del administrador. La pantalla de Facturación
+   permite descargar, imprimir, reenviar y anular (sin eliminar) cada factura; el reporte de **Ingresos**
+   muestra el dinero recibido, la cantidad de servicios, los servicios más vendidos y el detalle por factura.
 
 ## 12. Enlaces
 * Repositorio: _(agregar URL de GitHub)_

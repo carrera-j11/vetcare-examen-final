@@ -22,6 +22,7 @@ router.get('/:id', autorizar(...TODOS), validar(paramId, 'params'), c.obtener);
 router.post('/', autorizar(ADMIN, RECEPCION), validar(dto.crear), c.crear);
 router.put('/:id', autorizar(ADMIN, RECEPCION), validar(paramId, 'params'), validar(dto.reprogramar), c.reprogramar);
 router.patch('/:id/cancelar', autorizar(ADMIN, RECEPCION), validar(paramId, 'params'), validar(dto.cancelar), c.cancelar);
+router.patch('/:id/completar', autorizar(...TODOS), validar(paramId, 'params'), validar(version), c.completarServicio);
 router.patch('/:id/no-asistio', autorizar(...TODOS), validar(paramId, 'params'), validar(version), c.marcarNoAsistio);
 
 module.exports = router;

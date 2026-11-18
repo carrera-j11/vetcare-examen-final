@@ -14,6 +14,8 @@ export class CitasService {
     return this.api.actualizar<Cita>(`/citas/${id}`, d);
   }
   cancelar(id: number, motivo: string, version: number) { return this.api.parche<Cita>(`/citas/${id}/cancelar`, { motivo, version }); }
+  /** Peluquería: marca el servicio como realizado y lo factura */
+  completar(id: number, version: number) { return this.api.parche<Cita & { facturaId: number; factura: { estado: string } }>(`/citas/${id}/completar`, { version }); }
   noAsistio(id: number, version: number) { return this.api.parche<Cita>(`/citas/${id}/no-asistio`, { version }); }
 
   disponibilidad(veterinarioId: number, especialidadId: number, fecha: string) {

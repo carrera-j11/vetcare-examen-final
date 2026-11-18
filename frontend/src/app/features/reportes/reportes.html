@@ -7,7 +7,7 @@
   <div class="acciones no-imprimir">
     <button type="button" class="btn" (click)="imprimir()">🖨️ Imprimir</button>
     <button type="button" class="btn btn-primario" (click)="exportar()" [disabled]="exportando() !== null">
-      ⬇ {{ exportando() ? 'Exportando…' : 'Exportar ' + (pestana() === 'citas' ? 'citas' : pestana() === 'vacunas' ? 'vacunas' : 'consultas') + ' (CSV)' }}
+      ⬇ {{ exportando() ? 'Exportando…' : 'Exportar ' + nombresSeccion[pestana()] + ' (CSV)' }}
     </button>
   </div>
 </header>
@@ -48,7 +48,10 @@
   <p class="texto-suave">Período: {{ r.rango.desde | date: 'dd/MM/yyyy' }} – {{ r.rango.hasta | date: 'dd/MM/yyyy' }}</p>
 
   <!-- Resumen rápido del período -->
-  <section class="rejilla rejilla-3 resumen" aria-label="Resumen del período">
+  <section class="rejilla rejilla-4 resumen" aria-label="Resumen del período">
+    <button type="button" class="tarjeta kpi ingreso" [class.activa]="pestana() === 'ingresos'" (click)="pestana.set('ingresos')">
+      <span class="numero">$ {{ r.ingresos.resumen.total | number: '1.2-2' }}</span><span>Ingresos · {{ r.ingresos.resumen.servicios }} servicio(s)</span>
+    </button>
     <button type="button" class="tarjeta kpi" [class.activa]="pestana() === 'citas'" (click)="pestana.set('citas')">
       <span class="numero">{{ total() }}</span><span>Citas</span>
     </button>
@@ -64,6 +67,7 @@
     <button type="button" role="tab" [attr.aria-selected]="pestana() === 'citas'" (click)="pestana.set('citas')">Citas ({{ total() }})</button>
     <button type="button" role="tab" [attr.aria-selected]="pestana() === 'vacunas'" (click)="pestana.set('vacunas')">Vacunas aplicadas ({{ r.vacunas.detalle.length }})</button>
     <button type="button" role="tab" [attr.aria-selected]="pestana() === 'consultas'" (click)="pestana.set('consultas')">Consultas ({{ r.consultas.detalle.length }})</button>
+    <button type="button" role="tab" [attr.aria-selected]="pestana() === 'ingresos'" (click)="pestana.set('ingresos')">💲 Ingresos ({{ r.ingresos.resumen.facturas }})</button>
   </div>
 
   <div role="tabpanel">
@@ -162,6 +166,68 @@
               </table>
             </div>
           } @else { <p class="vacio-texto">No se aplicaron vacunas en el período.</p> }
+        </section>
+      }
+
+      @case ('ingresos') {
+        <section class="rejilla rejilla-4 resumen" aria-label="Resumen de ingresos">
+          <div class="tarjeta dato"><span>Total cobrado</span><strong>$ {{ r.ingresos.resumen.total | number: '1.2-2' }}</strong></div>
+          <div class="tarjeta dato"><span>Subtotal (sin IVA)</span><strong>$ {{ r.ingresos.resumen.subtotal | number: '1.2-2' }}</strong></div>
+          <div class="tarjeta dato"><span>IVA</span><strong>$ {{ r.ingresos.resumen.iva | number: '1.2-2' }}</strong></div>
+          <div class="tarjeta dato"><span>Servicios realizados</span><strong>{{ r.ingresos.resumen.servicios }}</strong><small>{{ r.ingresos.resumen.facturas }} factura(s)</small></div>
+        </section>
+
+        <div class="rejilla rejilla-2">
+          <section class="tarjeta">
+            <h2>Ingresos por tipo de servicio</h2>
+            @if (r.ingresos.porCategoria.length) {
+              <table class="tabla">
+                <thead><tr><th>Tipo</th><th class="num">Servicios</th><th class="num">Subtotal</th></tr></thead>
+                <tbody>
+                  @for (c of r.ingresos.porCategoria; track c.categoria) {
+                    <tr><td>{{ categorias[c.categoria] }}</td><td class="num">{{ c.servicios }}</td><td class="num fuerte">$ {{ c.subtotal | number: '1.2-2' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            } @else { <p class="vacio-texto">Sin ingresos en el período.</p> }
+          </section>
+          <section class="tarjeta">
+            <h2>Servicios más vendidos</h2>
+            @if (r.ingresos.porConcepto.length) {
+              <table class="tabla">
+                <thead><tr><th>Servicio</th><th class="num">Cant.</th><th class="num">Subtotal</th></tr></thead>
+                <tbody>
+                  @for (c of r.ingresos.porConcepto; track c.concepto) {
+                    <tr><td>{{ c.concepto }}</td><td class="num">{{ c.servicios }}</td><td class="num">$ {{ c.subtotal | number: '1.2-2' }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            } @else { <p class="vacio-texto">Sin datos.</p> }
+          </section>
+        </div>
+
+        <section class="tarjeta mt-1">
+          <h2>Facturas del período ({{ r.ingresos.detalle.length }})</h2>
+          @if (r.ingresos.detalle.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Factura</th><th>Fecha</th><th>Cliente</th><th>Servicios</th><th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Total</th></tr></thead>
+                <tbody>
+                  @for (f of r.ingresos.detalle; track f.id) {
+                    <tr>
+                      <td class="fuerte">{{ f.numero }}</td>
+                      <td>{{ f.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ f.propietario }}<span class="sub">{{ f.mascota }}</span></td>
+                      <td>{{ f.conceptos }}</td>
+                      <td class="num">$ {{ f.subtotal | number: '1.2-2' }}</td>
+                      <td class="num">$ {{ f.iva | number: '1.2-2' }}</td>
+                      <td class="num fuerte">$ {{ f.total | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">No hay facturas emitidas en el período.</p> }
         </section>
       }
 

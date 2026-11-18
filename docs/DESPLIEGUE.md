@@ -127,40 +127,48 @@ Cada `git push` a `main` vuelve a desplegar automáticamente Frontend y Backend.
 
 ---
 
-## Paso 6 · Correos de alertas (remitente: alex.carrera2004@gmail.com)
+## Paso 6 · Correos de alertas (remitente: javier.carrera2004@est.ucacue.edu.ec)
 Cuando el proceso automático crea una alerta (control próximo, vencido o cita de mañana), además de
 mostrarla en el sistema envía un correo al propietario. Desde el calendario también se puede pulsar
 **"✉ Recordar por correo"**. Si no se configura, todo funciona igual, pero sin correos.
 
-> **Railway bloquea el SMTP** (Gmail) en sus planes gratuito/Hobby. En Railway use **Brevo** (API HTTP).
-> Gmail SMTP sirve para probar en su computadora.
+> **Railway bloquea el SMTP** en sus planes gratuito/Hobby. En Railway use **Brevo** (API HTTP).
+> El SMTP de Outlook / Microsoft 365 solo sirve para probar en su computadora, y únicamente si la
+> universidad lo tiene habilitado.
+>
+> **Entregabilidad:** como el remitente es un correo institucional (`@est.ucacue.edu.ec`) enviado a través
+> de Brevo, algunos servidores pueden marcarlo como spam. Revise la carpeta de *Correo no deseado* la
+> primera vez y márquelo como "No es spam".
 
 ### 6.1 En Railway (Brevo, gratis hasta 300 correos/día)
-1. Cree una cuenta en <https://www.brevo.com> con `alex.carrera2004@gmail.com`.
-2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: `alex.carrera2004@gmail.com` y confirme el correo de verificación que le llega.
+1. Cree una cuenta en <https://www.brevo.com> con `javier.carrera2004@est.ucacue.edu.ec`.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: `javier.carrera2004@est.ucacue.edu.ec` y confirme el correo de verificación que le llega.
 3. **SMTP & API → API Keys → Generate a new API key**. Cópiela (empieza con `xkeysib-`).
 4. Railway → servicio de la API → **Variables**, agregue:
    ```
    MAIL_PROVEEDOR=brevo
-   MAIL_REMITENTE=alex.carrera2004@gmail.com
+   MAIL_REMITENTE=javier.carrera2004@est.ucacue.edu.ec
    BREVO_API_KEY=(su clave de Brevo)
-   MAIL_REDIRIGIR_A=alex.carrera2004@gmail.com
+   MAIL_REDIRIGIR_A=javier.carrera2004@est.ucacue.edu.ec
    ```
    `MAIL_REDIRIGIR_A` es el **modo demostración**: todos los recordatorios llegan a su buzón (los
    propietarios de prueba tienen correos ficticios). Quítela cuando use correos reales de propietarios.
 5. **Deploy**. En *Deploy Logs* debe aparecer `[correo] Alertas por correo activas (brevo)`.
 
-### 6.2 En su computadora (Gmail SMTP)
-1. Active la **verificación en dos pasos** en su cuenta de Google.
-2. Entre a <https://myaccount.google.com/apppasswords>, cree una contraseña de aplicación ("VetCare") y copie las 16 letras.
-3. En `backend/.env`:
-   ```
-   MAIL_PROVEEDOR=smtp
-   SMTP_USER=alex.carrera2004@gmail.com
-   SMTP_PASS=(las 16 letras, sin espacios)
-   MAIL_REDIRIGIR_A=alex.carrera2004@gmail.com
-   ```
-   Nunca suba esta contraseña a GitHub (el `.env` ya está excluido).
+### 6.2 En su computadora
+**Opción recomendada:** use también Brevo (las mismas variables del 6.1 en `backend/.env`).
+
+**Opción SMTP de Outlook / Microsoft 365** (solo si la universidad permite *SMTP AUTH*; muchas
+instituciones lo desactivan y entonces responde `535 Authentication unsuccessful`):
+```
+MAIL_PROVEEDOR=smtp
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=javier.carrera2004@est.ucacue.edu.ec
+SMTP_PASS=(su contraseña o contraseña de aplicación)
+MAIL_REDIRIGIR_A=javier.carrera2004@est.ucacue.edu.ec
+```
+Nunca suba esta contraseña a GitHub (el `.env` ya está excluido).
 
 ### 6.3 Probar
 * **Calendario → clic en un día con control pendiente → "✉ Recordar por correo"**, o

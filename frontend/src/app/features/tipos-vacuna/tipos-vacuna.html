@@ -12,13 +12,14 @@
     @if (!cargando() && lista().length) {
       <div class="tabla-cont">
         <table class="tabla">
-          <thead><tr><th>Vacuna</th><th>Especie</th><th class="num">Refuerzo</th><th class="num">Aplicadas</th><th></th></tr></thead>
+          <thead><tr><th>Vacuna</th><th>Especie</th><th class="num">Refuerzo</th><th class="num">Precio</th><th class="num">Aplicadas</th><th></th></tr></thead>
           <tbody>
             @for (t of lista(); track t.id) {
               <tr [class.inactivo]="!t.activo">
                 <td class="fuerte">{{ t.nombre }}<span class="sub">{{ t.descripcion || '—' }}</span></td>
                 <td>{{ t.especie || 'Todas' }}</td>
                 <td class="num">{{ t.intervaloDias ? t.intervaloDias + ' días' : 'Única' }}</td>
+                <td class="num fuerte">$ {{ t.precio.toFixed(2) }}</td>
                 <td class="num">{{ t.totalAplicadas }}</td>
                 <td class="acciones-fila"><button type="button" class="btn btn-texto btn-chico" (click)="editar(t)">Editar</button></td>
               </tr>
@@ -51,6 +52,11 @@
           <app-campo-error [control]="form.controls.intervaloDias" />
         </label>
       </div>
+      <label class="campo">
+        <span>Precio USD sin IVA <span class="requerido">*</span></span>
+        <input type="number" formControlName="precio" min="0" step="0.01" />
+        <app-campo-error [control]="form.controls.precio" />
+      </label>
       <label class="campo"><span>Descripción</span><textarea formControlName="descripcion" rows="2"></textarea></label>
       <label class="check"><input type="checkbox" formControlName="activo" /> Activo</label>
       <div class="pie-formulario">

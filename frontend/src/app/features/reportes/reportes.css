@@ -7,6 +7,10 @@
 .kpi span:last-child { color: var(--texto-suave); font-size: .88rem; }
 .kpi:hover { border-color: var(--borde-fuerte); }
 .kpi.activa { border-color: var(--primario); }
+.kpi.ingreso .numero { color: var(--primario); }
+.dato { display: flex; flex-direction: column; gap: .15rem; }
+.dato span, .dato small { color: var(--texto-suave); font-size: .85rem; }
+.dato strong { font-size: 1.5rem; }
 
 .pestanas { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 2px solid var(--borde); margin-bottom: 1rem; }
 .pestanas button {

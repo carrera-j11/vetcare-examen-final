@@ -118,7 +118,8 @@ export class ConsultaForm implements OnInit {
     this.guardando.set(true);
     this.consultas.crear(datos).subscribe({
       next: (c) => {
-        this.avisos.exito('Consulta registrada en el historial clínico');
+        const correo = (c as { factura?: { estado: string } }).factura?.estado === 'ENVIADO' ? ' y la factura se envió por correo' : ' y se generó su factura';
+        this.avisos.exito(`Consulta registrada en el historial clínico${correo}`);
         this.router.navigate(['/consultas', c.id]);
       },
       error: (e) => {

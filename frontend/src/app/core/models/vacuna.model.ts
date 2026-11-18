@@ -6,6 +6,8 @@ export interface TipoVacuna {
   especie: Especie | null;
   intervaloDias: number | null;
   descripcion: string | null;
+  /** Precio de aplicación en USD (sin IVA) */
+  precio: number;
   activo: boolean;
   totalAplicadas?: number;
 }
@@ -25,6 +27,8 @@ export interface VacunaAplicada {
   veterinarioId: number;
   veterinario: string;
   controlGeneradoId?: number | null;
+  facturaId?: number;
+  factura?: { estado: string; destino?: string | null };
 }
 
 export interface VacunaNueva {
@@ -32,7 +36,6 @@ export interface VacunaNueva {
   tipoVacunaId: number;
   fechaAplicacion: string;
   veterinarioId?: number | null;
-  lote?: string | null;
   proximaDosis?: string | null;
   observaciones?: string | null;
 }

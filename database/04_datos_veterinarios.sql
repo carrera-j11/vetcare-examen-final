@@ -4,25 +4,30 @@
 -- =====================================================================
 USE vetcare_db;
 
-INSERT INTO especialidades (id, nombre, descripcion, duracion_min) VALUES
-(1, 'Medicina general',            'Consulta clínica general y chequeos',            30),
-(2, 'Cirugía',                     'Valoración prequirúrgica y procedimientos',      60),
-(3, 'Dermatología',                'Afecciones de piel, pelaje y alergias',          30),
-(4, 'Odontología',                 'Limpieza dental y problemas bucales',            45),
-(5, 'Medicina preventiva',         'Vacunación, desparasitación y controles',        20),
-(6, 'Cardiología',                 'Evaluación cardiovascular',                      45);
+-- Precios en USD sin IVA
+INSERT INTO especialidades (id, nombre, descripcion, duracion_min, tipo, precio) VALUES
+(1, 'Medicina general',            'Consulta clínica general y chequeos',            30, 'CLINICO',  20.00),
+(2, 'Cirugía',                     'Valoración prequirúrgica y procedimientos',      60, 'CLINICO',  80.00),
+(3, 'Dermatología',                'Afecciones de piel, pelaje y alergias',          30, 'CLINICO',  25.00),
+(4, 'Odontología',                 'Limpieza dental y problemas bucales',            45, 'CLINICO',  35.00),
+(5, 'Medicina preventiva',         'Vacunación, desparasitación y controles',        20, 'CLINICO',  10.00),
+(6, 'Cardiología',                 'Evaluación cardiovascular',                      45, 'CLINICO',  40.00),
+(7, 'Peluquería y baño',           'Corte de pelo, baño, corte de uñas y limpieza de oídos', 60, 'ESTETICA', 18.00);
 ALTER TABLE especialidades AUTO_INCREMENT = 100;
 
 INSERT INTO veterinarios (id, usuario_id, cedula, nombres, apellidos, registro_senescyt, telefono, email) VALUES
 (1, 3, '0104567896', 'María',  'Vázquez', '1031-2015-1590231', '0987654321', 'mvazquez@vetcare.ec'),
 (2, 4, '0102345675', 'Carlos', 'Ortiz',   '1031-2012-1423876', '0991234567', 'cortiz@vetcare.ec'),
-(3, 5, '0106789019', 'Lucía',  'Peña',    '1031-2019-2087450', '0978765432', 'lpena@vetcare.ec');
+(3, 5, '0106789019', 'Lucía',  'Peña',    '1031-2019-2087450', '0978765432', 'lpena@vetcare.ec'),
+-- Estilista canina/felina (servicio de peluquería; no necesita cuenta de acceso)
+(4, NULL, '0105673420', 'Paola', 'Andrade', NULL,              '0983216547', 'pandrade@vetcare.ec');
 ALTER TABLE veterinarios AUTO_INCREMENT = 100;
 
 INSERT INTO veterinario_especialidad (veterinario_id, especialidad_id) VALUES
 (1, 1), (1, 3), (1, 5),
 (2, 1), (2, 2), (2, 4),
-(3, 1), (3, 5), (3, 6);
+(3, 1), (3, 5), (3, 6),
+(4, 7);
 
 -- Horario laboral (1 = lunes … 7 = domingo)
 INSERT INTO horarios_laborales (veterinario_id, dia_semana, hora_inicio, hora_fin) VALUES
@@ -41,7 +46,11 @@ INSERT INTO horarios_laborales (veterinario_id, dia_semana, hora_inicio, hora_fi
 -- Dra. Peña: martes a sábado, jornada continua
 (3, 2, '09:00', '17:00'), (3, 3, '09:00', '17:00'),
 (3, 4, '09:00', '17:00'), (3, 5, '09:00', '17:00'),
-(3, 6, '09:00', '13:00');
+(3, 6, '09:00', '13:00'),
+-- Paola Andrade (peluquería): martes a sábado
+(4, 2, '09:00', '17:00'), (4, 3, '09:00', '17:00'),
+(4, 4, '09:00', '17:00'), (4, 5, '09:00', '17:00'),
+(4, 6, '09:00', '14:00');
 
 -- Bloqueos relativos a la fecha actual para que la demostración siempre funcione
 SET @lunes = CURDATE() + INTERVAL (7 - WEEKDAY(CURDATE())) DAY;   -- próximo lunes

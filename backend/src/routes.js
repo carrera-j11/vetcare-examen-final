@@ -20,6 +20,7 @@ router.use('/vacunas', vacunasRouter);
 router.use('/controles', controlesRouter);
 router.use('/calendario', calendarioRouter);
 router.use('/notificaciones', require('./modules/notificaciones/notificaciones.routes'));
+router.use('/facturas', require('./modules/facturas/facturas.routes'));
 router.use('/reportes', require('./modules/reportes/reportes.routes'));
 router.use('/auditoria', require('./modules/auditoria/auditoria.routes'));
 router.use('/publico', require('./modules/publico/publico.routes'));

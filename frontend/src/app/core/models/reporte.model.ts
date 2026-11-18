@@ -29,6 +29,9 @@ export interface Indicadores {
     controlesProximos: number;
     tasaAsistencia: number | null;
     coberturaVacunacion: number | null;
+    ingresosMes: number;
+    serviciosMes: number;
+    ingresosHoy: number;
   };
   citasPorEstado: { estado: string; total: number }[];
   citasPorVeterinario: FilaVeterinario[];
@@ -53,6 +56,13 @@ export interface ReporteCitas {
   consultas: {
     detalle: { id: number; fecha: string; mascota: string; especie: string; propietario: string; veterinario: string; motivo: string; diagnostico: string; totalTratamientos: number }[];
   };
+  ingresos: {
+    resumen: { facturas: number; servicios: number; subtotal: number; iva: number; total: number };
+    porCategoria: { categoria: 'CONSULTA' | 'VACUNA' | 'ESTETICA'; servicios: number; subtotal: number }[];
+    porConcepto: { concepto: string; servicios: number; subtotal: number }[];
+    porDia: { fecha: string; facturas: number; total: number }[];
+    detalle: { id: number; numero: string; fecha: string; origen: string; propietario: string; mascota: string; conceptos: string; subtotal: number; iva: number; total: number; correoEstado: string | null }[];
+  };
 }
 
-export type SeccionReporte = 'citas' | 'vacunas' | 'consultas';
+export type SeccionReporte = 'citas' | 'vacunas' | 'consultas' | 'ingresos';

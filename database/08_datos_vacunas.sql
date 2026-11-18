@@ -7,15 +7,16 @@ USE vetcare_db;
 SET @lunes        = CURDATE() + INTERVAL (7 - WEEKDAY(CURDATE())) DAY;
 SET @lunes_pasado = @lunes - INTERVAL 21 DAY;
 
-INSERT INTO tipos_vacuna (id, nombre, especie, intervalo_dias, descripcion) VALUES
-(1, 'Antirrábica',              NULL,     365, 'Obligatoria. Refuerzo anual.'),
-(2, 'Séxtuple canina',          'PERRO',  365, 'Moquillo, hepatitis, parvovirus, parainfluenza, leptospira y coronavirus.'),
-(3, 'Parvovirus (cachorro)',    'PERRO',   21, 'Esquema de cachorro: refuerzo cada 3 semanas.'),
-(4, 'Bordetella (tos de perrera)','PERRO', 180, 'Recomendada para perros que conviven con otros.'),
-(5, 'Triple felina',            'GATO',   365, 'Panleucopenia, calicivirus y rinotraqueítis.'),
-(6, 'Leucemia felina',          'GATO',   365, 'Recomendada para gatos con acceso al exterior.'),
-(7, 'Mixomatosis',              'CONEJO', 180, 'Refuerzo semestral.'),
-(8, 'Desparasitante interno',   NULL,      90, 'Control antiparasitario trimestral.');
+-- Precios en USD sin IVA
+INSERT INTO tipos_vacuna (id, nombre, especie, intervalo_dias, descripcion, precio) VALUES
+(1, 'Antirrábica',              NULL,     365, 'Obligatoria. Refuerzo anual.', 12.00),
+(2, 'Séxtuple canina',          'PERRO',  365, 'Moquillo, hepatitis, parvovirus, parainfluenza, leptospira y coronavirus.', 25.00),
+(3, 'Parvovirus (cachorro)',    'PERRO',   21, 'Esquema de cachorro: refuerzo cada 3 semanas.', 18.00),
+(4, 'Bordetella (tos de perrera)','PERRO', 180, 'Recomendada para perros que conviven con otros.', 20.00),
+(5, 'Triple felina',            'GATO',   365, 'Panleucopenia, calicivirus y rinotraqueítis.', 22.00),
+(6, 'Leucemia felina',          'GATO',   365, 'Recomendada para gatos con acceso al exterior.', 28.00),
+(7, 'Mixomatosis',              'CONEJO', 180, 'Refuerzo semestral.', 20.00),
+(8, 'Desparasitante interno',   NULL,      90, 'Control antiparasitario trimestral.', 8.00);
 ALTER TABLE tipos_vacuna AUTO_INCREMENT = 100;
 
 INSERT INTO vacunas_aplicadas (id, mascota_id, tipo_vacuna_id, veterinario_id, fecha_aplicacion, lote, proxima_dosis, observaciones, creado_por) VALUES

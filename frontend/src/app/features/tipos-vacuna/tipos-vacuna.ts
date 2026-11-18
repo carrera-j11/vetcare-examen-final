@@ -30,6 +30,7 @@ export class TiposVacuna implements OnInit {
     especie: [''],
     intervaloDias: [null as number | null, [Validators.min(7), Validators.max(1095)]],
     descripcion: ['', Validators.maxLength(250)],
+    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000)]],
     activo: [true],
   });
 
@@ -45,12 +46,12 @@ export class TiposVacuna implements OnInit {
 
   editar(t: TipoVacuna): void {
     this.editandoId.set(t.id);
-    this.form.setValue({ nombre: t.nombre, especie: t.especie ?? '', intervaloDias: t.intervaloDias, descripcion: t.descripcion ?? '', activo: t.activo });
+    this.form.setValue({ nombre: t.nombre, especie: t.especie ?? '', intervaloDias: t.intervaloDias, descripcion: t.descripcion ?? '', precio: t.precio, activo: t.activo });
   }
 
   nuevo(): void {
     this.editandoId.set(null);
-    this.form.reset({ nombre: '', especie: '', intervaloDias: null, descripcion: '', activo: true });
+    this.form.reset({ nombre: '', especie: '', intervaloDias: null, descripcion: '', precio: 0, activo: true });
   }
 
   guardar(): void {

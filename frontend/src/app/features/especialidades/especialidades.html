@@ -2,7 +2,7 @@
   <div>
     <p class="sobre">Clínica</p>
     <h1>Especialidades</h1>
-    <p class="descripcion">La duración de cada especialidad determina la duración de las citas.</p>
+    <p class="descripcion">La duración define el largo de cada cita y el precio se usa para facturar automáticamente (más IVA).</p>
   </div>
 </header>
 
@@ -12,12 +12,14 @@
     @if (!cargando() && lista().length) {
       <div class="tabla-cont">
         <table class="tabla">
-          <thead><tr><th>Especialidad</th><th class="num">Duración</th><th class="num">Veterinarios</th><th>Estado</th><th></th></tr></thead>
+          <thead><tr><th>Servicio</th><th>Tipo</th><th class="num">Duración</th><th class="num">Precio</th><th class="num">Profesionales</th><th>Estado</th><th></th></tr></thead>
           <tbody>
             @for (e of lista(); track e.id) {
               <tr [class.inactivo]="!e.activo">
                 <td class="fuerte">{{ e.nombre }}<span class="sub">{{ e.descripcion || '—' }}</span></td>
+                <td><span class="badge" [class]="e.tipo === 'ESTETICA' ? 'badge badge-ADMIN' : 'badge badge-VETERINARIO'">{{ e.tipo === 'ESTETICA' ? '✂️ Estética' : '🩺 Clínico' }}</span></td>
                 <td class="num">{{ e.duracionMin }} min</td>
+                <td class="num fuerte">$ {{ e.precio.toFixed(2) }}</td>
                 <td class="num">{{ e.totalVeterinarios }}</td>
                 <td><span class="badge" [class]="e.activo ? 'badge badge-activo' : 'badge badge-inactivo'">{{ e.activo ? 'Activa' : 'Inactiva' }}</span></td>
                 <td class="acciones-fila">
@@ -44,10 +46,24 @@
         <span>Descripción</span>
         <textarea formControlName="descripcion" rows="2"></textarea>
       </label>
+      <div class="fila-campos">
+        <label class="campo">
+          <span>Duración (minutos) <span class="requerido">*</span></span>
+          <input type="number" formControlName="duracionMin" min="10" max="240" step="5" />
+          <app-campo-error [control]="form.controls.duracionMin" />
+        </label>
+        <label class="campo">
+          <span>Precio USD sin IVA <span class="requerido">*</span></span>
+          <input type="number" formControlName="precio" min="0" step="0.01" />
+          <app-campo-error [control]="form.controls.precio" />
+        </label>
+      </div>
       <label class="campo">
-        <span>Duración de la cita (minutos) <span class="requerido">*</span></span>
-        <input type="number" formControlName="duracionMin" min="10" max="240" step="5" />
-        <app-campo-error [control]="form.controls.duracionMin" />
+        <span>Tipo de servicio <span class="requerido">*</span></span>
+        <select formControlName="tipo">
+          <option value="CLINICO">🩺 Clínico (se atiende registrando una consulta)</option>
+          <option value="ESTETICA">✂️ Estética (peluquería: se marca como completado)</option>
+        </select>
       </label>
       <label class="check"><input type="checkbox" formControlName="activo" /> Activa</label>
       <div class="pie-formulario">

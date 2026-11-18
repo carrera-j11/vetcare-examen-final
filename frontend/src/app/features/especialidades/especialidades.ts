@@ -29,6 +29,8 @@ export class Especialidades implements OnInit {
     nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
     descripcion: ['', Validators.maxLength(250)],
     duracionMin: [30, [Validators.required, Validators.min(10), Validators.max(240)]],
+    tipo: ['CLINICO' as 'CLINICO' | 'ESTETICA', Validators.required],
+    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000)]],
     activo: [true],
   });
 
@@ -44,12 +46,12 @@ export class Especialidades implements OnInit {
 
   editar(e: Especialidad): void {
     this.editandoId.set(e.id);
-    this.form.setValue({ nombre: e.nombre, descripcion: e.descripcion ?? '', duracionMin: e.duracionMin, activo: e.activo });
+    this.form.setValue({ nombre: e.nombre, descripcion: e.descripcion ?? '', duracionMin: e.duracionMin, tipo: e.tipo, precio: e.precio, activo: e.activo });
   }
 
   nuevo(): void {
     this.editandoId.set(null);
-    this.form.reset({ nombre: '', descripcion: '', duracionMin: 30, activo: true });
+    this.form.reset({ nombre: '', descripcion: '', duracionMin: 30, tipo: 'CLINICO', precio: 0, activo: true });
   }
 
   guardar(): void {

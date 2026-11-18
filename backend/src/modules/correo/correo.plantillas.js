@@ -74,4 +74,24 @@ function recordatorioCita(c) {
   return { asunto, html, texto };
 }
 
-module.exports = { recordatorioControl, recordatorioCita };
+/** Factura de un servicio realizado (el PDF va adjunto) */
+function factura(f) {
+  const dinero = (n) => `$ ${Number(n).toFixed(2)}`;
+  const filas = f.detalle.map((d) => `${escapar(d.concepto)} — ${dinero(d.subtotal)}`).join('<br>');
+  const asunto = `🧾 Factura ${f.numero} · Servicios de ${f.mascota}`;
+  const html = marco({
+    color: '#0f766e',
+    titulo: `Factura ${escapar(f.numero)}`,
+    saludo: `Estimado/a <strong>${escapar(f.propietario)}</strong>:`,
+    cuerpo: `Gracias por confiar en nosotros. Adjuntamos la factura de los servicios realizados hoy a <strong>${escapar(f.mascota)}</strong>.`,
+    destacado: `${filas}<br><span style="color:#5b6472">Subtotal ${dinero(f.subtotal)} · IVA ${Number(f.ivaPorcentaje)} % ${dinero(f.iva)}</span><br><strong style="font-size:17px">Total: ${dinero(f.total)}</strong>`,
+    cierre: 'Encontrará la factura en PDF adjunta a este correo; puede descargarla o imprimirla.',
+  });
+  const texto = `${asunto}
+
+Estimado/a ${f.propietario}: adjuntamos la factura ${f.numero} por ${dinero(f.total)}.
+${env.clinica.nombre} · Tel. ${env.clinica.telefono}`;
+  return { asunto, html, texto };
+}
+
+module.exports = { recordatorioControl, recordatorioCita, factura };

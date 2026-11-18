@@ -106,6 +106,10 @@ npm start            # http://localhost:4200
 | RN08 | El veterinario debe atender la especialidad de la cita | `citas.service.validarParticipantes` |
 | RN09 | La vacuna debe corresponder a la especie de la mascota | `vacunas.service.aplicar` |
 | RN10 | No se registra dos veces la misma vacuna el mismo día | Validación + índice único |
+| RN11 | Cada atención (consulta, vacuna, peluquería) se factura una sola vez | `facturas.service.generar` + índice único (origen, referencia) |
+| RN12 | Las facturas no se eliminan; solo el administrador las anula con motivo | Trigger `trg_facturas_no_delete` + `PATCH /facturas/:id/anular` |
+| RN13 | El lote de la vacuna es automático y consecutivo por tipo y año (PRE-AA-NNNN) | `tipos.repository.siguienteLote` con `FOR UPDATE` |
+| RN14 | Las citas de peluquería se completan (no llevan consulta) y no pueden completarse antes de su fecha | `citas.service.completarServicio` |
 
 Además: una cita solo se atiende una vez (índice único `consultas.cita_id`), no se desactiva un
 propietario/veterinario con citas futuras, no se bloquea una agenda con citas programadas y el sistema
@@ -116,7 +120,9 @@ nunca se queda sin un administrador activo.
 2. **Notificaciones automáticas**: proceso `node-cron` (cada hora) que genera alertas de controles próximos/vencidos y citas del día siguiente, idempotente (índice único).
 3. **Algoritmo de asignación de horarios**: sugiere los mejores espacios libres combinando horario laboral, bloqueos y citas, y balancea la carga entre veterinarios.
 4. **Historial clínico en PDF con código QR**: el QR lleva a una página pública que verifica el carnet de vacunación.
-5. **Panel de indicadores y reporte con filtros avanzados** exportable a CSV/Excel.
+5. **Panel de indicadores y reportes con filtros avanzados** (citas, vacunas, consultas e **ingresos**) exportables a CSV/Excel.
+6. **Facturación automática**: cada atención genera su factura con IVA, se envía en PDF al correo del propietario y se puede descargar, imprimir, reenviar o anular.
+7. **Servicio de peluquería y baño** con precios por servicio y lote de vacunas automático.
 
 ## 5. Seguridad
 JWT con expiración · contraseñas con bcrypt · 3 roles verificados en el Backend · autorización a nivel

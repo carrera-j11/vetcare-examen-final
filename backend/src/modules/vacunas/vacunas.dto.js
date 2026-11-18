@@ -13,7 +13,7 @@ const aplicar = z.object({
   fechaAplicacion: z.string({ required_error: 'RN04: la fecha de aplicación es obligatoria' })
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'RN04: la fecha de aplicación debe tener formato YYYY-MM-DD'),
   veterinarioId: id.optional().nullable(),
-  lote: z.string().trim().max(40).regex(/^[A-Za-z0-9-]*$/, 'El lote solo admite letras, números y guiones').optional().nullable(),
+  // El lote NO se recibe: se genera automáticamente (PRE-AA-NNNN)
   proximaDosis: fecha.optional().nullable(),
   observaciones: textoOpcional(250, 'Las observaciones'),
   citaId: id.optional().nullable(),
@@ -29,4 +29,6 @@ const filtros = listadoQuery.extend({
   direccion: z.enum(['asc', 'desc']).default('desc'),
 });
 
-module.exports = { aplicar, filtros };
+const siguienteLote = z.object({ fecha: fecha.optional() });
+
+module.exports = { aplicar, filtros, siguienteLote };

@@ -36,7 +36,7 @@
             <span>Especialidad <span class="requerido">*</span></span>
             <select formControlName="especialidadId" (change)="cambioEspecialidad()">
               <option [ngValue]="0" disabled>Seleccione…</option>
-              @for (e of especialidades(); track e.id) { <option [ngValue]="e.id">{{ e.nombre }} ({{ e.duracionMin }} min)</option> }
+              @for (e of especialidades(); track e.id) { <option [ngValue]="e.id">{{ e.tipo === 'ESTETICA' ? '✂️ ' : '' }}{{ e.nombre }} · {{ e.duracionMin }} min · $ {{ e.precio.toFixed(2) }}</option> }
             </select>
             <app-campo-error [control]="form.controls.especialidadId" />
           </label>

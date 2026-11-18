@@ -10,6 +10,7 @@ DROP TRIGGER IF EXISTS trg_consultas_no_delete;
 DROP TRIGGER IF EXISTS trg_tratamientos_no_delete;
 DROP TRIGGER IF EXISTS trg_vacunas_no_delete;
 DROP TRIGGER IF EXISTS trg_auditoria_no_update;
+DROP TRIGGER IF EXISTS trg_facturas_no_delete;
 DROP TRIGGER IF EXISTS trg_auditoria_no_delete;
 
 DELIMITER $$
@@ -30,6 +31,13 @@ CREATE TRIGGER trg_vacunas_no_delete BEFORE DELETE ON vacunas_aplicadas
 FOR EACH ROW
 BEGIN
   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'RN05: el historial clinico (vacunas) no puede eliminarse';
+END$$
+
+-- Las facturas emitidas no se eliminan: solo se anulan
+CREATE TRIGGER trg_facturas_no_delete BEFORE DELETE ON facturas
+FOR EACH ROW
+BEGIN
+  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Las facturas no pueden eliminarse; deben anularse';
 END$$
 
 CREATE TRIGGER trg_auditoria_no_update BEFORE UPDATE ON auditoria

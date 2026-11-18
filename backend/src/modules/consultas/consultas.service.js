@@ -13,6 +13,8 @@ const citasRepo = require('../citas/citas.repository');
 const mascotasRepo = require('../mascotas/mascotas.repository');
 const veterinariosRepo = require('../veterinarios/veterinarios.repository');
 const controlesRepo = require('../vacunas/controles.repository');
+const especialidadesRepo = require('../especialidades/especialidades.repository');
+const facturas = require('../facturas/facturas.service');
 const auditoria = require('../auditoria/auditoria.service');
 const { transaccion } = require('../../config/db');
 const HttpError = require('../../utils/HttpError');
@@ -55,7 +57,9 @@ async function crear(datos, ctx) {
     throw HttpError.badRequest('Los datos enviados no son válidos', [{ campo: 'proximoControl.fecha', mensaje: 'El próximo control debe ser una fecha futura' }]);
   }
 
-  return transaccion(async (conn) => {
+  const resultado = await transaccion(async (conn) => {
+    // Especialidad a facturar: la de la cita o, sin cita, Medicina general
+    let especialidadId = 1;
     if (datos.citaId) {
       const cita = await citasRepo.bloquear(conn, datos.citaId); // FOR UPDATE
       if (!cita) throw HttpError.regla('CITA_INEXISTENTE', 'La cita indicada no existe');
@@ -67,6 +71,11 @@ async function crear(datos, ctx) {
       }
       if (cita.estado !== 'PROGRAMADA') throw HttpError.regla('CITA_NO_ATENDIBLE', `No se puede atender una cita en estado ${cita.estado}`);
       const citaCompleta = await citasRepo.buscarPorId(datos.citaId, conn);
+      especialidadId = citaCompleta.especialidadId;
+      const esp = await especialidadesRepo.buscarPorId(especialidadId, conn);
+      if (esp?.tipo === 'ESTETICA') {
+        throw HttpError.regla('SERVICIO_NO_CLINICO', 'Las citas de peluquería no llevan consulta: use "Completar servicio" en la cita');
+      }
       if (aTextoFecha(deTexto(citaCompleta.inicio)) > hoy()) {
         throw HttpError.regla('CITA_FUTURA', 'No se puede atender una cita programada para un día posterior');
       }
@@ -86,8 +95,16 @@ async function crear(datos, ctx) {
       accion: auditoria.ACCIONES.ATENDER, entidad: 'consulta', entidadId: id,
       detalle: { citaId: datos.citaId ?? null, mascotaId: datos.mascotaId, tratamientos: datos.tratamientos.length },
     });
-    return repo.buscarPorId(id, conn);
+    // Facturación automática de la consulta (misma transacción)
+    const especialidad = await especialidadesRepo.buscarPorId(especialidadId, conn);
+    const facturaId = await facturas.generar(conn, {
+      origen: 'CONSULTA', referenciaId: id, propietarioId: mascota.propietarioId, mascotaId: mascota.id,
+      items: [{ concepto: `Consulta · ${especialidad?.nombre || 'Medicina general'}`, categoria: 'CONSULTA', cantidad: 1, precioUnitario: especialidad?.precio ?? 0 }],
+    }, ctx);
+    return { ...(await repo.buscarPorId(id, conn)), facturaId };
   });
+  resultado.factura = await facturas.enviarPorCorreo(resultado.facturaId);
+  return resultado;
 }
 
 function eliminar() {

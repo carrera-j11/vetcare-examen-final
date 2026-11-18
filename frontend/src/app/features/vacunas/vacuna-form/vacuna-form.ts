@@ -40,6 +40,10 @@ export class VacunaForm implements OnInit {
   protected readonly tipos = signal<TipoVacuna[]>([]);
   protected readonly veterinarios = signal<Veterinario[]>([]);
   protected readonly guardando = signal(false);
+  /** Lote que asignará el sistema (vista previa; el número definitivo lo fija el Backend) */
+  protected readonly loteSiguiente = signal<string | null>(null);
+  protected readonly tipoElegido = signal<TipoVacuna | null>(null);
+  protected readonly ivaPorcentaje = 15;
 
   /** RN09: vacunas de la especie de la mascota o de uso general */
   protected readonly tiposCompatibles = computed(() => {
@@ -51,7 +55,6 @@ export class VacunaForm implements OnInit {
     tipoVacunaId: [0, [Validators.required, Validators.min(1)]],
     fechaAplicacion: [hoyTexto(), Validators.required],
     veterinarioId: [0],
-    lote: ['', [Validators.maxLength(40), Validators.pattern(/^[A-Za-z0-9-]*$/)]],
     proximaDosis: [''],
     observaciones: ['', Validators.maxLength(250)],
   });
@@ -70,6 +73,25 @@ export class VacunaForm implements OnInit {
     this.mascota.set(m);
     
     this.form.patchValue({ tipoVacunaId: 0, proximaDosis: '' });
+    this.tipoElegido.set(null);
+    this.loteSiguiente.set(null);
+  }
+
+  /** Al cambiar el tipo o la fecha: próxima dosis, precio y lote automático */
+  cambioTipoOFecha(): void {
+    this.calcularProxima();
+    const tipo = this.tipos().find((t) => t.id === Number(this.form.controls.tipoVacunaId.value)) ?? null;
+    this.tipoElegido.set(tipo);
+    const fecha = this.form.controls.fechaAplicacion.value;
+    if (!tipo || !fecha) { this.loteSiguiente.set(null); return; }
+    this.vacunas.siguienteLote(tipo.id, fecha).subscribe({
+      next: (r) => this.loteSiguiente.set(r.lote),
+      error: () => this.loteSiguiente.set(null),
+    });
+  }
+
+  totalConIva(precio: number): number {
+    return Math.round(precio * (1 + this.ivaPorcentaje / 100) * 100) / 100;
   }
 
   /** Propone la próxima dosis según el intervalo del tipo de vacuna (editable) */
@@ -89,14 +111,15 @@ export class VacunaForm implements OnInit {
       tipoVacunaId: Number(v.tipoVacunaId),
       fechaAplicacion: v.fechaAplicacion,
       veterinarioId: this.auth.tieneRol('ADMIN') ? Number(v.veterinarioId) : null,
-      lote: v.lote || null,
       proximaDosis: v.proximaDosis || null,
       observaciones: v.observaciones || null,
     };
     this.guardando.set(true);
     this.vacunas.aplicar(datos).subscribe({
       next: (r) => {
-        this.avisos.exito(r.proximaDosis ? `Vacuna registrada. Refuerzo programado para el ${r.proximaDosis}` : 'Vacuna registrada');
+        const refuerzo = r.proximaDosis ? ` Refuerzo programado para el ${r.proximaDosis}.` : '';
+        const correo = r.factura?.estado === 'ENVIADO' ? ` Factura enviada a ${r.factura.destino}.` : ' Factura generada.';
+        this.avisos.exito(`Vacuna registrada con lote ${r.lote}.${refuerzo}${correo}`);
         this.router.navigate(['/mascotas', m.id, 'historial']);
       },
       error: (e) => {

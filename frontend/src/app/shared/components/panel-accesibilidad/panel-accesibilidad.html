@@ -1,34 +1,22 @@
-<div class="pestana" role="toolbar" aria-label="Opciones de accesibilidad">
-  <!-- Modo nocturno: media luna (claro) / sol (oscuro) -->
-  <button type="button" class="boton luna" (click)="prefs.alternarTema()"
+<div class="accesibilidad" role="toolbar" aria-label="Opciones de accesibilidad">
+  <!-- Modo nocturno -->
+  <button type="button" class="btn btn-icono tema" (click)="prefs.alternarTema()"
           [attr.aria-pressed]="prefs.tema() === 'oscuro'"
-          [attr.aria-label]="prefs.tema() === 'oscuro' ? 'Desactivar modo nocturno (Alt+N)' : 'Activar modo nocturno (Alt+N)'"
+          [attr.aria-label]="prefs.tema() === 'oscuro' ? 'Cambiar a modo claro (Alt+N)' : 'Cambiar a modo nocturno (Alt+N)'"
           [title]="prefs.tema() === 'oscuro' ? 'Modo claro (Alt+N)' : 'Modo nocturno (Alt+N)'">
     <span aria-hidden="true">{{ prefs.tema() === 'oscuro' ? '☀️' : '🌙' }}</span>
   </button>
 
-  <!-- Zoom -->
-  <button type="button" class="boton" (click)="zoomAbierto.set(!zoomAbierto())"
-          [attr.aria-expanded]="zoomAbierto()" aria-controls="controles-zoom"
-          [attr.aria-label]="'Tamaño de la interfaz: ' + prefs.zoom() + ' por ciento'" title="Zoom">
-    <span aria-hidden="true" class="lupa">🔍</span>
-    <span class="porcentaje">{{ prefs.zoom() }}%</span>
-  </button>
-</div>
-
-@if (zoomAbierto()) {
-  <div id="controles-zoom" class="controles" role="group" aria-label="Zoom de la interfaz">
-    <p class="titulo">Tamaño de la interfaz</p>
-    <div class="fila">
-      <button type="button" class="btn btn-icono" (click)="prefs.alejar()" [disabled]="prefs.zoom() <= min"
-              aria-label="Reducir zoom (Ctrl+Alt+-)" title="Reducir (Ctrl+Alt+-)">−</button>
-      <output class="valor" aria-live="polite">{{ prefs.zoom() }}%</output>
-      <button type="button" class="btn btn-icono" (click)="prefs.acercar()" [disabled]="prefs.zoom() >= max"
-              aria-label="Aumentar zoom (Ctrl+Alt++)" title="Aumentar (Ctrl+Alt++)">+</button>
-    </div>
-    <input type="range" [min]="min" [max]="max" step="10" [value]="prefs.zoom()"
-           (input)="prefs.zoom.set(+$any($event.target).value)" aria-label="Nivel de zoom" />
-    <div class="escala" aria-hidden="true"><span>{{ min }}%</span><span>100%</span><span>{{ max }}%</span></div>
-    <button type="button" class="btn btn-chico" (click)="prefs.restablecerZoom()" [disabled]="prefs.zoom() === 100">Restablecer (100%)</button>
+  <!-- Zoom integrado en el mismo panel -->
+  <div class="zoom" role="group" aria-label="Tamaño de la interfaz">
+    <button type="button" class="paso" (click)="prefs.alejar()" [disabled]="prefs.zoom() <= min"
+            aria-label="Reducir zoom (Ctrl+Alt+-)" title="Reducir (Ctrl+Alt+-)">−</button>
+    <button type="button" class="valor" (click)="prefs.restablecerZoom()" [disabled]="prefs.zoom() === 100"
+            [attr.aria-label]="'Zoom actual ' + prefs.zoom() + ' por ciento. Pulse para volver a 100'"
+            title="Volver a 100 % (Ctrl+Alt+0)">
+      <output aria-live="polite">{{ prefs.zoom() }}%</output>
+    </button>
+    <button type="button" class="paso" (click)="prefs.acercar()" [disabled]="prefs.zoom() >= max"
+            aria-label="Aumentar zoom (Ctrl+Alt++)" title="Aumentar (Ctrl+Alt++)">+</button>
   </div>
-}
+</div>

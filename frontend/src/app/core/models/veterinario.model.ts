@@ -3,6 +3,10 @@ export interface Especialidad {
   nombre: string;
   descripcion: string | null;
   duracionMin: number;
+  /** CLINICO: se atiende con consulta · ESTETICA: peluquería, se completa y factura */
+  tipo: 'CLINICO' | 'ESTETICA';
+  /** Precio del servicio en USD (sin IVA) */
+  precio: number;
   activo: boolean;
   totalVeterinarios?: number;
 }

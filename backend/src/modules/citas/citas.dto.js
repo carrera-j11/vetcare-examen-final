@@ -60,7 +60,7 @@ function aRespuesta(c) {
     mascota: { id: c.mascotaId, nombre: c.mascotaNombre, especie: c.mascotaEspecie },
     propietario: { id: c.propietarioId, nombreCompleto: c.propietarioNombre, telefono: c.propietarioTelefono },
     veterinario: { id: c.veterinarioId, nombreCompleto: c.veterinarioNombre },
-    especialidad: { id: c.especialidadId, nombre: c.especialidadNombre, duracionMin: c.duracionMin },
+    especialidad: { id: c.especialidadId, nombre: c.especialidadNombre, duracionMin: c.duracionMin, tipo: c.especialidadTipo, precio: Number(c.especialidadPrecio ?? 0) },
     consultaId: c.consultaId ?? null,
     creadoEn: c.creadoEn,
   };

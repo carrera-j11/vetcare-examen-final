@@ -16,6 +16,7 @@ const SELECT_BASE = `
          p.id AS propietarioId, CONCAT(p.nombres, ' ', p.apellidos) AS propietarioNombre, p.telefono AS propietarioTelefono,
          v.id AS veterinarioId, CONCAT(v.nombres, ' ', v.apellidos) AS veterinarioNombre,
          e.id AS especialidadId, e.nombre AS especialidadNombre, e.duracion_min AS duracionMin,
+         e.tipo AS especialidadTipo, e.precio AS especialidadPrecio,
          co.id AS consultaId
   ${FROM_BASE}`;
 

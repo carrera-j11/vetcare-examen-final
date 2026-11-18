@@ -1,9 +1,9 @@
 /**
  * Envío de correos (alertas automáticas y recordatorios).
  *
- * Remitente: el correo del administrador (MAIL_REMITENTE, por defecto alex.carrera2004@gmail.com).
+ * Remitente: el correo del administrador (MAIL_REMITENTE, por defecto javier.carrera2004@est.ucacue.edu.ec).
  * Proveedores:
- *   smtp  → nodemailer (Gmail con contraseña de aplicación)
+ *   smtp  → nodemailer (Outlook/Microsoft 365, Gmail u otro servidor SMTP)
  *   brevo → API HTTP de Brevo (https://api.brevo.com/v3/smtp/email)
  *
  * Nunca lanza excepciones: devuelve un resultado { estado, destino, detalle } para que una
@@ -31,7 +31,7 @@ function transporte() {
   return transporteSmtp;
 }
 
-async function enviarPorBrevo({ para, asunto, html, texto }) {
+async function enviarPorBrevo({ para, asunto, html, texto, adjuntos = [] }) {
   const c = env.correo;
   const cuerpo = {
     sender: { name: c.nombreRemitente, email: c.remitente },
@@ -41,6 +41,7 @@ async function enviarPorBrevo({ para, asunto, html, texto }) {
     textContent: texto,
   };
   if (c.copiaAdmin) cuerpo.bcc = [{ email: c.copiaAdmin }];
+  if (adjuntos.length) cuerpo.attachment = adjuntos.map((a) => ({ name: a.nombre, content: a.contenido.toString('base64') }));
   const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': c.brevoApiKey, 'content-type': 'application/json', accept: 'application/json' },
@@ -53,7 +54,7 @@ async function enviarPorBrevo({ para, asunto, html, texto }) {
   }
 }
 
-async function enviarPorSmtp({ para, asunto, html, texto }) {
+async function enviarPorSmtp({ para, asunto, html, texto, adjuntos = [] }) {
   const c = env.correo;
   await transporte().sendMail({
     from: `"${c.nombreRemitente}" <${c.remitente}>`,
@@ -62,11 +63,12 @@ async function enviarPorSmtp({ para, asunto, html, texto }) {
     subject: asunto,
     html,
     text: texto,
+    attachments: adjuntos.map((a) => ({ filename: a.nombre, content: a.contenido })),
   });
 }
 
 /**
- * @param {{ para: string|null, asunto: string, html: string, texto: string }} mensaje
+ * @param {{ para: string|null, asunto: string, html: string, texto: string, adjuntos?: {nombre: string, contenido: Buffer}[] }} mensaje
  * @returns {Promise<{ estado: string, destino: string|null, detalle?: string }>}
  */
 async function enviar(mensaje) {

@@ -26,5 +26,9 @@ INSERT INTO citas (id, mascota_id, veterinario_id, especialidad_id, inicio, fin,
 (13, 3, 1, 5, TIMESTAMP(@lunes + INTERVAL 2 DAY,         '14:00'), TIMESTAMP(@lunes + INTERVAL 2 DAY,         '14:20'), 'Refuerzo de parvovirus',               'PROGRAMADA', NULL, 2),
 (14, 11, 2, 1, TIMESTAMP(@lunes + INTERVAL 3 DAY,        '15:00'), TIMESTAMP(@lunes + INTERVAL 3 DAY,        '15:30'), 'Vómitos (reprogramada)',               'PROGRAMADA', NULL, 2),
 (15, 12, 3, 6, TIMESTAMP(@lunes + INTERVAL 4 DAY,        '11:00'), TIMESTAMP(@lunes + INTERVAL 4 DAY,        '11:45'), 'Control cardiológico',                 'PROGRAMADA', NULL, 2),
-(16, 5, 3, 5, TIMESTAMP(@lunes + INTERVAL 5 DAY,         '09:00'), TIMESTAMP(@lunes + INTERVAL 5 DAY,         '09:20'), 'Vacuna mixomatosis',                   'PROGRAMADA', NULL, 2);
+(16, 5, 3, 5, TIMESTAMP(@lunes + INTERVAL 5 DAY,         '09:00'), TIMESTAMP(@lunes + INTERVAL 5 DAY,         '09:20'), 'Vacuna mixomatosis',                   'PROGRAMADA', NULL, 2),
+-- Servicio de peluquería (Paola Andrade)
+(17, 8, 4, 7, TIMESTAMP(@lunes_pasado + INTERVAL 1 DAY,  '10:00'), TIMESTAMP(@lunes_pasado + INTERVAL 1 DAY,  '11:00'), 'Corte de pelo y baño',                 'ATENDIDA',   NULL, 2),
+(18, 8, 4, 7, TIMESTAMP(@lunes + INTERVAL 2 DAY,         '10:00'), TIMESTAMP(@lunes + INTERVAL 2 DAY,         '11:00'), 'Corte de pelo de raza (Shih Tzu)',     'PROGRAMADA', NULL, 2),
+(19, 1, 4, 7, TIMESTAMP(@lunes + INTERVAL 3 DAY,         '15:00'), TIMESTAMP(@lunes + INTERVAL 3 DAY,         '16:00'), 'Baño medicado',                        'PROGRAMADA', NULL, 2);
 ALTER TABLE citas AUTO_INCREMENT = 100;

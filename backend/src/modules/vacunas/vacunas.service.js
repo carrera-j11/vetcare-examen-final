@@ -16,6 +16,7 @@ const mascotasRepo = require('../mascotas/mascotas.repository');
 const veterinariosRepo = require('../veterinarios/veterinarios.repository');
 const dispRepo = require('../disponibilidad/disponibilidad.repository');
 const auditoria = require('../auditoria/auditoria.service');
+const facturas = require('../facturas/facturas.service');
 const { transaccion } = require('../../config/db');
 const HttpError = require('../../utils/HttpError');
 const { meta } = require('../../utils/paginacion');
@@ -65,13 +66,15 @@ async function aplicar(datos, ctx) {
     throw HttpError.badRequest('Los datos enviados no son válidos', [{ campo: 'proximaDosis', mensaje: 'La próxima dosis debe ser posterior a la fecha de aplicación' }]);
   }
 
-  return transaccion(async (conn) => {
+  const resultado = await transaccion(async (conn) => {
     await dispRepo.bloquearMascota(conn, datos.mascotaId);
     // RN10 · evita la doble aplicación (también protegido por índice único)
     if (await repo.existeMismoDia(conn, datos.mascotaId, datos.tipoVacunaId, datos.fechaAplicacion)) {
       throw HttpError.conflict('RN10_VACUNA_DUPLICADA', `La vacuna ${tipo.nombre} ya fue registrada para ${mascota.nombre} el ${datos.fechaAplicacion}`);
     }
-    const id = await repo.insertar(conn, { ...datos, veterinarioId, proximaDosis }, ctx.usuario.id);
+    // Lote automático según las vacunas de ese tipo ya aplicadas en el año (bloquea el tipo: sin números repetidos)
+    const lote = await tiposRepo.siguienteLote(tipo.id, datos.fechaAplicacion, conn);
+    const id = await repo.insertar(conn, { ...datos, lote, veterinarioId, proximaDosis }, ctx.usuario.id);
     const cerrados = await controlesRepo.completarPendientesDeVacuna(conn, datos.mascotaId, datos.tipoVacunaId);
     let controlId = null;
     if (proximaDosis) {
@@ -86,14 +89,29 @@ async function aplicar(datos, ctx) {
     }
     await auditoria.registrar(conn, ctx, {
       accion: auditoria.ACCIONES.APLICAR_VACUNA, entidad: 'vacuna', entidadId: id,
-      detalle: { mascotaId: datos.mascotaId, tipo: tipo.nombre, veterinarioId, fecha: datos.fechaAplicacion, proximaDosis, controlesCerrados: cerrados, controlGenerado: controlId },
+      detalle: { mascotaId: datos.mascotaId, tipo: tipo.nombre, lote, veterinarioId, fecha: datos.fechaAplicacion, proximaDosis, controlesCerrados: cerrados, controlGenerado: controlId },
     });
-    return { ...(await repo.buscarPorId(id, conn)), controlGeneradoId: controlId, controlesCerrados: cerrados };
+    // Facturación automática de la vacuna (misma transacción)
+    const facturaId = await facturas.generar(conn, {
+      origen: 'VACUNA', referenciaId: id, propietarioId: mascota.propietarioId, mascotaId: mascota.id,
+      items: [{ concepto: `Vacuna · ${tipo.nombre}`, categoria: 'VACUNA', cantidad: 1, precioUnitario: tipo.precio }],
+    }, ctx);
+    return { ...(await repo.buscarPorId(id, conn)), controlGeneradoId: controlId, controlesCerrados: cerrados, facturaId };
   });
+  // Ya confirmada la transacción: se envía la factura por correo (no bloquea si falla)
+  resultado.factura = await facturas.enviarPorCorreo(resultado.facturaId);
+  return resultado;
+}
+
+/** Vista previa del lote que se asignará (formulario de aplicar vacuna) */
+async function siguienteLote(tipoVacunaId, fecha) {
+  const lote = await tiposRepo.siguienteLote(tipoVacunaId, fecha || hoy());
+  if (!lote) throw HttpError.notFound('Tipo de vacuna');
+  return { lote };
 }
 
 function eliminar() {
   throw HttpError.regla('RN05_HISTORIAL_NO_ELIMINABLE', 'Las vacunas aplicadas forman parte del historial clínico y no pueden eliminarse');
 }
 
-module.exports = { listar, aplicar, eliminar };
+module.exports = { listar, aplicar, eliminar, siguienteLote };

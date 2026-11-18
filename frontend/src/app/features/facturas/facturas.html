@@ -1,0 +1,99 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Caja</p>
+    <h1>Facturación</h1>
+    <p class="descripcion">Cada consulta, vacuna o servicio de peluquería genera su factura automáticamente y se envía al correo del propietario.</p>
+  </div>
+  @if (meta(); as m) {
+    <div class="total-periodo" aria-live="polite">
+      <span>Facturado en el período</span>
+      <strong>$ {{ (m.montoEmitido ?? 0) | number: '1.2-2' }}</strong>
+      <small>{{ m.total }} factura(s)</small>
+    </div>
+  }
+</header>
+
+<form class="filtros" (ngSubmit)="filtrar()" role="search">
+  <label class="campo crece"><span>Buscar</span><input type="search" name="q" [(ngModel)]="filtros.q" placeholder="N.º de factura, cédula, propietario o mascota" /></label>
+  <label class="campo"><span>Desde</span><input type="date" name="desde" [(ngModel)]="filtros.desde" (change)="filtrar()" /></label>
+  <label class="campo"><span>Hasta</span><input type="date" name="hasta" [(ngModel)]="filtros.hasta" (change)="filtrar()" /></label>
+  <label class="campo">
+    <span>Servicio</span>
+    <select name="origen" [(ngModel)]="filtros.origen" (change)="filtrar()">
+      <option value="">Todos</option>
+      <option value="CONSULTA">Consultas</option>
+      <option value="VACUNA">Vacunas</option>
+      <option value="SERVICIO">Peluquería</option>
+    </select>
+  </label>
+  <label class="campo">
+    <span>Estado</span>
+    <select name="estado" [(ngModel)]="filtros.estado" (change)="filtrar()">
+      <option value="">Todas</option>
+      <option value="EMITIDA">Emitidas</option>
+      <option value="ANULADA">Anuladas</option>
+    </select>
+  </label>
+  <button type="submit" class="btn">Buscar</button>
+  <button type="button" class="btn btn-texto" (click)="hoy()">Solo hoy</button>
+</form>
+
+<app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay facturas en el período seleccionado." (reintentar)="cargar()" />
+
+@if (!cargando() && lista().length) {
+  <div class="tabla-cont">
+    <table class="tabla">
+      <caption class="solo-lector">Facturas emitidas</caption>
+      <thead><tr><th>Factura</th><th>Cliente / paciente</th><th>Servicio</th><th class="num">Total</th><th>Correo</th><th><span class="solo-lector">Acciones</span></th></tr></thead>
+      <tbody>
+        @for (f of lista(); track f.id) {
+          <tr [class.inactivo]="f.estado === 'ANULADA'">
+            <td class="fuerte">{{ f.numero }}<span class="sub">{{ f.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
+              @if (f.estado === 'ANULADA') { <span class="badge badge-vencido">Anulada</span> }
+            </td>
+            <td>{{ f.propietario }}<span class="sub">C.I. {{ f.propietarioCedula }} · <a [routerLink]="['/mascotas', f.mascotaId, 'historial']">{{ f.mascota }}</a></span></td>
+            <td>{{ origenes[f.origen] }}</td>
+            <td class="num fuerte">$ {{ f.total | number: '1.2-2' }}<span class="sub">IVA $ {{ f.iva | number: '1.2-2' }}</span></td>
+            <td>
+              @if (f.correoEstado; as ec) { <span class="badge" [class]="'badge ' + correos[ec].clase">{{ correos[ec].texto }}</span> }
+              @else { <span class="texto-suave">—</span> }
+            </td>
+            <td class="acciones-fila">
+              <button type="button" class="btn btn-texto btn-chico" (click)="verDetalle(f)" [attr.aria-expanded]="abierta()?.id === f.id">Detalle</button>
+              <button type="button" class="btn btn-chico" (click)="descargar(f)" [disabled]="ocupado() === f.id" title="Descargar PDF">⬇ PDF</button>
+              <button type="button" class="btn btn-chico" (click)="imprimir(f)" [disabled]="ocupado() === f.id" title="Imprimir">🖨️</button>
+              @if (f.estado === 'EMITIDA') {
+                <button type="button" class="btn btn-chico" (click)="reenviar(f)" [disabled]="ocupado() === f.id" title="Enviar por correo">✉</button>
+                @if (auth.tieneRol('ADMIN')) {
+                  <button type="button" class="btn btn-texto btn-chico peligro" (click)="anular(f)">Anular</button>
+                }
+              }
+            </td>
+          </tr>
+          @if (abierta()?.id === f.id && abierta(); as d) {
+            <tr class="detalle">
+              <td colspan="6">
+                <table class="tabla interna">
+                  <thead><tr><th>Concepto</th><th class="num">Cant.</th><th class="num">P. unitario</th><th class="num">Subtotal</th></tr></thead>
+                  <tbody>
+                    @for (l of d.detalle; track l.id) {
+                      <tr><td>{{ l.concepto }}</td><td class="num">{{ l.cantidad }}</td><td class="num">$ {{ l.precioUnitario | number: '1.2-2' }}</td><td class="num">$ {{ l.subtotal | number: '1.2-2' }}</td></tr>
+                    }
+                    <tr><td colspan="3" class="num">Subtotal</td><td class="num">$ {{ d.subtotal | number: '1.2-2' }}</td></tr>
+                    <tr><td colspan="3" class="num">IVA {{ d.ivaPorcentaje }} %</td><td class="num">$ {{ d.iva | number: '1.2-2' }}</td></tr>
+                    <tr><td colspan="3" class="num fuerte">Total</td><td class="num fuerte">$ {{ d.total | number: '1.2-2' }}</td></tr>
+                  </tbody>
+                </table>
+                <p class="texto-suave nota">Emitida por {{ d.emitidoPor }}
+                  @if (d.correoDestino) { · Correo: {{ d.correoDestino }} }
+                  @if (d.motivoAnulacion) { · <span class="texto-peligro">Anulada: {{ d.motivoAnulacion }}</span> }
+                </p>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-paginador [meta]="meta()" (cambiarPagina)="pagina($event)" (cambiarTamano)="tamano($event)" />
+}

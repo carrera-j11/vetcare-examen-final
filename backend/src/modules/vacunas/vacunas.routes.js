@@ -19,6 +19,7 @@ const tiposRouter = Router();
 tiposRouter.use(autenticar);
 tiposRouter.get('/', autorizar(...TODOS), validar(tiposDto.filtros, 'query'), c.listarTipos);
 tiposRouter.post('/', autorizar(ADMIN), validar(tiposDto.guardar), c.crearTipo);
+tiposRouter.get('/:id/siguiente-lote', autorizar(...TODOS), validar(paramId, 'params'), validar(vacunasDto.siguienteLote, 'query'), c.siguienteLote);
 tiposRouter.put('/:id', autorizar(ADMIN), validar(paramId, 'params'), validar(tiposDto.guardar), c.actualizarTipo);
 
 // /api/vacunas

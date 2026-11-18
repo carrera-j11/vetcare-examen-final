@@ -7,6 +7,7 @@ import { Notificacion } from '../../core/models/sistema.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmacionService } from '../../core/services/confirmacion.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
+import { PanelAccesibilidad } from '../../shared/components/panel-accesibilidad/panel-accesibilidad';
 
 interface ItemMenu {
   ruta: string;
@@ -23,7 +24,7 @@ interface GrupoMenu {
 /** Estructura principal: menú lateral según rol, barra superior y campana de alertas. */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PanelAccesibilidad],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
 })
@@ -46,6 +47,7 @@ export class Shell {
       { ruta: '/citas', texto: 'Citas', icono: '🗓️' },
       { ruta: '/consultas', texto: 'Consultas', icono: '🩺' },
       { ruta: '/vacunas', texto: 'Vacunas', icono: '💉' },
+      { ruta: '/facturas', texto: 'Facturación', icono: '🧾', roles: ['ADMIN', 'RECEPCION'] },
     ] },
     { titulo: 'Registro', items: [
       { ruta: '/propietarios', texto: 'Propietarios', icono: '👤' },
@@ -53,9 +55,9 @@ export class Shell {
     ] },
     { titulo: 'Clínica', items: [
       { ruta: '/veterinarios', texto: 'Veterinarios', icono: '👩‍⚕️' },
-      { ruta: '/especialidades', texto: 'Especialidades', icono: '🏷️', roles: ['ADMIN'] },
+      { ruta: '/especialidades', texto: 'Servicios y precios', icono: '🏷️', roles: ['ADMIN'] },
       { ruta: '/bloqueos', texto: 'Bloqueos de agenda', icono: '⛔' },
-      { ruta: '/tipos-vacuna', texto: 'Tipos de vacuna', icono: '🧪', roles: ['ADMIN'] },
+      { ruta: '/tipos-vacuna', texto: 'Vacunas y precios', icono: '🧪', roles: ['ADMIN'] },
     ] },
     { titulo: 'Administración', items: [
       { ruta: '/reportes', texto: 'Reportes', icono: '📈', roles: ['ADMIN'] },

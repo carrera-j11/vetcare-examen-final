@@ -19,7 +19,13 @@ async function totales() {
         WHERE cp.estado = 'PENDIENTE' AND m.activo = 1 AND cp.fecha_programada < CURDATE())      AS controlesVencidos,
       (SELECT COUNT(*) FROM controles_periodicos cp JOIN mascotas m ON m.id = cp.mascota_id
         WHERE cp.estado = 'PENDIENTE' AND m.activo = 1
-          AND cp.fecha_programada BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY))     AS controlesProximos`);
+          AND cp.fecha_programada BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY))     AS controlesProximos,
+      (SELECT COALESCE(SUM(total), 0) FROM facturas
+        WHERE estado = 'EMITIDA' AND fecha >= DATE_FORMAT(CURDATE(), '%Y-%m-01'))                AS ingresosMes,
+      (SELECT COUNT(*) FROM factura_detalle d JOIN facturas f ON f.id = d.factura_id
+        WHERE f.estado = 'EMITIDA' AND f.fecha >= DATE_FORMAT(CURDATE(), '%Y-%m-01'))            AS serviciosMes,
+      (SELECT COALESCE(SUM(total), 0) FROM facturas
+        WHERE estado = 'EMITIDA' AND DATE(fecha) = CURDATE())                                     AS ingresosHoy`);
   return fila;
 }
 
@@ -149,8 +155,51 @@ async function detalleConsultas(f) {
   return filas;
 }
 
+function filtrosFacturas(f) {
+  return new Filtros()
+    .agregar("f.estado = 'EMITIDA'")
+    .si(f.desde, 'f.fecha >= ?', `${f.desde} 00:00:00`)
+    .si(f.hasta, 'f.fecha <= ?', `${f.hasta} 23:59:59`);
+}
+
+/** Ingresos del período: totales, por tipo de servicio, por día y detalle de facturas */
+async function ingresos(f) {
+  const filtros = filtrosFacturas(f);
+  const [[resumen]] = await pool.query(
+    `SELECT COUNT(DISTINCT f.id) AS facturas, COALESCE(SUM(d.cantidad), 0) AS servicios,
+            COALESCE(SUM(d.subtotal), 0) AS subtotal
+       FROM facturas f JOIN factura_detalle d ON d.factura_id = f.id ${filtros.where}`, filtros.params);
+  const [[montos]] = await pool.query(
+    `SELECT COALESCE(SUM(f.iva), 0) AS iva, COALESCE(SUM(f.total), 0) AS total FROM facturas f ${filtros.where}`, filtros.params);
+  const [porCategoria] = await pool.query(
+    `SELECT d.categoria, COUNT(*) AS servicios, SUM(d.subtotal) AS subtotal
+       FROM facturas f JOIN factura_detalle d ON d.factura_id = f.id ${filtros.where}
+      GROUP BY d.categoria ORDER BY subtotal DESC`, filtros.params);
+  const [porConcepto] = await pool.query(
+    `SELECT d.concepto, COUNT(*) AS servicios, SUM(d.subtotal) AS subtotal
+       FROM facturas f JOIN factura_detalle d ON d.factura_id = f.id ${filtros.where}
+      GROUP BY d.concepto ORDER BY subtotal DESC`, filtros.params);
+  const [porDia] = await pool.query(
+    `SELECT DATE(f.fecha) AS fecha, COUNT(*) AS facturas, SUM(f.total) AS total
+       FROM facturas f ${filtros.where} GROUP BY DATE(f.fecha) ORDER BY fecha`, filtros.params);
+  const [detalle] = await pool.query(
+    `SELECT f.id, f.numero, f.fecha, f.origen, CONCAT(p.nombres, ' ', p.apellidos) AS propietario, m.nombre AS mascota,
+            (SELECT GROUP_CONCAT(d.concepto SEPARATOR ', ') FROM factura_detalle d WHERE d.factura_id = f.id) AS conceptos,
+            f.subtotal, f.iva, f.total, f.correo_estado AS correoEstado
+       FROM facturas f JOIN propietarios p ON p.id = f.propietario_id JOIN mascotas m ON m.id = f.mascota_id
+       ${filtros.where} ORDER BY f.fecha DESC LIMIT 5000`, filtros.params);
+  const num = (x) => Number(x || 0);
+  return {
+    resumen: { facturas: num(resumen.facturas), servicios: num(resumen.servicios), subtotal: num(resumen.subtotal), iva: num(montos.iva), total: num(montos.total) },
+    porCategoria: porCategoria.map((r) => ({ ...r, subtotal: num(r.subtotal) })),
+    porConcepto: porConcepto.map((r) => ({ ...r, subtotal: num(r.subtotal) })),
+    porDia: porDia.map((r) => ({ ...r, total: num(r.total) })),
+    detalle: detalle.map((r) => ({ ...r, subtotal: num(r.subtotal), iva: num(r.iva), total: num(r.total) })),
+  };
+}
+
 module.exports = {
-  detalleVacunas, detalleConsultas,
+  ingresos, detalleVacunas, detalleConsultas,
   totales, citasPorEstado, citasPorVeterinario, citasPorEspecialidad, citasPorDia,
   mascotasPorEspecie, vacunasPorTipo, coberturaVacunacion, detalleCitas,
 };

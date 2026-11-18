@@ -16,10 +16,11 @@ const mascotasRepo = require('../mascotas/mascotas.repository');
 const especialidadesRepo = require('../especialidades/especialidades.repository');
 const veterinariosRepo = require('../veterinarios/veterinarios.repository');
 const auditoria = require('../auditoria/auditoria.service');
+const facturas = require('../facturas/facturas.service');
 const { transaccion } = require('../../config/db');
 const HttpError = require('../../utils/HttpError');
 const { meta } = require('../../utils/paginacion');
-const { deTexto, sumarMinutos, aTextoFechaHora } = require('../../utils/fechas');
+const { deTexto, sumarMinutos, aTextoFechaHora, aTextoFecha, hoy } = require('../../utils/fechas');
 const { ROLES } = require('../../middlewares/autenticacion');
 
 /** Un veterinario solo ve su propia agenda */
@@ -140,6 +141,33 @@ async function marcarNoAsistio(id, { version }, ctx) {
   });
 }
 
+/**
+ * Completa un servicio estético (peluquería y baño): marca la cita como ATENDIDA
+ * y genera su factura en la misma transacción. Luego envía la factura por correo.
+ */
+async function completarServicio(id, { version }, ctx) {
+  const cita = await obtenerEntidad(id, ctx.usuario);
+  if (cita.especialidadTipo !== 'ESTETICA') {
+    throw HttpError.regla('SERVICIO_CLINICO', 'Las citas clínicas se atienden registrando una consulta');
+  }
+  if (cita.estado !== 'PROGRAMADA') throw HttpError.regla('CITA_NO_MODIFICABLE', `La cita ya está en estado ${cita.estado}`);
+  if (aTextoFecha(deTexto(cita.inicio)) > hoy()) {
+    throw HttpError.regla('CITA_FUTURA', 'No se puede completar un servicio programado para un día posterior');
+  }
+  const resultado = await transaccion(async (conn) => {
+    const ok = await repo.cambiarEstado(conn, id, version, 'ATENDIDA');
+    if (!ok) throw HttpError.conflict('CONFLICTO_VERSION', 'La cita fue modificada por otro usuario. Recargue la información');
+    const facturaId = await facturas.generar(conn, {
+      origen: 'SERVICIO', referenciaId: id, propietarioId: cita.propietarioId, mascotaId: cita.mascotaId,
+      items: [{ concepto: `Servicio · ${cita.especialidadNombre}`, categoria: 'ESTETICA', cantidad: 1, precioUnitario: cita.especialidadPrecio }],
+    }, ctx);
+    await auditoria.registrar(conn, ctx, { accion: auditoria.ACCIONES.ATENDER, entidad: 'cita', entidadId: id, detalle: { servicio: cita.especialidadNombre, facturaId } });
+    return { ...dto.aRespuesta(await repo.buscarPorId(id, conn)), facturaId };
+  });
+  resultado.factura = await facturas.enviarPorCorreo(resultado.facturaId);
+  return resultado;
+}
+
 async function espaciosLibres({ veterinarioId, especialidadId, fecha }) {
   const especialidad = await especialidadesRepo.buscarPorId(especialidadId);
   if (!especialidad) throw HttpError.notFound('Especialidad');
@@ -153,4 +181,4 @@ async function sugerencias({ especialidadId, veterinarioId, desde, cantidad }) {
   return { especialidad: { id: especialidad.id, nombre: especialidad.nombre, duracionMin: especialidad.duracionMin }, ...r };
 }
 
-module.exports = { listar, obtener, obtenerEntidad, crear, reprogramar, cancelar, marcarNoAsistio, espaciosLibres, sugerencias };
+module.exports = { listar, obtener, obtenerEntidad, crear, reprogramar, cancelar, marcarNoAsistio, completarServicio, espaciosLibres, sugerencias };

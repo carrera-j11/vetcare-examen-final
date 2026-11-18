@@ -22,7 +22,7 @@
   <div class="fila-campos">
     <label class="campo">
       <span>Tipo de vacuna <span class="requerido">*</span></span>
-      <select formControlName="tipoVacunaId" (change)="calcularProxima()">
+      <select formControlName="tipoVacunaId" (change)="cambioTipoOFecha()">
         <option [ngValue]="0" disabled>Seleccione…</option>
         @for (t of tiposCompatibles(); track t.id) {
           <option [ngValue]="t.id">{{ t.nombre }}{{ t.intervaloDias ? ' · refuerzo cada ' + t.intervaloDias + ' días' : ' · dosis única' }}</option>
@@ -33,7 +33,7 @@
     </label>
     <label class="campo">
       <span>Fecha de aplicación <span class="requerido">*</span></span>
-      <input type="date" formControlName="fechaAplicacion" [max]="hoy" (change)="calcularProxima()" />
+      <input type="date" formControlName="fechaAplicacion" [max]="hoy" (change)="cambioTipoOFecha()" />
       <app-campo-error [control]="form.controls.fechaAplicacion" />
     </label>
     @if (auth.tieneRol('ADMIN')) {
@@ -54,11 +54,11 @@
   </div>
 
   <div class="fila-campos">
-    <label class="campo">
-      <span>Lote</span>
-      <input formControlName="lote" placeholder="RAB-24-0001" />
-      <app-campo-error [control]="form.controls.lote" />
-    </label>
+    <div class="campo">
+      <span class="etiqueta">Lote <small class="texto-suave">(automático)</small></span>
+      <p class="solo-lectura" aria-live="polite">{{ loteSiguiente() || 'Se asigna al elegir el tipo de vacuna' }}</p>
+      <span class="ayuda">Número consecutivo según las vacunas de este tipo aplicadas en el año.</span>
+    </div>
     <label class="campo">
       <span>Próxima dosis</span>
       <input type="date" formControlName="proximaDosis" />
@@ -66,6 +66,13 @@
       <app-campo-error [control]="form.controls.proximaDosis" />
     </label>
   </div>
+  @if (tipoElegido(); as t) {
+    <div class="precio" aria-live="polite">
+      <span>💲 Precio: <strong>$ {{ t.precio.toFixed(2) }}</strong> + IVA {{ ivaPorcentaje }} % = <strong>$ {{ totalConIva(t.precio).toFixed(2) }}</strong></span>
+      <span class="texto-suave">La factura se genera y se envía por correo al registrar la vacuna.</span>
+    </div>
+  }
+
   <label class="campo">
     <span>Observaciones</span>
     <textarea formControlName="observaciones" rows="2" maxlength="250"></textarea>

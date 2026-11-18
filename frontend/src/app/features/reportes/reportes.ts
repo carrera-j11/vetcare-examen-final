@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ReporteCitas, SeccionReporte } from '../../core/models/reporte.model';
@@ -13,7 +13,7 @@ import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
 /** Reporte de citas con filtros avanzados, resumen por veterinario y exportación CSV. */
 @Component({
   selector: 'app-reportes',
-  imports: [DatePipe, FormsModule, EstadoVista],
+  imports: [DatePipe, DecimalPipe, FormsModule, EstadoVista],
   templateUrl: './reportes.html',
   styleUrl: './reportes.css',
 })
@@ -29,6 +29,8 @@ export class Reportes implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly exportando = signal<SeccionReporte | null>(null);
   protected readonly pestana = signal<SeccionReporte>('citas');
+  protected readonly nombresSeccion: Record<SeccionReporte, string> = { citas: 'citas', vacunas: 'vacunas', consultas: 'consultas', ingresos: 'ingresos' };
+  protected readonly categorias: Record<string, string> = { CONSULTA: '🩺 Consultas', VACUNA: '💉 Vacunas', ESTETICA: '✂️ Peluquería y baño' };
 
   protected filtros = { desde: sumarDias(hoyTexto(), -30), hasta: sumarDias(hoyTexto(), 15), veterinarioId: '', especialidadId: '', estado: '' };
 

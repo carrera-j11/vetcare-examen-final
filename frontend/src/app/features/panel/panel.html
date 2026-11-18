@@ -27,6 +27,10 @@
     <article class="kpi"><span class="kpi-icono">💉</span><div><p class="kpi-valor">{{ d.totales.vacunasMes }}</p><p class="kpi-texto">Vacunas este mes</p></div></article>
     <article class="kpi kpi-alerta"><span class="kpi-icono">⚠️</span><div><p class="kpi-valor">{{ d.totales.controlesVencidos }}</p><p class="kpi-texto">Controles vencidos</p></div></article>
     <article class="kpi kpi-aviso"><span class="kpi-icono">⏰</span><div><p class="kpi-valor">{{ d.totales.controlesProximos }}</p><p class="kpi-texto">Controles en 7 días</p></div></article>
+    @if (auth.tieneRol('ADMIN', 'RECEPCION')) {
+      <article class="kpi kpi-dinero"><span class="kpi-icono">💲</span><div><p class="kpi-valor">$ {{ d.totales.ingresosMes | number: '1.2-2' }}</p><p class="kpi-texto">Ingresos del mes · {{ d.totales.serviciosMes }} servicio(s)</p></div></article>
+      <article class="kpi kpi-dinero"><span class="kpi-icono">🧾</span><div><p class="kpi-valor">$ {{ d.totales.ingresosHoy | number: '1.2-2' }}</p><p class="kpi-texto">Ingresos de hoy</p></div></article>
+    }
     <article class="kpi"><span class="kpi-icono">✅</span><div><p class="kpi-valor">{{ d.totales.tasaAsistencia !== null ? (d.totales.tasaAsistencia | number: '1.0-1') + '%' : '—' }}</p><p class="kpi-texto">Tasa de asistencia</p></div></article>
     <article class="kpi"><span class="kpi-icono">🛡️</span><div><p class="kpi-valor">{{ d.totales.coberturaVacunacion !== null ? (d.totales.coberturaVacunacion | number: '1.0-1') + '%' : '—' }}</p><p class="kpi-texto">Mascotas con vacunas al día</p></div></article>
   </section>

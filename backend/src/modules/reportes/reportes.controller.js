@@ -8,7 +8,7 @@ async function reporteCitas(req, res) {
   const reporte = await servicio.reporteCitas(req.consulta);
   if (req.consulta.formato === 'csv') {
     const { seccion } = req.consulta;
-    const filas = seccion === 'vacunas' ? reporte.vacunas.detalle : seccion === 'consultas' ? reporte.consultas.detalle : reporte.detalle;
+    const filas = { vacunas: reporte.vacunas.detalle, consultas: reporte.consultas.detalle, ingresos: reporte.ingresos.detalle }[seccion] || reporte.detalle;
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="reporte-${seccion}-${reporte.rango.desde}_${reporte.rango.hasta}.csv"`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');

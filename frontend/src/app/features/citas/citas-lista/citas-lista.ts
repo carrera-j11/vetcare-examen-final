@@ -94,6 +94,24 @@ export class CitasLista implements OnInit {
     });
   }
 
+  /** Peluquería y baño: confirma, marca la cita como atendida y genera la factura */
+  async completar(c: Cita): Promise<void> {
+    const total = Math.round(c.especialidad.precio * 1.15 * 100) / 100;
+    const { confirmado } = await this.confirmacion.pedir({
+      titulo: 'Completar servicio',
+      mensaje: `${c.especialidad.nombre} de ${c.mascota.nombre}. Se generará la factura por $ ${total.toFixed(2)} (IVA incluido) y se enviará al correo de ${c.propietario.nombreCompleto}.`,
+      textoConfirmar: 'Completar y facturar',
+    });
+    if (!confirmado) return;
+    this.servicio.completar(c.id, c.version).subscribe({
+      next: (r) => {
+        this.avisos.exito(r.factura?.estado === 'ENVIADO' ? 'Servicio completado. Factura enviada por correo' : 'Servicio completado y facturado');
+        this.cargar();
+      },
+      error: (e) => { this.avisos.error(mensajeError(e)); this.cargar(); },
+    });
+  }
+
   async noAsistio(c: Cita): Promise<void> {
     const { confirmado } = await this.confirmacion.pedir({
       titulo: 'Registrar inasistencia', mensaje: `¿${c.mascota.nombre} no asistió a su cita?`, textoConfirmar: 'Registrar',

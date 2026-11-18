@@ -1,0 +1,11 @@
+.total-periodo {
+  display: flex; flex-direction: column; align-items: flex-end; padding: .7rem 1rem;
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra);
+}
+.total-periodo span { font-size: .8rem; color: var(--texto-suave); }
+.total-periodo strong { font-size: 1.6rem; color: var(--primario); line-height: 1.2; }
+.total-periodo small { color: var(--texto-suave); }
+.detalle > td { background: var(--superficie-2); }
+.interna { max-width: 640px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 8px; }
+.nota { margin: .5rem 0 0; font-size: .82rem; }
+.peligro { color: var(--peligro); }

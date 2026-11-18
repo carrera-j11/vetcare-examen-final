@@ -8,6 +8,9 @@ const guardar = z.object({
   especie: z.enum(ESPECIES).optional().nullable(),
   intervaloDias: z.coerce.number().int().min(7, 'El intervalo mínimo es 7 días').max(1095, 'El intervalo máximo es 3 años').optional().nullable(),
   descripcion: textoOpcional(250, 'La descripción'),
+  precio: z.coerce.number({ invalid_type_error: 'El precio debe ser numérico' })
+    .min(0, 'El precio no puede ser negativo').max(10000, 'El precio máximo es 10 000')
+    .transform((v) => Math.round(v * 100) / 100),
   activo: z.boolean().default(true),
 });
 
@@ -20,7 +23,7 @@ const filtros = listadoQuery.extend({
 function aRespuesta(t) {
   return {
     id: t.id, nombre: t.nombre, especie: t.especie, intervaloDias: t.intervaloDias,
-    descripcion: t.descripcion, activo: Boolean(t.activo), totalAplicadas: t.totalAplicadas,
+    descripcion: t.descripcion, precio: Number(t.precio), activo: Boolean(t.activo), totalAplicadas: t.totalAplicadas,
   };
 }
 

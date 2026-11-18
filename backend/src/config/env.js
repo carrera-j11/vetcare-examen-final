@@ -47,25 +47,30 @@ const env = {
   },
   /**
    * Correo de alertas. Proveedores:
-   *  - smtp  → Gmail u otro servidor SMTP (ideal en local; Railway bloquea SMTP en planes gratuitos/Hobby)
+   *  - smtp  → Outlook/Microsoft 365, Gmail u otro servidor SMTP (ideal en local; Railway bloquea SMTP en planes gratuitos/Hobby)
    *  - brevo → API HTTP de Brevo (funciona en cualquier hosting)
    *  - vacío → correo deshabilitado (las alertas igual se muestran en el sistema)
    */
   correo: {
     proveedor: (process.env.MAIL_PROVEEDOR || '').toLowerCase(),
-    remitente: process.env.MAIL_REMITENTE || 'alex.carrera2004@gmail.com',
+    remitente: process.env.MAIL_REMITENTE || 'javier.carrera2004@est.ucacue.edu.ec',
     nombreRemitente: process.env.MAIL_NOMBRE_REMITENTE || 'VetCare · Administración',
     /** Si se define, TODOS los correos se envían a esta dirección (modo demostración) */
     redirigirA: (process.env.MAIL_REDIRIGIR_A || '').trim(),
     /** Copia oculta opcional para el administrador */
     copiaAdmin: (process.env.MAIL_COPIA_ADMIN || '').trim(),
     smtp: {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT || 465),
+      host: process.env.SMTP_HOST || 'smtp.office365.com',
+      port: Number(process.env.SMTP_PORT || 587),
       user: process.env.SMTP_USER || '',
       pass: process.env.SMTP_PASS || '',
     },
     brevoApiKey: process.env.BREVO_API_KEY || '',
+  },
+  /** Facturación: IVA aplicado a los servicios (Ecuador: 15 %) */
+  facturacion: {
+    ivaPorcentaje: Number(process.env.IVA_PORCENTAJE ?? 15),
+    ruc: process.env.CLINICA_RUC || '0190000000001',
   },
   clinica: {
     nombre: process.env.CLINICA_NOMBRE || 'Clínica Veterinaria VetCare',

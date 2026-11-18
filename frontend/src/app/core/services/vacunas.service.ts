@@ -11,6 +11,8 @@ export class VacunasService {
   // Tipos de vacuna
   tipos(f: FiltrosListado = { tamano: 100 }) { return this.api.listar<TipoVacuna>('/tipos-vacuna', f); }
   crearTipo(d: Partial<TipoVacuna>) { return this.api.crear<TipoVacuna>('/tipos-vacuna', d); }
+  /** Lote que se asignará automáticamente (vista previa) */
+  siguienteLote(tipoId: number, fecha: string) { return this.api.obtener<{ lote: string }>(`/tipos-vacuna/${tipoId}/siguiente-lote`, { fecha }); }
   actualizarTipo(id: number, d: Partial<TipoVacuna>) { return this.api.actualizar<TipoVacuna>(`/tipos-vacuna/${id}`, d); }
 
   // Vacunas aplicadas

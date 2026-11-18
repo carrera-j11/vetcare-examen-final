@@ -70,6 +70,10 @@ export const routes: Routes = [
       { path: 'tipos-vacuna', title: 'Tipos de vacuna · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN'] },
         loadComponent: () => import('./features/tipos-vacuna/tipos-vacuna').then((m) => m.TiposVacuna) },
 
+      // Facturación (caja)
+      { path: 'facturas', title: 'Facturación · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN', 'RECEPCION'] },
+        loadComponent: () => import('./features/facturas/facturas').then((m) => m.Facturas) },
+
       // Administración
       { path: 'reportes', title: 'Reportes · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN'] },
         loadComponent: () => import('./features/reportes/reportes').then((m) => m.Reportes) },

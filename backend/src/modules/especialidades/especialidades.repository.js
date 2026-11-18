@@ -2,12 +2,12 @@ const { pool } = require('../../config/db');
 const { Filtros, ordenSeguro, offset } = require('../../utils/paginacion');
 
 const SELECT_BASE = `
-  SELECT e.id, e.nombre, e.descripcion, e.duracion_min AS duracionMin, e.activo,
+  SELECT e.id, e.nombre, e.descripcion, e.duracion_min AS duracionMin, e.tipo, e.precio, e.activo,
          (SELECT COUNT(*) FROM veterinario_especialidad ve JOIN veterinarios v ON v.id = ve.veterinario_id
            WHERE ve.especialidad_id = e.id AND v.activo = 1) AS totalVeterinarios
     FROM especialidades e`;
 
-const COLUMNAS_ORDEN = { nombre: 'e.nombre', duracionMin: 'e.duracion_min' };
+const COLUMNAS_ORDEN = { nombre: 'e.nombre', duracionMin: 'e.duracion_min', precio: 'e.precio' };
 
 async function listar(f) {
   const filtros = new Filtros()
@@ -31,14 +31,14 @@ async function existeNombre(nombre, excluirId = 0) {
 }
 
 async function insertar(conn, e) {
-  const [r] = await conn.execute('INSERT INTO especialidades (nombre, descripcion, duracion_min, activo) VALUES (?, ?, ?, ?)',
-    [e.nombre, e.descripcion, e.duracionMin, e.activo ? 1 : 0]);
+  const [r] = await conn.execute('INSERT INTO especialidades (nombre, descripcion, duracion_min, tipo, precio, activo) VALUES (?, ?, ?, ?, ?, ?)',
+    [e.nombre, e.descripcion, e.duracionMin, e.tipo, e.precio, e.activo ? 1 : 0]);
   return r.insertId;
 }
 
 async function actualizar(conn, id, e) {
-  await conn.execute('UPDATE especialidades SET nombre = ?, descripcion = ?, duracion_min = ?, activo = ? WHERE id = ?',
-    [e.nombre, e.descripcion, e.duracionMin, e.activo ? 1 : 0, id]);
+  await conn.execute('UPDATE especialidades SET nombre = ?, descripcion = ?, duracion_min = ?, tipo = ?, precio = ?, activo = ? WHERE id = ?',
+    [e.nombre, e.descripcion, e.duracionMin, e.tipo, e.precio, e.activo ? 1 : 0, id]);
 }
 
 async function eliminar(conn, id) {

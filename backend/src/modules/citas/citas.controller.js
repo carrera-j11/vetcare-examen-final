@@ -25,6 +25,10 @@ async function marcarNoAsistio(req, res) {
   res.json({ data: await servicio.marcarNoAsistio(req.params.id, req.body, contexto(req)) });
 }
 
+async function completarServicio(req, res) {
+  res.json({ data: await servicio.completarServicio(req.params.id, req.body, contexto(req)) });
+}
+
 async function espaciosLibres(req, res) {
   res.json({ data: await servicio.espaciosLibres(req.consulta) });
 }
@@ -34,4 +38,4 @@ async function sugerencias(req, res) {
   res.json({ data: await servicio.sugerencias(req.consulta) });
 }
 
-module.exports = { listar, obtener, crear, reprogramar, cancelar, marcarNoAsistio, espaciosLibres, sugerencias };
+module.exports = { listar, obtener, crear, reprogramar, cancelar, marcarNoAsistio, completarServicio, espaciosLibres, sugerencias };

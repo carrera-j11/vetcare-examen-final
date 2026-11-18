@@ -43,6 +43,11 @@
   --info-texto: #1e3a8a;
   --sobre-primario: #ffffff;
   --sobre-peligro: #ffffff;
+  --lateral-fondo: #0b3b37;
+  --lateral-texto: #d7efec;
+  --lateral-grupo: #7fb9b1;
+  --lateral-activo-fondo: var(--primario);
+  --lateral-activo-texto: #ffffff;
   --radio: 10px;
   --sombra: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
   --sombra-alta: 0 12px 32px rgba(16, 24, 40, .18);
@@ -54,47 +59,53 @@
    Se activa con la pestaña de la media luna; agrega data-tema="oscuro" a <html>.
    Todos los componentes usan estas variables, por eso cambian de color solos. */
 :root[data-tema='oscuro'] {
-  --primario: #2dd4bf;
-  --primario-oscuro: #5eead4;
-  --primario-suave: #134e4a;
-  --acento: #fbbf24;
-  --fondo: #0b1214;
-  --superficie: #131c1f;
-  --superficie-2: #1a2427;
-  --borde: #26363a;
-  --texto: #e2e8f0;
-  --texto-suave: #9fb0b8;
-  --exito: #4ade80;
-  --exito-suave: #12321f;
-  --peligro: #f87171;
-  --peligro-suave: #3a1414;
-  --advertencia: #fbbf24;
-  --advertencia-suave: #3a2a0a;
-  --info: #60a5fa;
-  --info-suave: #142744;
-  --titulo: #f1f5f9;
-  --etiqueta: #cbd5e1;
-  --borde-fuerte: #3a4d52;
-  --linea: #1f2c30;
-  --hover: #182a2b;
-  --barra: rgba(19, 28, 31, .95);
-  --neutro-suave: #253033;
-  --neutro-texto: #cbd5e1;
-  --neutro-borde: #64748b;
-  --morado: #c4b5fd;
-  --morado-suave: #2e1f4d;
-  --indigo: #a5b4fc;
-  --indigo-suave: #1e2250;
-  --peligro-oscuro: #dc2626;
-  --peligro-borde: #7f1d1d;
-  --peligro-texto: #fecaca;
-  --exito-texto: #bbf7d0;
-  --advertencia-texto: #fde68a;
-  --info-texto: #bfdbfe;
-  --sobre-primario: #04201d;
-  --sobre-peligro: #2a0707;
-  --sombra: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .5);
-  --sombra-alta: 0 12px 32px rgba(0, 0, 0, .6);
+  /* Paleta nocturna suave: grises azulados, turquesa apagado y alertas de bajo brillo */
+  --primario: #4fae9f;
+  --primario-oscuro: #66c0b2;
+  --primario-suave: #1f3b38;
+  --acento: #e0b354;
+  --fondo: #151b1e;
+  --superficie: #1c2428;
+  --superficie-2: #222b30;
+  --borde: #2e3a40;
+  --texto: #d9e1e6;
+  --texto-suave: #98a6ae;
+  --exito: #6cc497;
+  --exito-suave: #1d3328;
+  --peligro: #e5847d;
+  --peligro-suave: #362527;
+  --advertencia: #dfb15c;
+  --advertencia-suave: #352e21;
+  --info: #82a9e6;
+  --info-suave: #1f2a3d;
+  --titulo: #edf2f5;
+  --etiqueta: #c2ccd2;
+  --borde-fuerte: #3c4a51;
+  --linea: #263035;
+  --hover: #24302f;
+  --barra: rgba(28, 36, 40, .96);
+  --neutro-suave: #2a3439;
+  --neutro-texto: #c2ccd2;
+  --neutro-borde: #6d7a82;
+  --morado: #c1b3ee;
+  --morado-suave: #2b2740;
+  --indigo: #a8b5ef;
+  --indigo-suave: #242a43;
+  --peligro-oscuro: #d36c65;
+  --peligro-borde: #6a3b3b;
+  --peligro-texto: #f2c7c3;
+  --exito-texto: #c7e9d6;
+  --advertencia-texto: #efdcb2;
+  --info-texto: #cddcf4;
+  --sobre-primario: #0f1f1d;
+  --sobre-peligro: #2a1210;
+  --lateral-fondo: #11181b;
+  --lateral-texto: #b8c6cc;
+  --lateral-grupo: #6f8c88;
+  --lateral-activo-fondo: #24423e;
+  --lateral-activo-texto: #e3f4f1;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px rgba(0, 0, 0, .35);
+  --sombra-alta: 0 12px 32px rgba(0, 0, 0, .45);
   color-scheme: dark;
 }
 
@@ -104,6 +115,7 @@
 html, body { margin: 0; height: 100%; }
 
 body {
+  transition: background-color .2s, color .2s;
   font-family: var(--fuente);
   font-size: 15px;
   line-height: 1.5;

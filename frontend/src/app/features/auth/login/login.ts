@@ -5,10 +5,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AvisosService } from '../../../core/services/avisos.service';
 import { mensajeError } from '../../../core/utils/errores';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
+import { PanelAccesibilidad } from '../../../shared/components/panel-accesibilidad/panel-accesibilidad';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, CampoError],
+  imports: [ReactiveFormsModule, CampoError, PanelAccesibilidad],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

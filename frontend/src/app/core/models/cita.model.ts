@@ -12,7 +12,7 @@ export interface Cita {
   mascota: { id: number; nombre: string; especie: string };
   propietario: { id: number; nombreCompleto: string; telefono: string };
   veterinario: { id: number; nombreCompleto: string };
-  especialidad: { id: number; nombre: string; duracionMin: number };
+  especialidad: { id: number; nombre: string; duracionMin: number; tipo: 'CLINICO' | 'ESTETICA'; precio: number };
   consultaId: number | null;
   creadoEn: string;
 }

@@ -9,6 +9,7 @@
 .kpi-alerta .kpi-valor { color: var(--peligro); }
 .kpi-aviso .kpi-icono { background: var(--advertencia-suave); }
 .kpi-aviso .kpi-valor { color: var(--advertencia); }
+.kpi-dinero .kpi-valor { color: var(--primario); }
 
 .lista-alertas, .agenda, .barras { list-style: none; margin: 0; padding: 0; }
 .lista-alertas li { display: grid; gap: .15rem; padding: .6rem 0; border-bottom: 1px solid var(--linea); }

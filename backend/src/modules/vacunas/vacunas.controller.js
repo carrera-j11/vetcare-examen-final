@@ -12,6 +12,7 @@ module.exports = {
   // Tipos de vacuna
   listarTipos: async (req, res) => res.json(await tipos.listar(req.consulta)),
   crearTipo: async (req, res) => res.status(201).json({ data: await tipos.crear(req.body, contexto(req)) }),
+  siguienteLote: async (req, res) => res.json({ data: await vacunas.siguienteLote(req.params.id, req.consulta.fecha) }),
   actualizarTipo: async (req, res) => res.json({ data: await tipos.actualizar(req.params.id, req.body, contexto(req)) }),
 
   // Vacunas aplicadas

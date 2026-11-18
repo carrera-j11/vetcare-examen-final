@@ -71,9 +71,13 @@ CREATE TABLE especialidades (
   nombre          VARCHAR(80)  NOT NULL,
   descripcion     VARCHAR(250) NULL,
   duracion_min    SMALLINT     NOT NULL DEFAULT 30,   -- duración estándar de la cita
+  -- CLINICO: se atiende registrando una consulta · ESTETICA: peluquería/baño, se marca como completado
+  tipo            ENUM('CLINICO','ESTETICA') NOT NULL DEFAULT 'CLINICO',
+  precio          DECIMAL(8,2) NOT NULL DEFAULT 0,    -- precio del servicio (sin IVA)
   activo          TINYINT(1)   NOT NULL DEFAULT 1,
   CONSTRAINT uq_especialidades_nombre UNIQUE (nombre),
-  CONSTRAINT ck_especialidades_duracion CHECK (duracion_min BETWEEN 10 AND 240)
+  CONSTRAINT ck_especialidades_duracion CHECK (duracion_min BETWEEN 10 AND 240),
+  CONSTRAINT ck_especialidades_precio CHECK (precio >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE veterinarios (
@@ -206,8 +210,10 @@ CREATE TABLE tipos_vacuna (
   especie         ENUM('PERRO','GATO','AVE','CONEJO','REPTIL','OTRO') NULL,  -- NULL = cualquier especie
   intervalo_dias  SMALLINT     NULL,                  -- días hasta el refuerzo (NULL = dosis única)
   descripcion     VARCHAR(250) NULL,
+  precio          DECIMAL(8,2) NOT NULL DEFAULT 0,    -- precio de aplicación (sin IVA)
   activo          TINYINT(1)   NOT NULL DEFAULT 1,
-  CONSTRAINT uq_tipos_vacuna_nombre UNIQUE (nombre)
+  CONSTRAINT uq_tipos_vacuna_nombre UNIQUE (nombre),
+  CONSTRAINT ck_tipos_vacuna_precio CHECK (precio >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE vacunas_aplicadas (
@@ -247,6 +253,48 @@ CREATE TABLE controles_periodicos (
   CONSTRAINT fk_controles_vacuna  FOREIGN KEY (vacuna_origen_id) REFERENCES vacunas_aplicadas(id),
   CONSTRAINT fk_controles_usuario FOREIGN KEY (creado_por)       REFERENCES usuarios(id),
   INDEX idx_controles_fecha (fecha_programada, estado)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 6b. FACTURACIÓN (cada atención genera su factura y se envía por correo)
+-- ---------------------------------------------------------------------
+CREATE TABLE facturas (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20)  NULL,                  -- FAC-000001 (se asigna con el id)
+  propietario_id  INT          NOT NULL,
+  mascota_id      INT          NOT NULL,
+  fecha           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  origen          ENUM('CONSULTA','VACUNA','SERVICIO') NOT NULL,
+  referencia_id   INT          NOT NULL,              -- id de la consulta, vacuna o cita
+  subtotal        DECIMAL(10,2) NOT NULL,
+  iva_porcentaje  DECIMAL(5,2) NOT NULL,
+  iva             DECIMAL(10,2) NOT NULL,
+  total           DECIMAL(10,2) NOT NULL,
+  estado          ENUM('EMITIDA','ANULADA') NOT NULL DEFAULT 'EMITIDA',
+  motivo_anulacion VARCHAR(250) NULL,
+  correo_destino  VARCHAR(120) NULL,
+  correo_estado   ENUM('ENVIADO','ERROR','SIN_CORREO','NO_CONFIGURADO') NULL,
+  correo_enviado_en DATETIME   NULL,
+  creado_por      INT          NOT NULL,
+  -- Una misma atención nunca se factura dos veces
+  CONSTRAINT uq_facturas_origen UNIQUE (origen, referencia_id),
+  CONSTRAINT uq_facturas_numero UNIQUE (numero),
+  CONSTRAINT fk_facturas_propietario FOREIGN KEY (propietario_id) REFERENCES propietarios(id),
+  CONSTRAINT fk_facturas_mascota     FOREIGN KEY (mascota_id)     REFERENCES mascotas(id),
+  CONSTRAINT fk_facturas_usuario     FOREIGN KEY (creado_por)     REFERENCES usuarios(id),
+  CONSTRAINT ck_facturas_total CHECK (total >= 0),
+  INDEX idx_facturas_fecha (fecha, estado)
+) ENGINE=InnoDB;
+
+CREATE TABLE factura_detalle (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  factura_id      INT          NOT NULL,
+  concepto        VARCHAR(150) NOT NULL,
+  categoria       ENUM('CONSULTA','VACUNA','ESTETICA') NOT NULL,
+  cantidad        SMALLINT     NOT NULL DEFAULT 1,
+  precio_unitario DECIMAL(10,2) NOT NULL,
+  subtotal        DECIMAL(10,2) NOT NULL,
+  CONSTRAINT fk_detalle_factura FOREIGN KEY (factura_id) REFERENCES facturas(id)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------

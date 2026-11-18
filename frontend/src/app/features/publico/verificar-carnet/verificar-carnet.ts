@@ -3,11 +3,12 @@ import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { CarnetPublico } from '../../../core/models/mascota.model';
 import { MascotasService } from '../../../core/services/mascotas.service';
 import { mensajeError } from '../../../core/utils/errores';
+import { PanelAccesibilidad } from '../../../shared/components/panel-accesibilidad/panel-accesibilidad';
 
 /** Página pública a la que lleva el código QR del PDF: verifica el carnet de vacunación. */
 @Component({
   selector: 'app-verificar-carnet',
-  imports: [DatePipe, TitleCasePipe],
+  imports: [DatePipe, TitleCasePipe, PanelAccesibilidad],
   templateUrl: './verificar-carnet.html',
   styleUrl: './verificar-carnet.css',
 })
