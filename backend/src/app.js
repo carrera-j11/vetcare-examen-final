@@ -37,6 +37,9 @@ app.use('/api/docs', helmet({ contentSecurityPolicy: false }), swaggerUi.serve, 
   swaggerOptions: { persistAuthorization: true },
 }));
 
+// La raíz del servidor no es un endpoint: redirige a la documentación
+app.get(['/', '/api'], (_req, res) => res.redirect('/api/docs'));
+
 // Estado del servicio (para monitoreo y despliegue)
 app.get('/api/salud', async (_req, res) => {
   try {
