@@ -53,15 +53,17 @@ const env = {
    */
   correo: {
     proveedor: (process.env.MAIL_PROVEEDOR || '').toLowerCase(),
-    remitente: process.env.MAIL_REMITENTE || 'javier.carrera2004@est.ucacue.edu.ec',
+    remitente: process.env.MAIL_REMITENTE || 'alex.carrera2004@gmail.com',
     nombreRemitente: process.env.MAIL_NOMBRE_REMITENTE || 'VetCare · Administración',
     /** Si se define, TODOS los correos se envían a esta dirección (modo demostración) */
     redirigirA: (process.env.MAIL_REDIRIGIR_A || '').trim(),
+    /** Dirección a la que llegan las respuestas del propietario (p. ej. el correo institucional) */
+    responderA: (process.env.MAIL_RESPONDER_A || '').trim(),
     /** Copia oculta opcional para el administrador */
     copiaAdmin: (process.env.MAIL_COPIA_ADMIN || '').trim(),
     smtp: {
-      host: process.env.SMTP_HOST || 'smtp.office365.com',
-      port: Number(process.env.SMTP_PORT || 587),
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT || 465),
       user: process.env.SMTP_USER || '',
       pass: process.env.SMTP_PASS || '',
     },

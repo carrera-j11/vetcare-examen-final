@@ -1,7 +1,7 @@
 /**
  * Envío de correos (alertas automáticas y recordatorios).
  *
- * Remitente: el correo del administrador (MAIL_REMITENTE, por defecto javier.carrera2004@est.ucacue.edu.ec).
+ * Remitente: el correo del administrador (MAIL_REMITENTE, por defecto alex.carrera2004@gmail.com).
  * Proveedores:
  *   smtp  → nodemailer (Outlook/Microsoft 365, Gmail u otro servidor SMTP)
  *   brevo → API HTTP de Brevo (https://api.brevo.com/v3/smtp/email)
@@ -43,6 +43,7 @@ async function enviarPorBrevo({ para, asunto, html, texto, adjuntos = [] }) {
     textContent: texto,
   };
   if (c.copiaAdmin) cuerpo.bcc = [{ email: c.copiaAdmin }];
+  if (c.responderA) cuerpo.replyTo = { email: c.responderA, name: c.nombreRemitente };
   if (adjuntos.length) cuerpo.attachment = adjuntos.map((a) => ({ name: a.nombre, content: a.contenido.toString('base64') }));
   const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -62,6 +63,7 @@ async function enviarPorSmtp({ para, asunto, html, texto, adjuntos = [] }) {
     from: `"${c.nombreRemitente}" <${c.remitente}>`,
     to: para,
     bcc: c.copiaAdmin || undefined,
+    replyTo: c.responderA || undefined,
     subject: asunto,
     html,
     text: texto,

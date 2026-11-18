@@ -19,11 +19,8 @@ test('RN01 · Un veterinario no puede tener citas superpuestas (caso permitido y
   const ok = await agendar(token, { mascotaId: a.mascota.id, veterinarioId: 1, especialidadId: 1, inicio, motivo: 'Primera cita' });
   assert.equal(ok.status, 201);
 
-  // Rechazado: otra mascota, mismo veterinario, horario que se cruza (15 minutos después)
-  const [f, hora] = inicio.split(' ');
-  const [hh, mm] = hora.split(':').map(Number);
-  const cruce = `${f} ${String(hh + Math.floor((mm + 15) / 60)).padStart(2, '0')}:${String((mm + 15) % 60).padStart(2, '0')}`;
-  const choque = await agendar(token, { mascotaId: b.mascota.id, veterinarioId: 1, especialidadId: 1, inicio: cruce, motivo: 'Se cruza' });
+  // Rechazado: otra mascota, mismo veterinario y el mismo horario (dentro de la jornada laboral)
+  const choque = await agendar(token, { mascotaId: b.mascota.id, veterinarioId: 1, especialidadId: 1, inicio, motivo: 'Se cruza' });
   assert.equal(choque.status, 409);
   assert.equal(choque.body.error.codigo, 'RN01_CITA_SUPERPUESTA');
 });

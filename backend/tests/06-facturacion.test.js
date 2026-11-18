@@ -90,14 +90,19 @@ test('F5 · Completar un servicio de peluquería de hoy lo factura una sola vez'
 test('F6 · Las facturas no se eliminan: solo el administrador las anula con motivo', async () => {
   const rec = await h.recepcion();
   const adm = await h.admin();
-  assert.equal((await h.request(h.app).patch('/api/facturas/1/anular').set('Authorization', `Bearer ${rec}`).send({ motivo: 'Error de cobro' })).status, 403);
-  const r = await h.request(h.app).patch('/api/facturas/1/anular').set('Authorization', `Bearer ${adm}`).send({ motivo: 'Error de cobro' });
+  // Factura propia de esta prueba (vacuna de hoy) para no depender de los datos iniciales
+  const { mascota } = await h.crearPropietarioConMascota(rec);
+  const v = await h.request(h.app).post('/api/vacunas').set('Authorization', `Bearer ${await h.veterinaria()}`)
+    .send({ mascotaId: mascota.id, tipoVacunaId: 1, fechaAplicacion: h.fechaTexto(new Date()) });
+  const id = v.body.data.facturaId;
+  assert.equal((await h.request(h.app).patch(`/api/facturas/${id}/anular`).set('Authorization', `Bearer ${rec}`).send({ motivo: 'Error de cobro' })).status, 403);
+  const r = await h.request(h.app).patch(`/api/facturas/${id}/anular`).set('Authorization', `Bearer ${adm}`).send({ motivo: 'Error de cobro' });
   assert.equal(r.status, 200);
   assert.equal(r.body.data.estado, 'ANULADA');
-  const otra = await h.request(h.app).patch('/api/facturas/1/anular').set('Authorization', `Bearer ${adm}`).send({ motivo: 'Otra vez' });
+  const otra = await h.request(h.app).patch(`/api/facturas/${id}/anular`).set('Authorization', `Bearer ${adm}`).send({ motivo: 'Otra vez' });
   assert.equal(otra.status, 422);
-  await assert.rejects(h.pool.execute('DELETE FROM facturas WHERE id = 1'), /anularse/);
-  const pdf = await h.request(h.app).get('/api/facturas/1/pdf').set('Authorization', `Bearer ${adm}`);
+  await assert.rejects(h.pool.execute('DELETE FROM facturas WHERE id = ?', [id]), /anularse/);
+  const pdf = await h.request(h.app).get(`/api/facturas/${id}/pdf`).set('Authorization', `Bearer ${adm}`);
   assert.equal(pdf.headers['content-type'], 'application/pdf');
 });
 
