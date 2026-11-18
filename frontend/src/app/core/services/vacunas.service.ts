@@ -18,6 +18,8 @@ export class VacunasService {
   // Vacunas aplicadas
   listar(f: FiltrosListado) { return this.api.listar<VacunaAplicada>('/vacunas', f); }
   aplicar(d: VacunaNueva) { return this.api.crear<VacunaAplicada>('/vacunas', d); }
+  /** Certificado en PDF de la vacuna aplicada */
+  certificado(id: number) { return this.api.descargar(`/vacunas/${id}/certificado/pdf`); }
 
   // Controles periódicos
   controles(f: FiltrosListado) { return this.api.listar<Control>('/controles', f); }

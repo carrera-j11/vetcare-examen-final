@@ -33,9 +33,27 @@ const COLUMNAS = [
   ['especialidades', 'tipo', "ENUM('CLINICO','ESTETICA') NOT NULL DEFAULT 'CLINICO' AFTER duracion_min"],
   ['especialidades', 'precio', 'DECIMAL(8,2) NOT NULL DEFAULT 0 AFTER tipo'],
   ['tipos_vacuna', 'precio', 'DECIMAL(8,2) NOT NULL DEFAULT 0 AFTER descripcion'],
+  ['tratamientos', 'medicamento_id', 'INT NULL AFTER consulta_id'],
+  ['tratamientos', 'cantidad', 'SMALLINT NOT NULL DEFAULT 0 AFTER duracion_dias'],
+  ['tratamientos', 'precio_unitario', 'DECIMAL(8,2) NULL AFTER cantidad'],
 ];
 
 const TABLAS = {
+  medicamentos: `CREATE TABLE medicamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(120) NOT NULL,
+    presentacion VARCHAR(80) NOT NULL,
+    dosis_sugerida VARCHAR(60) NOT NULL,
+    frecuencia_sugerida VARCHAR(60) NOT NULL,
+    duracion_sugerida SMALLINT NOT NULL DEFAULT 7,
+    especie ENUM('PERRO','GATO','AVE','CONEJO','REPTIL','OTRO') NULL,
+    precio DECIMAL(8,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+    CONSTRAINT uq_medicamentos UNIQUE (nombre, presentacion),
+    CONSTRAINT ck_medicamentos_stock CHECK (stock >= 0),
+    CONSTRAINT ck_medicamentos_precio CHECK (precio >= 0)
+  ) ENGINE=InnoDB`,
   facturas: `CREATE TABLE facturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     numero VARCHAR(20) NULL,
@@ -66,7 +84,7 @@ const TABLAS = {
     id INT AUTO_INCREMENT PRIMARY KEY,
     factura_id INT NOT NULL,
     concepto VARCHAR(150) NOT NULL,
-    categoria ENUM('CONSULTA','VACUNA','ESTETICA') NOT NULL,
+    categoria ENUM('CONSULTA','VACUNA','ESTETICA','MEDICAMENTO') NOT NULL,
     cantidad SMALLINT NOT NULL DEFAULT 1,
     precio_unitario DECIMAL(10,2) NOT NULL,
     subtotal DECIMAL(10,2) NOT NULL,
@@ -107,6 +125,22 @@ async function datosPeluqueria(aplicadas) {
   }
 }
 
+/** Catálogo inicial de la farmacia (datos ficticios de ejemplo) si la tabla está vacía */
+const MEDICAMENTOS_INICIALES = [
+  ['Amoxicilina + ácido clavulánico', 'Tabletas 250 mg (caja x 10)', '12.5 mg/kg', 'Cada 12 horas', 7, null, 9.5, 40],
+  ['Meloxicam', 'Suspensión oral 1.5 mg/ml 10 ml', '0.1 mg/kg', 'Cada 24 horas', 5, null, 8, 25],
+  ['Prednisolona', 'Tabletas 5 mg (caja x 20)', '1 mg/kg', 'Cada 24 horas', 7, null, 6.5, 30],
+  ['Metronidazol', 'Tabletas 250 mg (caja x 10)', '15 mg/kg', 'Cada 12 horas', 5, null, 5.75, 35],
+  ['Omeprazol', 'Cápsulas 20 mg (caja x 14)', '1 mg/kg', 'Cada 24 horas', 7, null, 7.2, 20],
+  ['Clindamicina', 'Cápsulas 75 mg (caja x 16)', '11 mg/kg', 'Cada 12 horas', 7, 'PERRO', 11, 15],
+  ['Pimobendan', 'Tabletas 2.5 mg (caja x 50)', '0.25 mg/kg', 'Cada 12 horas', 30, 'PERRO', 32, 8],
+  ['Condroitina + glucosamina', 'Tabletas masticables (frasco x 60)', '1 tableta', 'Cada 24 horas', 30, 'PERRO', 18.5, 12],
+  ['Champú de clorhexidina 2 %', 'Frasco 250 ml', 'Uso tópico', 'Cada 3 días', 21, null, 12, 10],
+  ['Ivermectina pour-on', 'Pipeta 1 ml', '1 pipeta', 'Dosis única', 1, 'GATO', 6, 18],
+  ['Metoclopramida', 'Gotas orales 20 ml', '0.3 mg/kg', 'Cada 8 horas', 3, null, 4.8, 22],
+  ['Suero oral rehidratante', 'Sobre 20 g', '1 sobre en 500 ml de agua', 'A libre consumo', 2, null, 1.5, 60],
+];
+
 async function aplicarMigraciones() {
   const aplicadas = [];
 
@@ -122,6 +156,30 @@ async function aplicarMigraciones() {
       await pool.query(ddl);
       aplicadas.push(`tabla ${tabla}`);
     }
+  }
+
+  // La categoría MEDICAMENTO en el detalle de factura
+  const [[cat]] = await pool.query(
+    `SELECT COLUMN_TYPE AS tipo FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'factura_detalle' AND COLUMN_NAME = 'categoria'`);
+  if (cat && !cat.tipo.includes('MEDICAMENTO')) {
+    await pool.query("ALTER TABLE factura_detalle MODIFY categoria ENUM('CONSULTA','VACUNA','ESTETICA','MEDICAMENTO') NOT NULL");
+    aplicadas.push('factura_detalle.categoria MEDICAMENTO');
+  }
+  // Relación tratamiento → medicamento
+  const [fk] = await pool.query(
+    `SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tratamientos' AND CONSTRAINT_NAME = 'fk_tratamientos_medicamento'`);
+  if (!fk.length) {
+    await pool.query('ALTER TABLE tratamientos ADD CONSTRAINT fk_tratamientos_medicamento FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id)');
+    aplicadas.push('fk tratamientos → medicamentos');
+  }
+  const [[{ totalMed }]] = await pool.query('SELECT COUNT(*) AS totalMed FROM medicamentos');
+  if (!totalMed) {
+    await pool.query(
+      'INSERT INTO medicamentos (nombre, presentacion, dosis_sugerida, frecuencia_sugerida, duracion_sugerida, especie, precio, stock) VALUES ?',
+      [MEDICAMENTOS_INICIALES]);
+    aplicadas.push('catálogo de medicamentos');
   }
 
   if (!(await existeTrigger('trg_facturas_no_delete'))) {

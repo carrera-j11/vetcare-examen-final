@@ -27,6 +27,7 @@ const vacunasRouter = Router();
 vacunasRouter.use(autenticar);
 vacunasRouter.get('/', autorizar(...TODOS), validar(vacunasDto.filtros, 'query'), c.listarAplicadas);
 vacunasRouter.post('/', autorizar(ADMIN, VETERINARIO), validar(vacunasDto.aplicar), c.aplicar);
+vacunasRouter.get('/:id/certificado/pdf', autorizar(...TODOS), validar(paramId, 'params'), c.certificado);
 vacunasRouter.delete('/:id', autorizar(ADMIN, VETERINARIO), validar(paramId, 'params'), c.eliminarAplicada);
 
 // /api/controles

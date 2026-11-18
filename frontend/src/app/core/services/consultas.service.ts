@@ -10,4 +10,6 @@ export class ConsultasService {
   listar(f: FiltrosListado) { return this.api.listar<Consulta>('/consultas', f); }
   obtener(id: number) { return this.api.obtener<Consulta>(`/consultas/${id}`); }
   crear(d: ConsultaNueva) { return this.api.crear<Consulta>('/consultas', d); }
+  /** Receta médica en PDF */
+  receta(id: number) { return this.api.descargar(`/consultas/${id}/receta/pdf`); }
 }

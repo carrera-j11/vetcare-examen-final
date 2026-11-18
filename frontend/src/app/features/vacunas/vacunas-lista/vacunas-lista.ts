@@ -6,6 +6,9 @@ import { Meta } from '../../../core/models/api.models';
 import { TipoVacuna, VacunaAplicada } from '../../../core/models/vacuna.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { VacunasService } from '../../../core/services/vacunas.service';
+import { FacturasService } from '../../../core/services/facturas.service';
+import { AvisosService } from '../../../core/services/avisos.service';
+import { guardarArchivo, imprimirArchivo } from '../../../core/utils/errores';
 import { mensajeError } from '../../../core/utils/errores';
 import { hoyTexto } from '../../../core/utils/fechas';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
@@ -18,6 +21,9 @@ import { Paginador } from '../../../shared/components/paginador/paginador';
 })
 export class VacunasLista implements OnInit {
   private readonly servicio = inject(VacunasService);
+  private readonly facturas = inject(FacturasService);
+  private readonly avisos = inject(AvisosService);
+  protected readonly ocupado = signal<number | null>(null);
   protected readonly auth = inject(AuthService);
 
   protected readonly hoy = hoyTexto();
@@ -46,6 +52,18 @@ export class VacunasLista implements OnInit {
   filtrar(): void { this.filtros.pagina = 1; this.cargar(); }
   pagina(p: number): void { this.filtros.pagina = p; this.cargar(); }
   tamano(t: number): void { this.filtros.tamano = t; this.filtrar(); }
+
+  documento(v: VacunaAplicada, tipo: 'certificado' | 'factura', accion: 'descargar' | 'imprimir' = 'descargar'): void {
+    this.ocupado.set(v.id);
+    const peticion = tipo === 'certificado' ? this.servicio.certificado(v.id) : this.facturas.pdf(v.facturaId!);
+    peticion.subscribe({
+      next: ({ blob, nombre }) => {
+        if (accion === 'descargar') guardarArchivo(blob, nombre); else imprimirArchivo(blob);
+        this.ocupado.set(null);
+      },
+      error: (e) => { this.avisos.error(mensajeError(e, 'No se pudo generar el documento')); this.ocupado.set(null); },
+    });
+  }
 
   ordenar(campo: string): void {
     this.filtros.direccion = this.filtros.orden === campo && this.filtros.direccion === 'desc' ? 'asc' : 'desc';

@@ -85,7 +85,9 @@ function factura(f) {
     saludo: `Estimado/a <strong>${escapar(f.propietario)}</strong>:`,
     cuerpo: `Gracias por confiar en nosotros. Adjuntamos la factura de los servicios realizados hoy a <strong>${escapar(f.mascota)}</strong>.`,
     destacado: `${filas}<br><span style="color:#5b6472">Subtotal ${dinero(f.subtotal)} · IVA ${Number(f.ivaPorcentaje)} % ${dinero(f.iva)}</span><br><strong style="font-size:17px">Total: ${dinero(f.total)}</strong>`,
-    cierre: 'Encontrará la factura en PDF adjunta a este correo; puede descargarla o imprimirla.',
+    cierre: f.origen === 'VACUNA' ? 'Adjuntamos la factura y el certificado de la vacuna aplicada en PDF; puede descargarlos o imprimirlos.'
+      : f.origen === 'CONSULTA' ? 'Adjuntamos la factura y la receta médica en PDF; puede descargarlas o imprimirlas.'
+        : 'Encontrará la factura en PDF adjunta a este correo; puede descargarla o imprimirla.',
   });
   const texto = `${asunto}
 

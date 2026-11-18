@@ -80,7 +80,30 @@
         <fieldset class="tratamiento" [formGroupName]="i">
           <legend>Medicamento {{ i + 1 }}</legend>
           <div class="fila-campos">
-            <label class="campo"><span>Medicamento *</span><input formControlName="medicamento" /><app-campo-error [control]="t.get('medicamento')" /></label>
+            <label class="campo ancho">
+              <span>Medicamento <span class="requerido">*</span></span>
+              <select formControlName="medicamentoId" (change)="elegirMedicamento(i)">
+                <option [ngValue]="0">✍️ Otro medicamento (receta externa, no se cobra)</option>
+                <optgroup label="💊 Farmacia de la clínica">
+                  @for (m of medicamentosCompatibles(); track m.id) {
+                    <option [ngValue]="m.id" [disabled]="m.stock === 0">
+                      {{ m.nombre }} · {{ m.presentacion }} · $ {{ m.precio.toFixed(2) }} · {{ m.stock === 0 ? 'agotado' : 'stock ' + m.stock }}
+                    </option>
+                  }
+                </optgroup>
+              </select>
+            </label>
+            @if (!t.value.medicamentoId) {
+              <label class="campo"><span>Nombre del medicamento externo *</span><input formControlName="medicamento" placeholder="Nombre comercial o genérico" /></label>
+            } @else {
+              <label class="campo">
+                <span>Unidades a entregar *</span>
+                <input type="number" formControlName="cantidad" min="1" [max]="medicamentoDe(t.value.medicamentoId)?.stock ?? 100" />
+                <span class="ayuda">Disponibles: {{ medicamentoDe(t.value.medicamentoId)?.stock }} · Subtotal $ {{ ((medicamentoDe(t.value.medicamentoId)?.precio ?? 0) * (t.value.cantidad || 1)).toFixed(2) }}</span>
+              </label>
+            }
+          </div>
+          <div class="fila-campos">
             <label class="campo"><span>Dosis *</span><input formControlName="dosis" placeholder="10 mg/kg" /><app-campo-error [control]="t.get('dosis')" /></label>
             <label class="campo"><span>Frecuencia *</span><input formControlName="frecuencia" placeholder="Cada 12 horas" /><app-campo-error [control]="t.get('frecuencia')" /></label>
             <label class="campo"><span>Duración (días) *</span><input type="number" formControlName="duracionDias" min="1" max="365" /><app-campo-error [control]="t.get('duracionDias')" /></label>
@@ -92,6 +115,10 @@
         <p class="vacio-texto">Sin medicamentos prescritos.</p>
       }
     </div>
+    @if (totalMedicamentos() > 0) {
+      <p class="total-farmacia">💊 Medicamentos de la farmacia: <strong>$ {{ totalMedicamentos().toFixed(2) }}</strong> + IVA · se agregarán a la factura de la consulta.</p>
+    }
+    <p class="ayuda-receta">Al registrar la consulta podrá descargar o imprimir la <strong>receta</strong> y la <strong>factura</strong>.</p>
   </section>
 
   <section class="tarjeta formulario">

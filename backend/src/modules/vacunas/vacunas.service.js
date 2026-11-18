@@ -17,6 +17,7 @@ const veterinariosRepo = require('../veterinarios/veterinarios.repository');
 const dispRepo = require('../disponibilidad/disponibilidad.repository');
 const auditoria = require('../auditoria/auditoria.service');
 const facturas = require('../facturas/facturas.service');
+const { generarPdfCertificado } = require('./vacunas.certificado');
 const { transaccion } = require('../../config/db');
 const HttpError = require('../../utils/HttpError');
 const { meta } = require('../../utils/paginacion');
@@ -103,6 +104,16 @@ async function aplicar(datos, ctx) {
   return resultado;
 }
 
+/** Certificado en PDF de la vacuna aplicada */
+async function certificado(id) {
+  const vacuna = await repo.buscarPorId(id);
+  if (!vacuna) throw HttpError.notFound('Vacuna aplicada');
+  return {
+    buffer: await generarPdfCertificado(vacuna),
+    nombreArchivo: `certificado-vacuna-${vacuna.mascota.toLowerCase().replace(/\s+/g, '-')}-${id}.pdf`,
+  };
+}
+
 /** Vista previa del lote que se asignará (formulario de aplicar vacuna) */
 async function siguienteLote(tipoVacunaId, fecha) {
   const lote = await tiposRepo.siguienteLote(tipoVacunaId, fecha || hoy());
@@ -114,4 +125,4 @@ function eliminar() {
   throw HttpError.regla('RN05_HISTORIAL_NO_ELIMINABLE', 'Las vacunas aplicadas forman parte del historial clínico y no pueden eliminarse');
 }
 
-module.exports = { listar, aplicar, eliminar, siguienteLote };
+module.exports = { listar, aplicar, eliminar, siguienteLote, certificado };

@@ -113,3 +113,60 @@ test('F7 · El reporte muestra los ingresos y la cantidad de servicios del perí
   const ind = await h.request(h.app).get('/api/reportes/indicadores').set('Authorization', `Bearer ${adm}`);
   assert.ok(Number(ind.body.data.totales.ingresosMes) > 0);
 });
+
+test('F8 · Consulta con medicamento de la farmacia: descuenta stock, lo factura y genera receta', async () => {
+  const vet = await h.veterinaria();
+  const adm = await h.admin();
+  const { mascota } = await h.crearPropietarioConMascota(await h.recepcion());
+  const [[antes]] = await h.pool.execute('SELECT stock, precio FROM medicamentos WHERE id = 1');
+  const res = await h.request(h.app).post('/api/consultas').set('Authorization', `Bearer ${vet}`).send({
+    mascotaId: mascota.id, motivo: 'Infección de piel', diagnostico: 'Pioderma superficial',
+    tratamientos: [
+      { medicamentoId: 1, cantidad: 2, dosis: '12.5 mg/kg', frecuencia: 'Cada 12 horas', duracionDias: 7 },
+      { medicamento: 'Producto externo de prueba', dosis: '1 ml', frecuencia: 'Cada 24 horas', duracionDias: 3 },
+    ],
+  });
+  assert.equal(res.status, 201, JSON.stringify(res.body));
+  const [[despues]] = await h.pool.execute('SELECT stock FROM medicamentos WHERE id = 1');
+  assert.equal(despues.stock, antes.stock - 2, 'se descuentan 2 unidades');
+  const f = await h.request(h.app).get(`/api/facturas/${res.body.data.facturaId}`).set('Authorization', `Bearer ${adm}`);
+  const med = f.body.data.detalle.find((d) => d.categoria === 'MEDICAMENTO');
+  assert.ok(med, 'el medicamento aparece en la factura');
+  assert.equal(med.cantidad, 2);
+  assert.equal(f.body.data.detalle.length, 2, 'el medicamento externo no se cobra');
+  const receta = await h.request(h.app).get(`/api/consultas/${res.body.data.id}/receta/pdf`).set('Authorization', `Bearer ${vet}`);
+  assert.equal(receta.status, 200);
+  assert.equal(receta.headers['content-type'], 'application/pdf');
+});
+
+test('F9 · Stock insuficiente → 422 y no queda la consulta ni se descuenta nada (transacción)', async () => {
+  const vet = await h.veterinaria();
+  const { mascota } = await h.crearPropietarioConMascota(await h.recepcion());
+  const [[antes]] = await h.pool.execute('SELECT stock FROM medicamentos WHERE id = 7');
+  const res = await h.request(h.app).post('/api/consultas').set('Authorization', `Bearer ${vet}`).send({
+    mascotaId: mascota.id, motivo: 'Control', diagnostico: 'Prueba de stock',
+    tratamientos: [
+      { medicamentoId: 1, cantidad: 1, dosis: 'x', frecuencia: 'Cada 12 horas', duracionDias: 1 },
+      { medicamentoId: 7, cantidad: 99, dosis: 'x', frecuencia: 'Cada 12 horas', duracionDias: 1 },
+    ],
+  });
+  assert.equal(res.status, 422);
+  assert.equal(res.body.error.codigo, 'RN15_STOCK_INSUFICIENTE');
+  const [[despues]] = await h.pool.execute('SELECT stock FROM medicamentos WHERE id = 7');
+  assert.equal(despues.stock, antes.stock);
+  const consultas = await h.request(h.app).get('/api/consultas').query({ mascotaId: mascota.id }).set('Authorization', `Bearer ${vet}`);
+  assert.equal(consultas.body.meta.total, 0);
+});
+
+test('F10 · Certificado de la vacuna aplicada en PDF y su factura vinculada', async () => {
+  const vet = await h.veterinaria();
+  const { mascota } = await h.crearPropietarioConMascota(await h.recepcion());
+  const v = await h.request(h.app).post('/api/vacunas').set('Authorization', `Bearer ${vet}`)
+    .send({ mascotaId: mascota.id, tipoVacunaId: 2, fechaAplicacion: h.fechaTexto(new Date()) });
+  assert.equal(v.status, 201);
+  const cert = await h.request(h.app).get(`/api/vacunas/${v.body.data.id}/certificado/pdf`).set('Authorization', `Bearer ${vet}`);
+  assert.equal(cert.status, 200);
+  assert.equal(cert.headers['content-type'], 'application/pdf');
+  const lista = await h.request(h.app).get('/api/vacunas').query({ mascotaId: mascota.id }).set('Authorization', `Bearer ${vet}`);
+  assert.equal(lista.body.data[0].facturaId, v.body.data.facturaId);
+});

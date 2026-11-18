@@ -189,16 +189,38 @@ CREATE TABLE consultas (
   INDEX idx_consultas_mascota_fecha (mascota_id, fecha)
 ) ENGINE=InnoDB;
 
+-- Farmacia de la clínica: medicamentos que se recetan y venden (datos ficticios de ejemplo)
+CREATE TABLE medicamentos (
+  id                  INT AUTO_INCREMENT PRIMARY KEY,
+  nombre              VARCHAR(120) NOT NULL,
+  presentacion        VARCHAR(80)  NOT NULL,          -- p. ej. "Tabletas 100 mg (caja x 10)"
+  dosis_sugerida      VARCHAR(60)  NOT NULL,
+  frecuencia_sugerida VARCHAR(60)  NOT NULL,
+  duracion_sugerida   SMALLINT     NOT NULL DEFAULT 7,
+  especie             ENUM('PERRO','GATO','AVE','CONEJO','REPTIL','OTRO') NULL,  -- NULL = cualquier especie
+  precio              DECIMAL(8,2) NOT NULL,          -- precio por unidad de venta (sin IVA)
+  stock               INT          NOT NULL DEFAULT 0,
+  activo              TINYINT(1)   NOT NULL DEFAULT 1,
+  CONSTRAINT uq_medicamentos UNIQUE (nombre, presentacion),
+  CONSTRAINT ck_medicamentos_stock CHECK (stock >= 0),
+  CONSTRAINT ck_medicamentos_precio CHECK (precio >= 0)
+) ENGINE=InnoDB;
+
 CREATE TABLE tratamientos (
   id              INT AUTO_INCREMENT PRIMARY KEY,
   consulta_id     INT          NOT NULL,
+  medicamento_id  INT          NULL,                  -- NULL = medicamento externo (no se vende en la clínica)
   medicamento     VARCHAR(120) NOT NULL,
   dosis           VARCHAR(60)  NOT NULL,
   frecuencia      VARCHAR(60)  NOT NULL,
   duracion_dias   SMALLINT     NOT NULL,
+  cantidad        SMALLINT     NOT NULL DEFAULT 0,    -- unidades entregadas por la farmacia
+  precio_unitario DECIMAL(8,2) NULL,
   indicaciones    VARCHAR(300) NULL,
-  CONSTRAINT fk_tratamientos_consulta FOREIGN KEY (consulta_id) REFERENCES consultas(id),
-  CONSTRAINT ck_tratamientos_duracion CHECK (duracion_dias BETWEEN 1 AND 365)
+  CONSTRAINT fk_tratamientos_consulta    FOREIGN KEY (consulta_id)    REFERENCES consultas(id),
+  CONSTRAINT fk_tratamientos_medicamento FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id),
+  CONSTRAINT ck_tratamientos_duracion CHECK (duracion_dias BETWEEN 1 AND 365),
+  CONSTRAINT ck_tratamientos_cantidad CHECK (cantidad BETWEEN 0 AND 100)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -290,7 +312,7 @@ CREATE TABLE factura_detalle (
   id              INT AUTO_INCREMENT PRIMARY KEY,
   factura_id      INT          NOT NULL,
   concepto        VARCHAR(150) NOT NULL,
-  categoria       ENUM('CONSULTA','VACUNA','ESTETICA') NOT NULL,
+  categoria       ENUM('CONSULTA','VACUNA','ESTETICA','MEDICAMENTO') NOT NULL,
   cantidad        SMALLINT     NOT NULL DEFAULT 1,
   precio_unitario DECIMAL(10,2) NOT NULL,
   subtotal        DECIMAL(10,2) NOT NULL,

@@ -14,6 +14,7 @@ router.use(autenticar);
 
 router.get('/', autorizar(ADMIN, VETERINARIO, RECEPCION), validar(filtros, 'query'), c.listar);
 router.get('/:id', autorizar(ADMIN, VETERINARIO, RECEPCION), validar(paramId, 'params'), c.obtener);
+router.get('/:id/receta/pdf', autorizar(ADMIN, VETERINARIO, RECEPCION), validar(paramId, 'params'), c.receta);
 // Solo personal médico registra diagnósticos y tratamientos
 router.post('/', autorizar(ADMIN, VETERINARIO), validar(dto.crear), c.crear);
 // RN05: el historial clínico no se elimina

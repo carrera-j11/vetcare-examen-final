@@ -110,6 +110,7 @@ npm start            # http://localhost:4200
 | RN12 | Las facturas no se eliminan; solo el administrador las anula con motivo | Trigger `trg_facturas_no_delete` + `PATCH /facturas/:id/anular` |
 | RN13 | El lote de la vacuna es automático y consecutivo por tipo y año (PRE-AA-NNNN) | `tipos.repository.siguienteLote` con `FOR UPDATE` |
 | RN14 | Las citas de peluquería se completan (no llevan consulta) y no pueden completarse antes de su fecha | `citas.service.completarServicio` |
+| RN15 | No se entrega un medicamento de la farmacia sin stock suficiente (se descuenta en la misma transacción) | `medicamentos.service.dispensar` con `FOR UPDATE` |
 
 Además: una cita solo se atiende una vez (índice único `consultas.cita_id`), no se desactiva un
 propietario/veterinario con citas futuras, no se bloquea una agenda con citas programadas y el sistema
@@ -123,6 +124,7 @@ nunca se queda sin un administrador activo.
 5. **Panel de indicadores y reportes con filtros avanzados** (citas, vacunas, consultas e **ingresos**) exportables a CSV/Excel.
 6. **Facturación automática**: cada atención genera su factura con IVA, se envía en PDF al correo del propietario y se puede descargar, imprimir, reenviar o anular.
 7. **Servicio de peluquería y baño** con precios por servicio y lote de vacunas automático.
+8. **Farmacia de la clínica**: medicamentos con precio y stock que se eligen en la receta; la **receta** y el **certificado de la vacuna aplicada** se descargan/imprimen en PDF junto con su factura (datos de ejemplo de un proyecto ficticio).
 
 ## 5. Seguridad
 JWT con expiración · contraseñas con bcrypt · 3 roles verificados en el Backend · autorización a nivel

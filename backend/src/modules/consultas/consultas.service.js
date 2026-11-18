@@ -15,6 +15,8 @@ const veterinariosRepo = require('../veterinarios/veterinarios.repository');
 const controlesRepo = require('../vacunas/controles.repository');
 const especialidadesRepo = require('../especialidades/especialidades.repository');
 const facturas = require('../facturas/facturas.service');
+const medicamentos = require('../medicamentos/medicamentos.service');
+const { generarPdfReceta } = require('./consultas.receta');
 const auditoria = require('../auditoria/auditoria.service');
 const { transaccion } = require('../../config/db');
 const HttpError = require('../../utils/HttpError');
@@ -83,7 +85,9 @@ async function crear(datos, ctx) {
     }
 
     const id = await repo.insertar(conn, { ...datos, veterinarioId }, ctx.usuario.id);
-    await repo.insertarTratamientos(conn, id, datos.tratamientos);
+    // Farmacia: valida stock, lo descuenta (con bloqueo de fila) y fija nombre y precio
+    const tratamientos = await medicamentos.dispensar(conn, datos.tratamientos, mascota.especie);
+    await repo.insertarTratamientos(conn, id, tratamientos);
     if (datos.pesoKg) await mascotasRepo.actualizarPeso(conn, datos.mascotaId, datos.pesoKg);
     if (datos.proximoControl) {
       await controlesRepo.insertar(conn, {
@@ -99,7 +103,13 @@ async function crear(datos, ctx) {
     const especialidad = await especialidadesRepo.buscarPorId(especialidadId, conn);
     const facturaId = await facturas.generar(conn, {
       origen: 'CONSULTA', referenciaId: id, propietarioId: mascota.propietarioId, mascotaId: mascota.id,
-      items: [{ concepto: `Consulta · ${especialidad?.nombre || 'Medicina general'}`, categoria: 'CONSULTA', cantidad: 1, precioUnitario: especialidad?.precio ?? 0 }],
+      items: [
+        { concepto: `Consulta · ${especialidad?.nombre || 'Medicina general'}`, categoria: 'CONSULTA', cantidad: 1, precioUnitario: especialidad?.precio ?? 0 },
+        // Medicamentos entregados por la farmacia de la clínica
+        ...tratamientos.filter((t) => t.medicamentoId).map((t) => ({
+          concepto: t.medicamento, categoria: 'MEDICAMENTO', cantidad: t.cantidad, precioUnitario: t.precioUnitario,
+        })),
+      ],
     }, ctx);
     return { ...(await repo.buscarPorId(id, conn)), facturaId };
   });
@@ -107,8 +117,14 @@ async function crear(datos, ctx) {
   return resultado;
 }
 
+/** Receta médica en PDF de la consulta */
+async function receta(id) {
+  const consulta = await obtener(id);
+  return { buffer: await generarPdfReceta(consulta), nombreArchivo: `receta-${consulta.mascota.toLowerCase().replace(/\s+/g, '-')}-${id}.pdf` };
+}
+
 function eliminar() {
   throw HttpError.regla('RN05_HISTORIAL_NO_ELIMINABLE', 'El historial clínico no puede eliminarse. Registre una nueva consulta con la corrección');
 }
 
-module.exports = { listar, obtener, crear, eliminar };
+module.exports = { listar, obtener, crear, receta, eliminar };

@@ -19,6 +19,14 @@ module.exports = {
   listarAplicadas: async (req, res) => res.json(await vacunas.listar(req.consulta)),
   aplicar: async (req, res) => res.status(201).json({ data: await vacunas.aplicar(req.body, contexto(req)) }),
   eliminarAplicada: async () => vacunas.eliminar(),
+  /** Certificado de la vacuna aplicada (descargar o imprimir) */
+  certificado: async (req, res) => {
+    const { buffer, nombreArchivo } = await vacunas.certificado(req.params.id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${nombreArchivo}"`);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+    res.send(buffer);
+  },
 
   // Controles periódicos
   listarControles: async (req, res) => res.json(await controles.listar(req.consulta)),

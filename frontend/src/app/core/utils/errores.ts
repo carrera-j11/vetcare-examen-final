@@ -70,6 +70,20 @@ export function mensajeCampo(c: AbstractControl | null): string | null {
   return typeof primero === 'string' ? primero : 'Valor no válido';
 }
 
+/** Abre un PDF en un marco oculto y muestra el diálogo de impresión del navegador */
+export function imprimirArchivo(blob: Blob): void {
+  const url = URL.createObjectURL(blob);
+  const marco = document.createElement('iframe');
+  Object.assign(marco.style, { position: 'fixed', width: '0', height: '0', border: '0' });
+  marco.src = url;
+  marco.onload = () => {
+    marco.contentWindow?.focus();
+    marco.contentWindow?.print();
+    setTimeout(() => { URL.revokeObjectURL(url); marco.remove(); }, 60_000);
+  };
+  document.body.appendChild(marco);
+}
+
 /** Guarda un Blob como archivo en el equipo del usuario */
 export function guardarArchivo(blob: Blob, nombre: string): void {
   const url = URL.createObjectURL(blob);

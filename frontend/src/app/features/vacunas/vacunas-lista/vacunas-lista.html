@@ -41,6 +41,7 @@
           <th><button type="button" class="th-orden" (click)="ordenar('mascota')">Mascota{{ indicador('mascota') }}</button></th>
           <th>Responsable</th>
           <th><button type="button" class="th-orden" (click)="ordenar('proximaDosis')">Próxima dosis{{ indicador('proximaDosis') }}</button></th>
+          <th><span class="solo-lector">Documentos</span></th>
         </tr>
       </thead>
       <tbody>
@@ -54,6 +55,12 @@
               @if (v.proximaDosis) {
                 <span class="badge" [class]="v.proximaDosis < hoy ? 'badge badge-vencido' : 'badge badge-programado'">{{ v.proximaDosis | date: 'dd/MM/yyyy' }}</span>
               } @else { Dosis única }
+            </td>
+            <td class="acciones-fila">
+              <button type="button" class="btn btn-chico" (click)="documento(v, 'certificado')" [disabled]="ocupado() === v.id" title="Certificado de la vacuna">📄 Certificado</button>
+              @if (v.facturaId) {
+                <button type="button" class="btn btn-chico" (click)="documento(v, 'factura')" [disabled]="ocupado() === v.id" title="Factura">🧾 Factura</button>
+              }
             </td>
           </tr>
         }

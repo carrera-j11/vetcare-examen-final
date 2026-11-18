@@ -3,3 +3,8 @@
 .tratamiento { position: relative; border: 1px solid var(--borde); border-radius: 8px; padding: .75rem 1rem; margin: 0; display: grid; gap: .6rem; }
 .tratamiento legend { font-weight: 700; color: var(--primario); padding: 0 .3rem; }
 .quitar { justify-self: end; }
+
+.ancho { grid-column: span 2; }
+.total-farmacia { margin: .75rem 0 0; padding: .6rem .8rem; border-radius: 8px; background: var(--primario-suave); }
+.ayuda-receta { margin: .5rem 0 0; font-size: .85rem; color: var(--texto-suave); }
+@media (max-width: 700px) { .ancho { grid-column: auto; } }

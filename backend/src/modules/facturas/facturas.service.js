@@ -25,7 +25,7 @@ const redondear = (n) => Math.round(n * 100) / 100;
 
 /** Calcula subtotal, IVA y total de una lista de conceptos */
 function calcularTotales(items) {
-  const lineas = items.map((i) => ({ ...i, cantidad: i.cantidad || 1, subtotal: redondear((i.cantidad || 1) * Number(i.precioUnitario)) }));
+  const lineas = items.map((i) => ({ ...i, concepto: String(i.concepto).slice(0, 150), cantidad: i.cantidad || 1, subtotal: redondear((i.cantidad || 1) * Number(i.precioUnitario)) }));
   const subtotal = redondear(lineas.reduce((a, l) => a + l.subtotal, 0));
   const ivaPorcentaje = env.facturacion.ivaPorcentaje;
   const iva = redondear(subtotal * (ivaPorcentaje / 100));
@@ -59,6 +59,26 @@ async function pdf(id) {
   return { buffer: await generarPdfFactura(factura), nombreArchivo: `${factura.numero}.pdf` };
 }
 
+/**
+ * Documento que acompaña a la factura en el correo: receta (consulta) o certificado (vacuna).
+ * Se cargan con require diferido para evitar dependencias circulares entre módulos.
+ */
+async function documentoDeLaAtencion(factura) {
+  try {
+    if (factura.origen === 'CONSULTA') {
+      const { buffer, nombreArchivo } = await require('../consultas/consultas.service').receta(factura.referenciaId);
+      return [{ nombre: nombreArchivo, contenido: buffer }];
+    }
+    if (factura.origen === 'VACUNA') {
+      const { buffer, nombreArchivo } = await require('../vacunas/vacunas.service').certificado(factura.referenciaId);
+      return [{ nombre: nombreArchivo, contenido: buffer }];
+    }
+  } catch (err) {
+    console.error(`[factura] No se pudo adjuntar el documento de la atención: ${err.message}`);
+  }
+  return [];
+}
+
 /** Envía la factura por correo (nunca lanza error: devuelve el resultado) */
 async function enviarPorCorreo(id) {
   const factura = await repo.buscarPorId(id);
@@ -69,11 +89,8 @@ async function enviarPorCorreo(id) {
     return r;
   }
   const buffer = await generarPdfFactura(factura);
-  const resultado = await correo.enviar({
-    ...plantillas.factura(factura),
-    para: factura.propietarioEmail,
-    adjuntos: [{ nombre: `${factura.numero}.pdf`, contenido: buffer }],
-  });
+  const adjuntos = [{ nombre: `${factura.numero}.pdf`, contenido: buffer }, ...(await documentoDeLaAtencion(factura))];
+  const resultado = await correo.enviar({ ...plantillas.factura(factura), para: factura.propietarioEmail, adjuntos });
   await repo.registrarCorreo(id, resultado);
   return resultado;
 }

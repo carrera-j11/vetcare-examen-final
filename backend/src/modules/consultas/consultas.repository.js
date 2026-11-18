@@ -7,7 +7,8 @@ const SELECT_BASE = `
          m.id AS mascotaId, m.nombre AS mascota, m.especie,
          CONCAT(p.nombres, ' ', p.apellidos) AS propietario,
          v.id AS veterinarioId, CONCAT(v.nombres, ' ', v.apellidos) AS veterinario,
-         (SELECT COUNT(*) FROM tratamientos t WHERE t.consulta_id = c.id) AS totalTratamientos
+         (SELECT COUNT(*) FROM tratamientos t WHERE t.consulta_id = c.id) AS totalTratamientos,
+         (SELECT f.id FROM facturas f WHERE f.origen = 'CONSULTA' AND f.referencia_id = c.id) AS facturaId
     FROM consultas c
     JOIN mascotas m ON m.id = c.mascota_id
     JOIN propietarios p ON p.id = m.propietario_id
@@ -34,7 +35,8 @@ async function buscarPorId(id, ejecutor = pool) {
   const [filas] = await ejecutor.execute(`${SELECT_BASE} WHERE c.id = ?`, [id]);
   if (!filas[0]) return null;
   const [tratamientos] = await ejecutor.execute(
-    `SELECT id, medicamento, dosis, frecuencia, duracion_dias AS duracionDias, indicaciones
+    `SELECT id, medicamento_id AS medicamentoId, medicamento, dosis, frecuencia, duracion_dias AS duracionDias,
+            cantidad, precio_unitario AS precioUnitario, indicaciones
        FROM tratamientos WHERE consulta_id = ? ORDER BY id`, [id]);
   return { ...filas[0], tratamientos };
 }
@@ -57,8 +59,10 @@ async function insertar(conn, c, usuarioId) {
 async function insertarTratamientos(conn, consultaId, tratamientos) {
   if (!tratamientos.length) return;
   await conn.query(
-    'INSERT INTO tratamientos (consulta_id, medicamento, dosis, frecuencia, duracion_dias, indicaciones) VALUES ?',
-    [tratamientos.map((t) => [consultaId, t.medicamento, t.dosis, t.frecuencia, t.duracionDias, t.indicaciones])]);
+    `INSERT INTO tratamientos (consulta_id, medicamento_id, medicamento, dosis, frecuencia, duracion_dias, cantidad, precio_unitario, indicaciones)
+     VALUES ?`,
+    [tratamientos.map((t) => [consultaId, t.medicamentoId ?? null, t.medicamento, t.dosis, t.frecuencia, t.duracionDias,
+      t.cantidad ?? 0, t.precioUnitario ?? null, t.indicaciones ?? null])]);
 }
 
 module.exports = { listar, buscarPorId, existePorCita, insertar, insertarTratamientos };

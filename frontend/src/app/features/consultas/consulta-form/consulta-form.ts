@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormArray, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Cita } from '../../../core/models/cita.model';
@@ -9,6 +9,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AvisosService } from '../../../core/services/avisos.service';
 import { CitasService } from '../../../core/services/citas.service';
 import { ConsultasService } from '../../../core/services/consultas.service';
+import { Medicamento } from '../../../core/models/medicamento.model';
+import { MedicamentosService } from '../../../core/services/medicamentos.service';
 import { MascotasService } from '../../../core/services/mascotas.service';
 import { VeterinariosService } from '../../../core/services/veterinarios.service';
 import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errores';
@@ -31,6 +33,7 @@ export class ConsultaForm implements OnInit {
   protected readonly mascotas = inject(MascotasService);
   private readonly citas = inject(CitasService);
   private readonly veterinariosSrv = inject(VeterinariosService);
+  private readonly farmacia = inject(MedicamentosService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
@@ -45,6 +48,14 @@ export class ConsultaForm implements OnInit {
   protected readonly veterinarios = signal<Veterinario[]>([]);
   protected readonly guardando = signal(false);
   protected readonly programarControl = signal(false);
+  protected readonly medicamentos = signal<Medicamento[]>([]);
+  /** Medicamentos de la farmacia aptos para la especie de la mascota */
+  protected readonly medicamentosCompatibles = computed(() => {
+    const especie = this.mascota()?.especie;
+    return this.medicamentos().filter((m) => m.activo && (!m.especie || !especie || m.especie === especie));
+  });
+  /** Total estimado de medicamentos a cobrar (sin IVA) */
+  protected readonly totalMedicamentos = signal(0);
 
   protected readonly form = this.fb.group({
     veterinarioId: [0],
@@ -63,6 +74,8 @@ export class ConsultaForm implements OnInit {
   get tratamientos(): FormArray<FormGroup> { return this.form.controls.tratamientos; }
 
   ngOnInit(): void {
+    this.farmacia.listar({ activo: 'true', tamano: 100 }).subscribe((r) => this.medicamentos.set(r.data));
+    this.tratamientos.valueChanges.subscribe(() => this.recalcular());
     if (this.auth.tieneRol('ADMIN')) {
       this.veterinariosSrv.listar({ activo: 'true', tamano: 100 }).subscribe((r) => this.veterinarios.set(r.data));
       this.form.controls.veterinarioId.addValidators(Validators.min(1));
@@ -81,7 +94,9 @@ export class ConsultaForm implements OnInit {
 
   agregarTratamiento(): void {
     this.tratamientos.push(this.fb.group({
-      medicamento: ['', [Validators.required, Validators.maxLength(120)]],
+      medicamentoId: [0],                // 0 = medicamento externo (no se vende en la clínica)
+      medicamento: ['', [Validators.maxLength(120)]],
+      cantidad: [1, [Validators.min(1), Validators.max(100)]],
       dosis: ['', [Validators.required, Validators.maxLength(60)]],
       frecuencia: ['', [Validators.required, Validators.maxLength(60)]],
       duracionDias: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
@@ -91,14 +106,48 @@ export class ConsultaForm implements OnInit {
 
   quitarTratamiento(i: number): void { this.tratamientos.removeAt(i); }
 
+  medicamentoDe(id: number): Medicamento | undefined {
+    return this.medicamentos().find((m) => m.id === Number(id));
+  }
+
+  /** Al elegir un medicamento de la farmacia se completan la dosis, frecuencia y duración sugeridas */
+  elegirMedicamento(i: number): void {
+    const grupo = this.tratamientos.at(i);
+    const med = this.medicamentoDe(grupo.value.medicamentoId);
+    if (med) {
+      grupo.patchValue({ medicamento: '', dosis: med.dosisSugerida, frecuencia: med.frecuenciaSugerida, duracionDias: med.duracionSugerida, cantidad: 1 });
+    }
+  }
+
+  private recalcular(): void {
+    const total = this.tratamientos.controls.reduce((acc, g) => {
+      const med = this.medicamentoDe(g.value.medicamentoId);
+      return acc + (med ? med.precio * (Number(g.value.cantidad) || 1) : 0);
+    }, 0);
+    this.totalMedicamentos.set(Math.round(total * 100) / 100);
+  }
+
+  private tratamientosValidos(): boolean {
+    return this.tratamientos.controls.every((g) => {
+      const v = g.value;
+      if (Number(v.medicamentoId)) {
+        const med = this.medicamentoDe(v.medicamentoId);
+        return !!med && Number(v.cantidad) >= 1 && Number(v.cantidad) <= med.stock;
+      }
+      return String(v.medicamento || '').trim().length >= 2;
+    });
+  }
+
   guardar(): void {
     const m = this.mascota();
     if (!m) { this.avisos.advertencia('Seleccione la mascota atendida'); return; }
     const v = this.form.getRawValue();
     const controlIncompleto = this.programarControl() && (!v.controlFecha || v.controlDescripcion.trim().length < 3);
-    if (this.form.invalid || controlIncompleto) {
+    if (this.form.invalid || controlIncompleto || !this.tratamientosValidos()) {
       this.form.markAllAsTouched();
-      this.avisos.advertencia(controlIncompleto ? 'Complete la fecha y descripción del próximo control' : 'Revise los campos marcados');
+      this.avisos.advertencia(controlIncompleto ? 'Complete la fecha y descripción del próximo control'
+        : !this.tratamientosValidos() ? 'Revise los medicamentos: elija uno de la farmacia (con stock suficiente) o escriba el nombre del externo'
+          : 'Revise los campos marcados');
       return;
     }
     const datos: ConsultaNueva = {
@@ -112,7 +161,12 @@ export class ConsultaForm implements OnInit {
       frecuenciaCardiaca: v.frecuenciaCardiaca || null,
       diagnostico: v.diagnostico,
       observaciones: v.observaciones || null,
-      tratamientos: v.tratamientos as Tratamiento[],
+      tratamientos: (v.tratamientos as (Tratamiento & { medicamentoId: number })[]).map((t) => ({
+        ...t,
+        medicamentoId: Number(t.medicamentoId) || null,
+        cantidad: Number(t.medicamentoId) ? Number(t.cantidad) : undefined,
+        medicamento: Number(t.medicamentoId) ? '' : t.medicamento,
+      })),
       proximoControl: this.programarControl() ? { fecha: v.controlFecha, descripcion: v.controlDescripcion } : null,
     };
     this.guardando.set(true);

@@ -30,7 +30,7 @@ export class Reportes implements OnInit {
   protected readonly exportando = signal<SeccionReporte | null>(null);
   protected readonly pestana = signal<SeccionReporte>('citas');
   protected readonly nombresSeccion: Record<SeccionReporte, string> = { citas: 'citas', vacunas: 'vacunas', consultas: 'consultas', ingresos: 'ingresos' };
-  protected readonly categorias: Record<string, string> = { CONSULTA: '🩺 Consultas', VACUNA: '💉 Vacunas', ESTETICA: '✂️ Peluquería y baño' };
+  protected readonly categorias: Record<string, string> = { CONSULTA: '🩺 Consultas', VACUNA: '💉 Vacunas', ESTETICA: '✂️ Peluquería y baño', MEDICAMENTO: '💊 Farmacia' };
 
   protected filtros = { desde: sumarDias(hoyTexto(), -30), hasta: sumarDias(hoyTexto(), 15), veterinarioId: '', especialidadId: '', estado: '' };
 

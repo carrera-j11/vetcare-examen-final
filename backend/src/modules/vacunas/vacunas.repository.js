@@ -7,7 +7,9 @@ const SELECT_BASE = `
          m.id AS mascotaId, m.nombre AS mascota, m.especie,
          CONCAT(p.nombres, ' ', p.apellidos) AS propietario,
          v.id AS veterinarioId, CONCAT(v.nombres, ' ', v.apellidos) AS veterinario,
-         va.creado_en AS creadoEn
+         va.creado_en AS creadoEn,
+         m.codigo AS mascotaCodigo, m.raza, m.sexo, p.cedula AS propietarioCedula, va.tipo_vacuna_id AS tipoId,
+         (SELECT f.id FROM facturas f WHERE f.origen = 'VACUNA' AND f.referencia_id = va.id) AS facturaId
     FROM vacunas_aplicadas va
     JOIN tipos_vacuna t ON t.id = va.tipo_vacuna_id
     JOIN mascotas m ON m.id = va.mascota_id

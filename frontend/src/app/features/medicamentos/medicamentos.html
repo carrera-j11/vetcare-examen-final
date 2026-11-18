@@ -1,0 +1,78 @@
+<header class="cabecera">
+  <div>
+    <p class="sobre">Clínica</p>
+    <h1>Farmacia</h1>
+    <p class="descripcion">Medicamentos que se recetan y venden en la clínica. Al registrar una consulta se descuenta el stock y se suman a la factura. <em>(Datos ficticios de ejemplo.)</em></p>
+  </div>
+</header>
+
+<div class="rejilla rejilla-2">
+  <section>
+    <form class="filtros" (ngSubmit)="cargar()" role="search">
+      <label class="campo crece"><span>Buscar</span><input type="search" name="q" [(ngModel)]="filtros.q" placeholder="Nombre o presentación" /></label>
+      <label class="campo">
+        <span>Stock</span>
+        <select name="stockBajo" [(ngModel)]="filtros.stockBajo" (change)="cargar()">
+          <option value="">Todos</option>
+          <option value="true">Stock bajo (≤ 5)</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">Buscar</button>
+    </form>
+
+    <app-estado-vista [cargando]="cargando()" [error]="error()" [vacio]="!lista().length" textoVacio="No hay medicamentos con esos filtros." (reintentar)="cargar()" />
+    @if (!cargando() && lista().length) {
+      <div class="tabla-cont">
+        <table class="tabla">
+          <thead><tr><th>Medicamento</th><th>Uso sugerido</th><th class="num">Precio</th><th class="num">Stock</th><th></th></tr></thead>
+          <tbody>
+            @for (m of lista(); track m.id) {
+              <tr [class.inactivo]="!m.activo">
+                <td class="fuerte">{{ m.nombre }}<span class="sub">{{ m.presentacion }} · {{ m.especie || 'Todas las especies' }}</span></td>
+                <td>{{ m.dosisSugerida }}<span class="sub">{{ m.frecuenciaSugerida }} · {{ m.duracionSugerida }} día(s)</span></td>
+                <td class="num fuerte">$ {{ m.precio.toFixed(2) }}</td>
+                <td class="num">
+                  <span class="badge" [class]="m.stock === 0 ? 'badge badge-vencido' : m.stockBajo ? 'badge badge-proximo' : 'badge badge-activo'">
+                    {{ m.stock === 0 ? 'Agotado' : m.stock }}
+                  </span>
+                </td>
+                <td class="acciones-fila"><button type="button" class="btn btn-texto btn-chico" (click)="editar(m)">Editar</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="tarjeta">
+    <h2>{{ editandoId() ? 'Editar medicamento' : 'Nuevo medicamento' }}</h2>
+    <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <label class="campo"><span>Nombre <span class="requerido">*</span></span><input formControlName="nombre" /><app-campo-error [control]="form.controls.nombre" /></label>
+      <label class="campo"><span>Presentación <span class="requerido">*</span></span><input formControlName="presentacion" placeholder="Tabletas 250 mg (caja x 10)" /><app-campo-error [control]="form.controls.presentacion" /></label>
+      <div class="fila-campos">
+        <label class="campo"><span>Dosis sugerida *</span><input formControlName="dosisSugerida" placeholder="10 mg/kg" /><app-campo-error [control]="form.controls.dosisSugerida" /></label>
+        <label class="campo"><span>Frecuencia sugerida *</span><input formControlName="frecuenciaSugerida" placeholder="Cada 12 horas" /><app-campo-error [control]="form.controls.frecuenciaSugerida" /></label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo"><span>Duración (días) *</span><input type="number" formControlName="duracionSugerida" min="1" max="365" /></label>
+        <label class="campo">
+          <span>Especie</span>
+          <select formControlName="especie">
+            <option value="">Todas</option>
+            @for (e of especies; track e) { <option [value]="e">{{ e }}</option> }
+          </select>
+        </label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo"><span>Precio USD sin IVA *</span><input type="number" formControlName="precio" min="0" step="0.01" /><app-campo-error [control]="form.controls.precio" /></label>
+        <label class="campo"><span>Stock (unidades) *</span><input type="number" formControlName="stock" min="0" step="1" /><app-campo-error [control]="form.controls.stock" /></label>
+      </div>
+      <label class="check"><input type="checkbox" formControlName="activo" /> Disponible</label>
+      <div class="pie-formulario">
+        @if (editandoId()) { <button type="button" class="btn" (click)="nuevo()">Cancelar edición</button> }
+        <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </section>
+</div>

@@ -67,6 +67,8 @@ export const routes: Routes = [
       { path: 'vacunas', title: 'Vacunas · VetCare', loadComponent: () => import('./features/vacunas/vacunas-lista/vacunas-lista').then((m) => m.VacunasLista) },
       { path: 'vacunas/aplicar', title: 'Aplicar vacuna · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN', 'VETERINARIO'] },
         loadComponent: () => import('./features/vacunas/vacuna-form/vacuna-form').then((m) => m.VacunaForm) },
+      { path: 'farmacia', title: 'Farmacia · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN'] },
+        loadComponent: () => import('./features/medicamentos/medicamentos').then((m) => m.Medicamentos) },
       { path: 'tipos-vacuna', title: 'Tipos de vacuna · VetCare', canActivate: [rolGuard], data: { roles: ['ADMIN'] },
         loadComponent: () => import('./features/tipos-vacuna/tipos-vacuna').then((m) => m.TiposVacuna) },
 

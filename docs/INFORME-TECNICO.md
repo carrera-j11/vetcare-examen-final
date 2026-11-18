@@ -158,6 +158,7 @@ paginación real (`pagina`, `tamano`)** en el servidor. La documentación comple
 | RN12 | Las facturas no se eliminan, solo se anulan con motivo (ADMIN) | Trigger `BEFORE DELETE` + endpoint de anulación | 422 / 403 |
 | RN13 | Lote de vacuna automático y consecutivo (PRE-AA-NNNN) | Conteo por tipo y año con bloqueo del tipo de vacuna | — |
 | RN14 | Peluquería: se completa sin consulta y no antes de su fecha | `completarServicio` | 422 `CITA_FUTURA` / `SERVICIO_CLINICO` |
+| RN15 | No se entrega medicamento sin stock; el stock se descuenta en la transacción de la consulta | Bloqueo `FOR UPDATE` del medicamento | 422 `RN15_STOCK_INSUFICIENTE` |
 
 ### 7.1 Transacciones
 `config/db.js → transaccion()` envuelve `BEGIN / COMMIT / ROLLBACK`. Se usa en:

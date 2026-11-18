@@ -18,6 +18,8 @@ export interface Consulta {
   veterinarioId: number;
   veterinario: string;
   totalTratamientos: number;
+  facturaId?: number | null;
+  factura?: { estado: string; destino?: string | null };
   tratamientos?: Tratamiento[];
 }
 

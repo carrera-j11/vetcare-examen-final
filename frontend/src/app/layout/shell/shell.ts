@@ -58,6 +58,7 @@ export class Shell {
       { ruta: '/especialidades', texto: 'Servicios y precios', icono: '🏷️', roles: ['ADMIN'] },
       { ruta: '/bloqueos', texto: 'Bloqueos de agenda', icono: '⛔' },
       { ruta: '/tipos-vacuna', texto: 'Vacunas y precios', icono: '🧪', roles: ['ADMIN'] },
+      { ruta: '/farmacia', texto: 'Farmacia', icono: '💊', roles: ['ADMIN'] },
     ] },
     { titulo: 'Administración', items: [
       { ruta: '/reportes', texto: 'Reportes', icono: '📈', roles: ['ADMIN'] },

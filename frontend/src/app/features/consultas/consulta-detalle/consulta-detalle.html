@@ -8,9 +8,27 @@
       <p class="descripcion">{{ c.fecha | date: "EEEE dd 'de' MMMM yyyy, HH:mm" }} · {{ c.veterinario }}</p>
     </div>
     <div class="acciones">
-      <a [routerLink]="['/mascotas', c.mascotaId, 'historial']" class="btn">Ver historial completo de {{ c.mascota }}</a>
+      <a [routerLink]="['/mascotas', c.mascotaId, 'historial']" class="btn">Historial de {{ c.mascota }}</a>
     </div>
   </header>
+
+  <!-- Documentos de la atención -->
+  <section class="tarjeta documentos" aria-label="Documentos de la consulta">
+    <div class="documento">
+      <span class="icono" aria-hidden="true">📝</span>
+      <div><strong>Receta médica</strong><span class="sub">Medicamentos, dosis y duración del tratamiento</span></div>
+      <button type="button" class="btn btn-primario btn-chico" (click)="documento('receta', 'descargar')" [disabled]="!!ocupado()">⬇ Descargar</button>
+      <button type="button" class="btn btn-chico" (click)="documento('receta', 'imprimir')" [disabled]="!!ocupado()">🖨️ Imprimir</button>
+    </div>
+    @if (c.facturaId) {
+      <div class="documento">
+        <span class="icono" aria-hidden="true">🧾</span>
+        <div><strong>Factura</strong><span class="sub">Consulta y medicamentos entregados por la farmacia</span></div>
+        <button type="button" class="btn btn-primario btn-chico" (click)="documento('factura', 'descargar')" [disabled]="!!ocupado()">⬇ Descargar</button>
+        <button type="button" class="btn btn-chico" (click)="documento('factura', 'imprimir')" [disabled]="!!ocupado()">🖨️ Imprimir</button>
+      </div>
+    }
+  </section>
 
   <section class="tarjeta">
     <dl class="datos">
@@ -35,10 +53,10 @@
     @if (c.tratamientos?.length) {
       <div class="tabla-cont">
         <table class="tabla">
-          <thead><tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th class="num">Días</th><th>Indicaciones</th></tr></thead>
+          <thead><tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th class="num">Días</th><th>Farmacia</th><th>Indicaciones</th></tr></thead>
           <tbody>
             @for (t of c.tratamientos; track t.id) {
-              <tr><td class="fuerte">{{ t.medicamento }}</td><td>{{ t.dosis }}</td><td>{{ t.frecuencia }}</td><td class="num">{{ t.duracionDias }}</td><td>{{ t.indicaciones || '—' }}</td></tr>
+              <tr><td class="fuerte">{{ t.medicamento }}</td><td>{{ t.dosis }}</td><td>{{ t.frecuencia }}</td><td class="num">{{ t.duracionDias }}</td><td>{{ t.medicamentoId ? t.cantidad + ' u. · $ ' + (t.precioUnitario ?? 0).toFixed(2) : 'Externo' }}</td><td>{{ t.indicaciones || '—' }}</td></tr>
             }
           </tbody>
         </table>

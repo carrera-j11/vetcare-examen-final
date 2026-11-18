@@ -30,7 +30,12 @@ export interface MascotaGuardar {
 
 export interface Tratamiento {
   id?: number;
+  /** Medicamento de la farmacia (se cobra y descuenta stock); null = receta externa */
+  medicamentoId?: number | null;
   medicamento: string;
+  /** Unidades entregadas por la farmacia */
+  cantidad?: number;
+  precioUnitario?: number | null;
   dosis: string;
   frecuencia: string;
   duracionDias: number;

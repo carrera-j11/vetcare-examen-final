@@ -2,14 +2,15 @@ import { Component, computed, inject, input, OnInit, signal } from '@angular/cor
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Mascota } from '../../../core/models/mascota.model';
-import { TipoVacuna, VacunaNueva } from '../../../core/models/vacuna.model';
+import { TipoVacuna, VacunaAplicada, VacunaNueva } from '../../../core/models/vacuna.model';
+import { FacturasService } from '../../../core/services/facturas.service';
 import { Veterinario } from '../../../core/models/veterinario.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { AvisosService } from '../../../core/services/avisos.service';
 import { MascotasService } from '../../../core/services/mascotas.service';
 import { VacunasService } from '../../../core/services/vacunas.service';
 import { VeterinariosService } from '../../../core/services/veterinarios.service';
-import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errores';
+import { aplicarErroresServidor, guardarArchivo, imprimirArchivo, mensajeError } from '../../../core/utils/errores';
 import { hoyTexto, sumarDias } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
 import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
@@ -31,6 +32,7 @@ export class VacunaForm implements OnInit {
   private readonly veterinariosSrv = inject(VeterinariosService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
+  private readonly facturas = inject(FacturasService);
   protected readonly auth = inject(AuthService);
 
   readonly mascotaId = input<string>();
@@ -44,6 +46,9 @@ export class VacunaForm implements OnInit {
   protected readonly loteSiguiente = signal<string | null>(null);
   protected readonly tipoElegido = signal<TipoVacuna | null>(null);
   protected readonly ivaPorcentaje = 15;
+  /** Vacuna recién registrada: se muestran sus documentos (certificado y factura) */
+  protected readonly registrada = signal<VacunaAplicada | null>(null);
+  protected readonly ocupado = signal<string | null>(null);
 
   /** RN09: vacunas de la especie de la mascota o de uso general */
   protected readonly tiposCompatibles = computed(() => {
@@ -90,6 +95,34 @@ export class VacunaForm implements OnInit {
     });
   }
 
+  /** Descarga o imprime el certificado de la vacuna aplicada o su factura */
+  documento(tipo: 'certificado' | 'factura', accion: 'descargar' | 'imprimir'): void {
+    const v = this.registrada();
+    if (!v) return;
+    this.ocupado.set(`${tipo}-${accion}`);
+    const peticion = tipo === 'certificado' ? this.vacunas.certificado(v.id) : this.facturas.pdf(v.facturaId!);
+    peticion.subscribe({
+      next: ({ blob, nombre }) => {
+        if (accion === 'descargar') guardarArchivo(blob, nombre); else imprimirArchivo(blob);
+        this.ocupado.set(null);
+      },
+      error: (e) => { this.avisos.error(mensajeError(e, 'No se pudo generar el documento')); this.ocupado.set(null); },
+    });
+  }
+
+  verHistorial(): void {
+    const v = this.registrada();
+    if (v) this.router.navigate(['/mascotas', v.mascotaId, 'historial']);
+  }
+
+  /** Limpia el formulario para registrar otra vacuna a la misma mascota */
+  aplicarOtra(): void {
+    this.registrada.set(null);
+    this.tipoElegido.set(null);
+    this.loteSiguiente.set(null);
+    this.form.reset({ tipoVacunaId: 0, fechaAplicacion: hoyTexto(), veterinarioId: this.form.controls.veterinarioId.value, proximaDosis: '', observaciones: '' });
+  }
+
   totalConIva(precio: number): number {
     return Math.round(precio * (1 + this.ivaPorcentaje / 100) * 100) / 100;
   }
@@ -120,7 +153,8 @@ export class VacunaForm implements OnInit {
         const refuerzo = r.proximaDosis ? ` Refuerzo programado para el ${r.proximaDosis}.` : '';
         const correo = r.factura?.estado === 'ENVIADO' ? ` Factura enviada a ${r.factura.destino}.` : ' Factura generada.';
         this.avisos.exito(`Vacuna registrada con lote ${r.lote}.${refuerzo}${correo}`);
-        this.router.navigate(['/mascotas', m.id, 'historial']);
+        this.registrada.set(r);
+        this.guardando.set(false);
       },
       error: (e) => {
         aplicarErroresServidor(this.form, e);

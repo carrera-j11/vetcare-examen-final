@@ -6,6 +6,44 @@
   </div>
 </header>
 
+@if (registrada(); as v) {
+  <!-- Vacuna registrada: documentos para descargar o imprimir -->
+  <section class="tarjeta exito" aria-live="polite">
+    <div class="exito-cabecera">
+      <span class="check" aria-hidden="true">✔</span>
+      <div>
+        <h2>Vacuna registrada</h2>
+        <p class="texto-suave">{{ v.tipoVacuna }} · {{ v.mascota }} · lote <strong>{{ v.lote }}</strong>
+          @if (v.proximaDosis) { · refuerzo el {{ v.proximaDosis }} }</p>
+        @if (v.factura?.estado === 'ENVIADO') {
+          <p class="enviado">✉ La factura y el certificado se enviaron a {{ v.factura?.destino }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="documentos">
+      <div class="documento">
+        <span class="icono" aria-hidden="true">💉</span>
+        <div><strong>Certificado de la vacuna aplicada</strong><span class="sub">Con código QR para verificar el carnet</span></div>
+        <button type="button" class="btn btn-primario btn-chico" (click)="documento('certificado', 'descargar')" [disabled]="!!ocupado()">⬇ Descargar</button>
+        <button type="button" class="btn btn-chico" (click)="documento('certificado', 'imprimir')" [disabled]="!!ocupado()">🖨️ Imprimir</button>
+      </div>
+      @if (v.facturaId) {
+        <div class="documento">
+          <span class="icono" aria-hidden="true">🧾</span>
+          <div><strong>Factura de la vacuna</strong><span class="sub">Precio + IVA</span></div>
+          <button type="button" class="btn btn-primario btn-chico" (click)="documento('factura', 'descargar')" [disabled]="!!ocupado()">⬇ Descargar</button>
+          <button type="button" class="btn btn-chico" (click)="documento('factura', 'imprimir')" [disabled]="!!ocupado()">🖨️ Imprimir</button>
+        </div>
+      }
+    </div>
+
+    <div class="pie-formulario">
+      <button type="button" class="btn" (click)="aplicarOtra()">💉 Aplicar otra vacuna</button>
+      <button type="button" class="btn btn-primario" (click)="verHistorial()">Ver historial de {{ v.mascota }}</button>
+    </div>
+  </section>
+} @else {
 <form class="tarjeta formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
   <fieldset class="bloque">
     <legend class="etiqueta">Mascota <span class="requerido">*</span></legend>
@@ -83,3 +121,4 @@
     <button type="submit" class="btn btn-primario" [disabled]="guardando()">{{ guardando() ? 'Registrando…' : 'Registrar vacuna' }}</button>
   </div>
 </form>
+}

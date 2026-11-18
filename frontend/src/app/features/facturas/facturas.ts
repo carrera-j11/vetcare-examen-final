@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { AvisosService } from '../../core/services/avisos.service';
 import { ConfirmacionService } from '../../core/services/confirmacion.service';
 import { FacturasService } from '../../core/services/facturas.service';
-import { guardarArchivo, mensajeError } from '../../core/utils/errores';
+import { guardarArchivo, imprimirArchivo, mensajeError } from '../../core/utils/errores';
 import { hoyTexto, sumarDias } from '../../core/utils/fechas';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
 import { Paginador } from '../../shared/components/paginador/paginador';
@@ -79,22 +79,7 @@ export class Facturas implements OnInit {
   imprimir(f: Factura): void {
     this.ocupado.set(f.id);
     this.servicio.pdf(f.id).subscribe({
-      next: ({ blob }) => {
-        const url = URL.createObjectURL(blob);
-        const marco = document.createElement('iframe');
-        marco.style.position = 'fixed';
-        marco.style.width = '0';
-        marco.style.height = '0';
-        marco.style.border = '0';
-        marco.src = url;
-        marco.onload = () => {
-          marco.contentWindow?.focus();
-          marco.contentWindow?.print();
-          setTimeout(() => { URL.revokeObjectURL(url); marco.remove(); }, 60_000);
-        };
-        document.body.appendChild(marco);
-        this.ocupado.set(null);
-      },
+      next: ({ blob }) => { imprimirArchivo(blob); this.ocupado.set(null); },
       error: (e) => { this.avisos.error(mensajeError(e)); this.ocupado.set(null); },
     });
   }

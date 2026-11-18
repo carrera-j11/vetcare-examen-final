@@ -1,0 +1,5 @@
+/* Documentos descargables de la consulta */
+.documentos { display: grid; gap: .6rem; }
+.documento { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.documento > div { flex: 1; min-width: 200px; }
+.icono { font-size: 1.6rem; }

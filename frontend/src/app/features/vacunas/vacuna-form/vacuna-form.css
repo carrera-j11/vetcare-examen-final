@@ -10,3 +10,20 @@
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem; padding: .7rem .9rem;
   border-radius: 8px; background: var(--primario-suave); color: var(--texto);
 }
+
+.exito { display: grid; gap: 1rem; }
+.exito-cabecera { display: flex; gap: .9rem; align-items: flex-start; }
+.exito-cabecera h2 { margin: 0; }
+.exito-cabecera p { margin: .2rem 0 0; }
+.check {
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
+  background: var(--exito-suave); color: var(--exito); font-size: 1.4rem; font-weight: 800;
+}
+.enviado { color: var(--exito); font-weight: 600; }
+.documentos { display: grid; gap: .6rem; }
+.documento {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+  padding: .75rem .9rem; border: 1px solid var(--borde); border-radius: 10px; background: var(--superficie-2);
+}
+.documento > div { flex: 1; min-width: 200px; }
+.icono { font-size: 1.5rem; }
