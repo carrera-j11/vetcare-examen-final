@@ -102,7 +102,7 @@ async function reenviar(id, ctx) {
   if (!correo.configurado()) throw HttpError.regla('CORREO_NO_CONFIGURADO', 'El envío de correos no está configurado en el servidor (variables MAIL_*)');
   const r = await enviarPorCorreo(id);
   await auditoria.registrar(null, ctx, { accion: 'ENVIAR_CORREO', entidad: 'factura', entidadId: id, detalle: r });
-  if (r.estado === 'SIN_CORREO') throw HttpError.regla('PROPIETARIO_SIN_CORREO', `${factura.propietario} no tiene un correo registrado`);
+  if (r.estado === 'SIN_CORREO') throw HttpError.regla('PROPIETARIO_SIN_CORREO', r.detalle?.includes('prueba') ? r.detalle : `${factura.propietario} no tiene un correo registrado. Agréguelo en su ficha`);
   if (r.estado === 'ERROR') throw new HttpError(502, 'CORREO_ERROR', 'El servicio de correo rechazó el envío');
   return r;
 }

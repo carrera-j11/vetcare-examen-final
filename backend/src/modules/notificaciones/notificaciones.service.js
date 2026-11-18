@@ -88,7 +88,7 @@ async function enviarRecordatorioControl(controlId, ctx) {
     detalle: { estado: resultado.estado, destino: resultado.destino, detalle: resultado.detalle },
   });
   if (resultado.estado === 'SIN_CORREO') {
-    throw HttpError.regla('PROPIETARIO_SIN_CORREO', `${control.propietario} no tiene un correo registrado. Agréguelo en su ficha de propietario`);
+    throw HttpError.regla('PROPIETARIO_SIN_CORREO', resultado.detalle?.includes('prueba') ? resultado.detalle : `${control.propietario} no tiene un correo registrado. Agréguelo en su ficha de propietario`);
   }
   if (resultado.estado === 'ERROR') {
     throw new HttpError(502, 'CORREO_ERROR', 'El servicio de correo rechazó el envío. Revise la configuración del remitente');

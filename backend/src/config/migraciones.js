@@ -200,6 +200,12 @@ async function aplicarMigraciones() {
 
   await datosPeluqueria(aplicadas);
 
+  // Los propietarios de los datos de prueba usan correos de dominio reservado (no llegan a nadie real)
+  const [r] = await pool.query(
+    `UPDATE propietarios SET email = REPLACE(email, '@mail.com', '@example.com')
+      WHERE email LIKE '%@mail.com' AND cedula IN ('0105678924','0103456786','0107891236','0102233442','0109988774','0104455662','0106677883','0101122331')`);
+  if (r.affectedRows) aplicadas.push(`${r.affectedRows} correo(s) de prueba → @example.com`);
+
   if (aplicadas.length) console.log(`[db] Migración aplicada: ${aplicadas.join(', ')}`);
 }
 

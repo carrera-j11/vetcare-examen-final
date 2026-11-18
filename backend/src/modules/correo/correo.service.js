@@ -14,6 +14,8 @@ const nodemailer = require('nodemailer');
 const env = require('../../config/env');
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Dominios reservados para pruebas (RFC 2606): nunca se les envía correo */
+const DOMINIO_DE_PRUEBA = /@(.+\.)?(example\.(com|org|net)|ejemplo\.com)$|\.(test|invalid|localhost)$/i;
 let transporteSmtp = null;
 
 function configurado() {
@@ -80,6 +82,9 @@ async function enviar(mensaje) {
   const destino = env.correo.redirigirA || destinoOriginal;
   if (!EMAIL_VALIDO.test(destino)) {
     return { estado: 'SIN_CORREO', destino: null, detalle: 'El propietario no tiene un correo registrado' };
+  }
+  if (DOMINIO_DE_PRUEBA.test(destino)) {
+    return { estado: 'SIN_CORREO', destino, detalle: `${destino} es un correo de prueba; registre el correo real del propietario` };
   }
   const asunto = env.correo.redirigirA && destinoOriginal ? `${mensaje.asunto} (para ${destinoOriginal})` : mensaje.asunto;
   try {
