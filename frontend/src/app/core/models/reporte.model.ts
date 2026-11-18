@@ -46,4 +46,13 @@ export interface ReporteCitas {
     id: number; inicio: string; fin: string; estado: string; motivo: string; mascota: string; especie: string;
     propietario: string; telefono: string; veterinario: string; especialidad: string;
   }[];
+  vacunas: {
+    porTipo: { tipoVacuna: string; total: number }[];
+    detalle: { id: number; fechaAplicacion: string; tipoVacuna: string; mascota: string; especie: string; propietario: string; veterinario: string; lote: string | null; proximaDosis: string | null }[];
+  };
+  consultas: {
+    detalle: { id: number; fecha: string; mascota: string; especie: string; propietario: string; veterinario: string; motivo: string; diagnostico: string; totalTratamientos: number }[];
+  };
 }
+
+export type SeccionReporte = 'citas' | 'vacunas' | 'consultas';

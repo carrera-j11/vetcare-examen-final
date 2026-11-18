@@ -7,10 +7,12 @@ async function indicadores(req, res) {
 async function reporteCitas(req, res) {
   const reporte = await servicio.reporteCitas(req.consulta);
   if (req.consulta.formato === 'csv') {
+    const { seccion } = req.consulta;
+    const filas = seccion === 'vacunas' ? reporte.vacunas.detalle : seccion === 'consultas' ? reporte.consultas.detalle : reporte.detalle;
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="reporte-citas-${reporte.rango.desde}_${reporte.rango.hasta}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="reporte-${seccion}-${reporte.rango.desde}_${reporte.rango.hasta}.csv"`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-    return res.send(servicio.aCsv(reporte.detalle));
+    return res.send(servicio.aCsv(filas, seccion));
   }
   return res.json({ data: reporte });
 }

@@ -1,3 +1,20 @@
+.resumen { margin-bottom: 1rem; }
+.kpi {
+  display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; text-align: left;
+  font: inherit; color: var(--texto); cursor: pointer; border-width: 2px;
+}
+.kpi .numero { font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
+.kpi span:last-child { color: var(--texto-suave); font-size: .88rem; }
+.kpi:hover { border-color: var(--borde-fuerte); }
+.kpi.activa { border-color: var(--primario); }
+
+.pestanas { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 2px solid var(--borde); margin-bottom: 1rem; }
+.pestanas button {
+  border: 0; background: none; font: inherit; font-weight: 600; color: var(--texto-suave);
+  padding: .6rem .9rem; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.pestanas button[aria-selected='true'] { color: var(--primario); border-bottom-color: var(--primario); }
+
 @media print {
   .no-imprimir { display: none !important; }
   :host { display: block; }

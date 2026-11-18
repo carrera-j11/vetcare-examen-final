@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ReporteCitas } from '../../core/models/reporte.model';
+import { ReporteCitas, SeccionReporte } from '../../core/models/reporte.model';
 import { Especialidad, Veterinario } from '../../core/models/veterinario.model';
 import { AvisosService } from '../../core/services/avisos.service';
 import { ReportesService } from '../../core/services/reportes.service';
@@ -27,7 +27,8 @@ export class Reportes implements OnInit {
   protected readonly especialidades = signal<Especialidad[]>([]);
   protected readonly cargando = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly exportando = signal(false);
+  protected readonly exportando = signal<SeccionReporte | null>(null);
+  protected readonly pestana = signal<SeccionReporte>('citas');
 
   protected filtros = { desde: sumarDias(hoyTexto(), -30), hasta: sumarDias(hoyTexto(), 15), veterinarioId: '', especialidadId: '', estado: '' };
 
@@ -52,11 +53,11 @@ export class Reportes implements OnInit {
     });
   }
 
-  exportar(): void {
-    this.exportando.set(true);
-    this.servicio.citasCsv(this.filtros).subscribe({
-      next: ({ blob, nombre }) => { guardarArchivo(blob, nombre); this.exportando.set(false); this.avisos.exito('Reporte exportado (CSV compatible con Excel)'); },
-      error: (e) => { this.avisos.error(mensajeError(e)); this.exportando.set(false); },
+  exportar(seccion: SeccionReporte = this.pestana()): void {
+    this.exportando.set(seccion);
+    this.servicio.exportarCsv(this.filtros, seccion).subscribe({
+      next: ({ blob, nombre }) => { guardarArchivo(blob, nombre); this.exportando.set(null); this.avisos.exito('Reporte exportado (CSV compatible con Excel)'); },
+      error: (e) => { this.avisos.error(mensajeError(e)); this.exportando.set(null); },
     });
   }
 

@@ -4,7 +4,7 @@
 }
 .aviso {
   display: flex; align-items: flex-start; gap: .6rem; padding: .75rem .9rem;
-  border-radius: 10px; box-shadow: var(--sombra-alta); background: #fff; border-left: 5px solid;
+  border-radius: 10px; box-shadow: var(--sombra-alta); background: var(--superficie); border-left: 5px solid;
   animation: entrar .2s ease-out;
 }
 .aviso p { margin: 0; flex: 1; font-size: .9rem; }

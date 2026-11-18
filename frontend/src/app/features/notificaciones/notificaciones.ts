@@ -32,6 +32,13 @@ export class Notificaciones implements OnInit {
     CONTROL_PROXIMO: 'Control próximo', CONTROL_VENCIDO: 'Control vencido', CITA_PROXIMA: 'Cita mañana',
   };
 
+  protected readonly estadosCorreo: Record<string, { texto: string; clase: string }> = {
+    ENVIADO: { texto: '✉ Enviado', clase: 'badge-activo' },
+    ERROR: { texto: '✖ Error', clase: 'badge-vencido' },
+    SIN_CORREO: { texto: 'Sin correo', clase: 'badge-proximo' },
+    NO_CONFIGURADO: { texto: 'No configurado', clase: 'badge-inactivo' },
+  };
+
   ngOnInit(): void { this.cargar(); }
 
   cargar(): void {
@@ -66,7 +73,7 @@ export class Notificaciones implements OnInit {
   generar(): void {
     this.servicio.generar().subscribe({
       next: (r) => {
-        this.avisos.info(`Proceso ejecutado: ${r.revisados} evento(s) revisado(s), ${r.creadas} alerta(s) nueva(s)`);
+        this.avisos.info(`Proceso ejecutado: ${r.revisados} evento(s) revisado(s), ${r.creadas} alerta(s) nueva(s), ${r.correosEnviados ?? 0} correo(s) enviado(s)`);
         this.servicio.actualizarContador();
         this.cargar();
       },

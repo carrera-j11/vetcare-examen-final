@@ -8,6 +8,7 @@ const rango = z.object({
   especialidadId: z.coerce.number().int().positive().optional(),
   estado: z.enum(['PROGRAMADA', 'ATENDIDA', 'CANCELADA', 'NO_ASISTIO']).optional(),
   formato: z.enum(['json', 'csv']).default('json'),
+  seccion: z.enum(['citas', 'vacunas', 'consultas']).default('citas'),
 }).refine((r) => !r.desde || !r.hasta || r.desde <= r.hasta, { message: 'El rango de fechas no es válido', path: ['hasta'] });
 
 module.exports = { rango };

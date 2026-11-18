@@ -79,10 +79,15 @@ async function mascotasPorEspecie() {
   return filas;
 }
 
-async function vacunasPorTipo(f) {
-  const filtros = new Filtros()
+function filtrosVacunas(f) {
+  return new Filtros()
     .si(f.desde, 'va.fecha_aplicacion >= ?', f.desde)
-    .si(f.hasta, 'va.fecha_aplicacion <= ?', f.hasta);
+    .si(f.hasta, 'va.fecha_aplicacion <= ?', f.hasta)
+    .si(f.veterinarioId, 'va.veterinario_id = ?', f.veterinarioId);
+}
+
+async function vacunasPorTipo(f) {
+  const filtros = filtrosVacunas(f);
   const [filas] = await pool.query(
     `SELECT t.nombre AS tipoVacuna, COUNT(*) AS total FROM vacunas_aplicadas va JOIN tipos_vacuna t ON t.id = va.tipo_vacuna_id
       ${filtros.where} GROUP BY t.id ORDER BY total DESC`, filtros.params);
@@ -114,7 +119,38 @@ async function detalleCitas(f) {
   return filas;
 }
 
+/** Vacunas aplicadas en el período (sección del reporte y exportación CSV) */
+async function detalleVacunas(f) {
+  const filtros = filtrosVacunas(f);
+  const [filas] = await pool.query(
+    `SELECT va.id, va.fecha_aplicacion AS fechaAplicacion, t.nombre AS tipoVacuna, m.nombre AS mascota, m.especie,
+            CONCAT(p.nombres, ' ', p.apellidos) AS propietario, CONCAT(v.nombres, ' ', v.apellidos) AS veterinario,
+            va.lote, va.proxima_dosis AS proximaDosis
+       FROM vacunas_aplicadas va JOIN tipos_vacuna t ON t.id = va.tipo_vacuna_id
+       JOIN mascotas m ON m.id = va.mascota_id JOIN propietarios p ON p.id = m.propietario_id
+       JOIN veterinarios v ON v.id = va.veterinario_id
+       ${filtros.where} ORDER BY va.fecha_aplicacion DESC, va.id DESC LIMIT 5000`, filtros.params);
+  return filas;
+}
+
+/** Consultas atendidas en el período */
+async function detalleConsultas(f) {
+  const filtros = new Filtros()
+    .si(f.desde, 'c.fecha >= ?', `${f.desde} 00:00:00`)
+    .si(f.hasta, 'c.fecha <= ?', `${f.hasta} 23:59:59`)
+    .si(f.veterinarioId, 'c.veterinario_id = ?', f.veterinarioId);
+  const [filas] = await pool.query(
+    `SELECT c.id, c.fecha, m.nombre AS mascota, m.especie, CONCAT(p.nombres, ' ', p.apellidos) AS propietario,
+            CONCAT(v.nombres, ' ', v.apellidos) AS veterinario, c.motivo, c.diagnostico,
+            (SELECT COUNT(*) FROM tratamientos t WHERE t.consulta_id = c.id) AS totalTratamientos
+       FROM consultas c JOIN mascotas m ON m.id = c.mascota_id JOIN propietarios p ON p.id = m.propietario_id
+       JOIN veterinarios v ON v.id = c.veterinario_id
+       ${filtros.where} ORDER BY c.fecha DESC LIMIT 5000`, filtros.params);
+  return filas;
+}
+
 module.exports = {
+  detalleVacunas, detalleConsultas,
   totales, citasPorEstado, citasPorVeterinario, citasPorEspecialidad, citasPorDia,
   mascotasPorEspecie, vacunasPorTipo, coberturaVacunacion, detalleCitas,
 };

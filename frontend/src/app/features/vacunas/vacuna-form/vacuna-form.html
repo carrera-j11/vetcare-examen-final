@@ -15,17 +15,7 @@
         <button type="button" class="btn btn-texto btn-chico" (click)="mascota.set(null)">Cambiar</button>
       </div>
     } @else {
-      <div class="buscador">
-        <input type="search" [(ngModel)]="textoMascota" [ngModelOptions]="{ standalone: true }" (input)="buscarMascota()"
-               placeholder="Nombre de la mascota o cédula del propietario" aria-label="Buscar mascota" autocomplete="off" />
-        @if (resultados().length) {
-          <ul class="resultados">
-            @for (r of resultados(); track r.id) {
-              <li><button type="button" (click)="elegirMascota(r)">{{ r.nombre }} <small>{{ r.especie }} · {{ r.propietario?.nombreCompleto }}</small></button></li>
-            }
-          </ul>
-        }
-      </div>
+      <app-selector-buscable etiqueta="Mascota" placeholderBusqueda="Nombre de la mascota o cédula del propietario" [buscar]="mascotas.opciones" (elegir)="elegirMascota($event)" />
     }
   </fieldset>
 

@@ -39,23 +39,41 @@ async function indicadores(filtros) {
   };
 }
 
-const COLUMNAS_CSV = ['id', 'inicio', 'fin', 'estado', 'especialidad', 'veterinario', 'mascota', 'especie', 'propietario', 'telefono', 'motivo'];
+/** Columnas de cada sección exportable a CSV */
+const COLUMNAS_CSV = {
+  citas: ['id', 'inicio', 'fin', 'estado', 'especialidad', 'veterinario', 'mascota', 'especie', 'propietario', 'telefono', 'motivo'],
+  vacunas: ['id', 'fechaAplicacion', 'tipoVacuna', 'mascota', 'especie', 'propietario', 'veterinario', 'lote', 'proximaDosis'],
+  consultas: ['id', 'fecha', 'mascota', 'especie', 'propietario', 'veterinario', 'motivo', 'diagnostico', 'totalTratamientos'],
+};
 
-function aCsv(filas) {
+function aCsv(filas, seccion = 'citas') {
+  const columnas = COLUMNAS_CSV[seccion];
   const escapar = (v) => {
     const t = v == null ? '' : String(v);
     return /[",;\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
-  const lineas = [COLUMNAS_CSV.join(';'), ...filas.map((f) => COLUMNAS_CSV.map((c) => escapar(f[c])).join(';'))];
-  return `﻿${lineas.join('\r\n')}`; // BOM para que Excel respete las tildes
+  const lineas = [columnas.join(';'), ...filas.map((f) => columnas.map((c) => escapar(f[c])).join(';'))];
+  return `\uFEFF${lineas.join('\r\n')}`; // BOM para que Excel respete las tildes
 }
 
+/**
+ * Reporte del período con filtros avanzados: citas (resumen + detalle),
+ * vacunas aplicadas y consultas atendidas. Las vacunas y consultas no son
+ * citas, por eso se reportan en secciones propias.
+ */
 async function reporteCitas(filtros) {
   const f = rangoPorDefecto(filtros);
-  const [detalle, porVeterinario, porEstado] = await Promise.all([
+  const [detalle, porVeterinario, porEstado, vacunas, vacunasPorTipo, consultas] = await Promise.all([
     repo.detalleCitas(f), repo.citasPorVeterinario(f), repo.citasPorEstado(f),
+    repo.detalleVacunas(f), repo.vacunasPorTipo(f), repo.detalleConsultas(f),
   ]);
-  return { rango: { desde: f.desde, hasta: f.hasta }, resumen: { porEstado, porVeterinario }, detalle };
+  return {
+    rango: { desde: f.desde, hasta: f.hasta },
+    resumen: { porEstado, porVeterinario },
+    detalle,
+    vacunas: { porTipo: vacunasPorTipo, detalle: vacunas },
+    consultas: { detalle: consultas },
+  };
 }
 
 module.exports = { indicadores, reporteCitas, aCsv };

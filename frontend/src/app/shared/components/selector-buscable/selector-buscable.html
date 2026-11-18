@@ -1,0 +1,30 @@
+<div class="selector" [class.invalido]="invalido()">
+  <!-- Opción 1: buscar escribiendo -->
+  <label class="buscador" [attr.for]="idBase + '-buscar'">
+    <span class="solo-lector">Buscar {{ etiqueta().toLowerCase() }}</span>
+    <span class="lupa" aria-hidden="true">🔍</span>
+    <input [id]="idBase + '-buscar'" type="search" autocomplete="off" [value]="texto()"
+           [placeholder]="placeholderBusqueda()" (input)="escribir($event)" (keydown.enter)="elegirPrimero($event)"
+           [attr.aria-controls]="idBase + '-lista'" />
+  </label>
+
+  <!-- Opción 2: desplegar y elegir -->
+  <label class="desplegable" [attr.for]="idBase + '-lista'">
+    <span class="solo-lector">Lista de {{ etiqueta().toLowerCase() }}</span>
+    <select [id]="idBase + '-lista'" (change)="seleccionar($event)" [disabled]="cargando() && !opciones().length">
+      <option value="" selected disabled>
+        {{ cargando() ? 'Cargando…' : opciones().length ? '▾ Seleccione ' + etiqueta().toLowerCase() + ' (' + opciones().length + ')' : 'Sin resultados' }}
+      </option>
+      @for (o of opciones(); track o.id) {
+        <option [value]="o.id">{{ o.texto }}{{ o.detalle ? ' — ' + o.detalle : '' }}</option>
+      }
+    </select>
+  </label>
+</div>
+<p class="ayuda" aria-live="polite">
+  @if (texto() && !cargando()) {
+    {{ opciones().length }} resultado(s) para “{{ texto() }}”. Elija en la lista o presione Enter para tomar el primero.
+  } @else {
+    Despliegue la lista o escriba para filtrar.
+  }
+</p>

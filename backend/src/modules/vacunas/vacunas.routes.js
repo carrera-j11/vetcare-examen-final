@@ -35,6 +35,7 @@ controlesRouter.get('/', autorizar(...TODOS), validar(controlesDto.filtros, 'que
 controlesRouter.post('/', autorizar(ADMIN, VETERINARIO), validar(controlesDto.crear), c.crearControl);
 controlesRouter.patch('/:id/realizado', autorizar(ADMIN, VETERINARIO), validar(paramId, 'params'), c.marcarRealizado);
 controlesRouter.patch('/:id/cancelar', autorizar(ADMIN, VETERINARIO), validar(paramId, 'params'), c.cancelarControl);
+controlesRouter.post('/:id/recordatorio', autorizar(...TODOS), validar(paramId, 'params'), c.recordatorioControl);
 controlesRouter.patch('/:id/reprogramar', autorizar(...TODOS), validar(paramId, 'params'), validar(controlesDto.reprogramar), c.reprogramarControl);
 
 // /api/calendario

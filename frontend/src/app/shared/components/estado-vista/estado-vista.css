@@ -5,7 +5,7 @@
   margin-bottom: 1rem;
 }
 .estado p { margin: 0; }
-.estado-error { color: var(--peligro); border-color: #fca5a5; background: #fff7f7; }
+.estado-error { color: var(--peligro); border-color: var(--peligro-borde); background: var(--peligro-suave); }
 .icono { font-size: 1.8rem; }
 .spinner {
   width: 28px; height: 28px; border-radius: 50%;

@@ -18,17 +18,7 @@
           <button type="button" class="btn btn-texto btn-chico" (click)="quitarPropietario()">Cambiar</button>
         </div>
       } @else {
-        <div class="buscador">
-          <input type="search" [(ngModel)]="textoBusqueda" [ngModelOptions]="{ standalone: true }" (input)="buscarPropietario()"
-                 placeholder="Escriba la cédula o el apellido del propietario" aria-label="Buscar propietario" autocomplete="off" />
-          @if (resultados().length) {
-            <ul class="resultados" role="listbox">
-              @for (r of resultados(); track r.id) {
-                <li><button type="button" (click)="seleccionar(r)">{{ r.nombreCompleto }} <small>C.I. {{ r.cedula }}</small></button></li>
-              }
-            </ul>
-          }
-        </div>
+        <app-selector-buscable etiqueta="Propietario" placeholderBusqueda="Cédula o apellido del propietario" [buscar]="propietarios.opciones" [invalido]="form.controls.propietarioId.touched && form.controls.propietarioId.invalid" (elegir)="seleccionar($event)" />
         <p class="ayuda">¿No existe? <a routerLink="/propietarios/nuevo">Registre primero al propietario</a>.</p>
         @if (form.controls.propietarioId.touched && form.controls.propietarioId.invalid) {
           <p class="error-campo" role="alert">Seleccione un propietario registrado</p>

@@ -1,42 +1,54 @@
 <main class="pagina">
-  <section class="tarjeta carnet">
-    <p class="sobre">🐾 VetCare · Verificación pública</p>
-    <h1>Carnet de vacunación</h1>
+  <section class="carnet">
+    <header class="encabezado">
+      <span class="logo" aria-hidden="true">🐾</span>
+      <div>
+        <p class="sobre">VetCare · Verificación pública</p>
+        <h1>Carnet de vacunación</h1>
+      </div>
+    </header>
 
     @if (cargando()) {
-      <p role="status">Verificando carnet…</p>
+      <p class="estado" role="status">Verificando carnet…</p>
     } @else if (error()) {
-      <div class="alerta alerta-error" role="alert">✖ {{ error() }}. El código QR no corresponde a un carnet válido.</div>
+      <div class="alerta alerta-error" role="alert">
+        <strong>✖ Carnet no válido.</strong> {{ error() }}. El código QR no corresponde a un carnet emitido por la clínica.
+      </div>
     } @else if (carnet(); as c) {
-      <div class="alerta alerta-exito" role="status">✔ Carnet auténtico emitido por la clínica.</div>
-      <dl class="datos">
+      <div class="alerta alerta-exito sello" role="status">
+        <span class="check" aria-hidden="true">✔</span>
+        <span><strong>Carnet auténtico</strong> emitido por la clínica.</span>
+      </div>
+
+      <dl class="ficha">
         <div><dt>Paciente</dt><dd>{{ c.mascota.nombre }}</dd></div>
         <div><dt>Especie</dt><dd>{{ c.mascota.especie | titlecase }}</dd></div>
         <div><dt>Raza</dt><dd>{{ c.mascota.raza || '—' }}</dd></div>
         <div><dt>Propietario</dt><dd>{{ c.propietario }}</dd></div>
       </dl>
 
-      <h2 class="mt-1">Vacunas registradas</h2>
+      <h2>Vacunas registradas <span class="contador">{{ c.vacunas.length }}</span></h2>
+
       @if (c.vacunas.length) {
-        <div class="tabla-cont">
-          <table class="tabla">
-            <thead><tr><th>Vacuna</th><th>Aplicada</th><th>Próxima dosis</th><th>Estado</th></tr></thead>
-            <tbody>
-              @for (v of c.vacunas; track $index) {
-                <tr>
-                  <td>{{ v.vacuna }}</td>
-                  <td>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ v.proximaDosis ? (v.proximaDosis | date: 'dd/MM/yyyy') : 'Dosis única' }}</td>
-                  <td><span class="badge" [class]="v.vigente ? 'badge badge-activo' : 'badge badge-vencido'">{{ v.vigente ? 'Vigente' : 'Vencida' }}</span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <ul class="vacunas">
+          @for (v of c.vacunas; track $index) {
+            <li class="vacuna" [class.vencida]="!v.vigente">
+              <div class="vacuna-cabecera">
+                <strong class="vacuna-nombre">{{ v.vacuna }}</strong>
+                <span class="badge" [class]="v.vigente ? 'badge badge-activo' : 'badge badge-vencido'">{{ v.vigente ? 'Vigente' : 'Vencida' }}</span>
+              </div>
+              <dl class="vacuna-fechas">
+                <div><dt>Aplicada</dt><dd>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</dd></div>
+                <div><dt>Próxima dosis</dt><dd>{{ v.proximaDosis ? (v.proximaDosis | date: 'dd/MM/yyyy') : 'Dosis única' }}</dd></div>
+              </dl>
+            </li>
+          }
+        </ul>
       } @else {
         <p class="vacio-texto">La mascota no tiene vacunas registradas.</p>
       }
-      <p class="texto-suave mt-1">Verificado el {{ c.verificadoEn | date: 'dd/MM/yyyy HH:mm' }}</p>
+
+      <p class="pie">Verificado el {{ c.verificadoEn | date: 'dd/MM/yyyy HH:mm' }} · Datos mínimos por privacidad del propietario.</p>
     }
   </section>
 </main>

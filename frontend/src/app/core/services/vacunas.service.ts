@@ -24,6 +24,8 @@ export class VacunasService {
   }
   marcarRealizado(id: number) { return this.api.parche<Control>(`/controles/${id}/realizado`); }
   cancelarControl(id: number) { return this.api.parche<Control>(`/controles/${id}/cancelar`); }
+  /** Envía ahora un recordatorio por correo al propietario */
+  enviarRecordatorio(id: number) { return this.api.crear<{ estado: string; destino: string; propietario: string; mascota: string }>(`/controles/${id}/recordatorio`, {}); }
   reprogramarControl(id: number, fechaProgramada: string) { return this.api.parche<Control>(`/controles/${id}/reprogramar`, { fechaProgramada }); }
 
   // Calendario y alertas (innovación)

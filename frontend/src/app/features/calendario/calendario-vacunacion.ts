@@ -44,6 +44,7 @@ export class CalendarioVacunacion implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly diaSel = signal<string>(hoyTexto());
   protected readonly reprogramandoId = signal<number | null>(null);
+  protected readonly enviandoId = signal<number | null>(null);
   protected nuevaFecha = '';
 
   protected filtroTipo = '';
@@ -125,6 +126,15 @@ export class CalendarioVacunacion implements OnInit {
     this.servicio.cancelarControl(e.referenciaId).subscribe({
       next: () => { this.avisos.info('Control cancelado'); this.refrescar(); },
       error: (err) => this.avisos.error(mensajeError(err)),
+    });
+  }
+
+  /** Envía por correo (desde el correo del administrador) un recordatorio al propietario */
+  enviarRecordatorio(e: EventoCalendario): void {
+    this.enviandoId.set(e.referenciaId);
+    this.servicio.enviarRecordatorio(e.referenciaId).subscribe({
+      next: (r) => { this.avisos.exito(`Recordatorio enviado a ${r.destino}`); this.enviandoId.set(null); },
+      error: (err) => { this.avisos.error(mensajeError(err)); this.enviandoId.set(null); },
     });
   }
 

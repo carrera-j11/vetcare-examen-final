@@ -208,14 +208,17 @@ atender, aplicar vacuna, exportar PDF, generar alertas. La tabla es de solo lect
 | Reportes | Filtros avanzados, resúmenes, detalle, exportación CSV e impresión |
 | Usuarios / Auditoría | Gestión de cuentas y roles; bitácora con filtros y detalle JSON |
 
-**UX y accesibilidad:** estados de carga, vacío y error con reintento; avisos de éxito/advertencia/error;
+**UX y accesibilidad:** pestaña de accesibilidad con forma de media luna en el borde derecho de todas
+las pantallas: **modo nocturno** (🌙/☀️, Alt+N) y **zoom de la interfaz de 50 % a 150 %** (Ctrl+Alt+ / Ctrl+Alt−),
+preferencias guardadas en el navegador; selector de mascotas/propietarios con **lista desplegable y búsqueda**;
+página pública del QR adaptable a celular, tablet y computadora; estados de carga, vacío y error con reintento; avisos de éxito/advertencia/error;
 confirmación antes de operaciones destructivas; diseño responsivo (menú desplegable en móvil); enlace
 "saltar al contenido", foco visible, etiquetas asociadas, `aria-live`, roles ARIA en diálogos/pestañas,
 respeto de `prefers-reduced-motion`; navegación sin recargar la página (SPA con lazy loading).
 
 ## 10. Pruebas
 
-Ejecución: `cd backend && npm test` → **31 pruebas, 31 aprobadas** (además, colección Postman en `postman/`).
+Ejecución: `cd backend && npm test` → **33 pruebas, 33 aprobadas** (además, colección Postman en `postman/`).
 
 | # | Escenario | Tipo | Resultado esperado | Resultado |
 |---|---|---|---|---|
@@ -250,6 +253,8 @@ Ejecución: `cd backend && npm test` → **31 pruebas, 31 aprobadas** (además, 
 | D3 | Reprogramar con versión vieja | Concurrencia | 409 `CONFLICTO_VERSION` | ✔ |
 | D4 | Cancelar dos veces | Duplicado | 422 | ✔ |
 | D5 | Ejecutar dos veces el job de alertas | Idempotencia | 0 alertas nuevas | ✔ |
+| C7 | Reporte incluye la vacuna aplicada hoy (y CSV de vacunas) | Correcto | aparece en la sección | ✔ |
+| C8 | Recordatorio por correo sin configuración | Error | 422 controlado | ✔ |
 
 > Agregue aquí las capturas de pantalla de la ejecución de `npm test`, Swagger y la interfaz.
 
@@ -259,9 +264,12 @@ Ejecución: `cd backend && npm test` → **31 pruebas, 31 aprobadas** (además, 
    Cada vacuna con intervalo de refuerzo genera automáticamente un control en `controles_periodicos`.
    El calendario mensual muestra un semáforo (vencido, próximo ≤ 7 días, programado, realizado) junto
    con las citas; desde el panel del día se aplica la vacuna, se marca realizado o se reprograma.
-2. **Notificaciones automáticas.** `jobs/alertas.job.js` se ejecuta con `node-cron` (cada hora y al arrancar):
-   detecta controles próximos/vencidos y citas del día siguiente y crea notificaciones con el contacto del
-   propietario. Es idempotente gracias al índice único. El Frontend consulta el contador cada minuto (campana).
+2. **Notificaciones automáticas por correo.** `jobs/alertas.job.js` se ejecuta con `node-cron` (cada hora y al arrancar):
+   detecta controles próximos/vencidos y citas del día siguiente, crea la alerta en el sistema (campana y
+   bandeja de notificaciones) y **envía un correo HTML al propietario desde el correo del administrador**
+   (Gmail SMTP en local o API de Brevo en la nube). Es idempotente gracias al índice único: ni las alertas
+   ni los correos se duplican. El estado de cada envío (enviado, error, sin correo) queda registrado y
+   también se puede enviar un recordatorio manual desde el calendario.
 3. **Algoritmo de asignación de horarios.** `GET /citas/sugerencias` recorre los próximos 14 días, toma
    los veterinarios que ofrecen la especialidad, calcula los huecos libres (horario laboral – bloqueos –
    citas, en pasos de 15 min y con la duración de la especialidad) y ordena por cercanía y menor carga
@@ -269,8 +277,9 @@ Ejecución: `cd backend && npm test` → **31 pruebas, 31 aprobadas** (además, 
 4. **Historial clínico en PDF con código QR.** `GET /mascotas/:id/historial/pdf` genera el documento
    (vacunas, próximos controles, consultas y tratamientos). El QR apunta a `/verificar/<código>`, página
    pública que confirma la autenticidad del carnet y la vigencia de cada vacuna.
-5. **Panel de indicadores y reporte con filtros avanzados** (asistencia, cobertura de vacunación,
-   productividad por veterinario) exportable a CSV para Excel.
+5. **Panel de indicadores y reportes con filtros avanzados** (asistencia, cobertura de vacunación,
+   productividad por veterinario) con secciones de citas, vacunas aplicadas y consultas, cada una
+   exportable a CSV para Excel.
 
 ## 12. Enlaces
 * Repositorio: _(agregar URL de GitHub)_

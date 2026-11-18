@@ -14,14 +14,14 @@ nav a {
   color: #d7efec; text-decoration: none; font-size: .9rem;
 }
 nav a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
-nav a.activo { background: var(--primario); color: #fff; font-weight: 600; }
+nav a.activo { background: var(--primario); color: var(--sobre-primario); font-weight: 600; }
 .icono { width: 1.3rem; text-align: center; }
 
 /* Barra superior */
 .principal { min-width: 0; display: flex; flex-direction: column; }
 .superior {
   position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: .6rem;
-  background: rgba(255, 255, 255, .95); backdrop-filter: blur(6px);
+  background: var(--barra); backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--borde); padding: .55rem 1.25rem;
 }
 .espaciador { flex: 1; }
@@ -39,17 +39,17 @@ nav a.activo { background: var(--primario); color: #fff; font-weight: 600; }
 .campana { position: relative; font-size: 1.05rem; }
 .contador {
   position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px;
-  border-radius: 999px; background: var(--peligro); color: #fff; font-size: .7rem; font-weight: 700;
+  border-radius: 999px; background: var(--peligro); color: var(--sobre-peligro); font-size: .7rem; font-weight: 700;
   display: grid; place-items: center;
 }
 .panel-alertas {
   position: absolute; right: 0; top: calc(100% + 8px); width: min(380px, calc(100vw - 24px));
-  background: #fff; border: 1px solid var(--borde); border-radius: 12px; box-shadow: var(--sombra-alta);
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; box-shadow: var(--sombra-alta);
   max-height: 70vh; overflow-y: auto; z-index: 60;
 }
 .panel-cabecera { display: flex; justify-content: space-between; align-items: center; padding: .75rem 1rem; border-bottom: 1px solid var(--borde); }
-.notificacion { display: flex; flex-direction: column; gap: .2rem; padding: .7rem 1rem; border-bottom: 1px solid #eef2f1; text-decoration: none; color: var(--texto); font-size: .85rem; }
-.notificacion:hover { background: #f6fbfa; }
+.notificacion { display: flex; flex-direction: column; gap: .2rem; padding: .7rem 1rem; border-bottom: 1px solid var(--linea); text-decoration: none; color: var(--texto); font-size: .85rem; }
+.notificacion:hover { background: var(--hover); }
 .notificacion .badge { align-self: flex-start; }
 .notificacion span:last-child { color: var(--texto-suave); }
 .sin-alertas { padding: 1rem; margin: 0; color: var(--texto-suave); text-align: center; }

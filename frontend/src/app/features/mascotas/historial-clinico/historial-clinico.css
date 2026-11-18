@@ -1,7 +1,7 @@
 .resumen .tarjeta { text-align: center; padding: .9rem; }
 .resumen p { margin: 0; color: var(--texto-suave); font-size: .85rem; }
 .resumen .numero { font-size: 1.7rem; font-weight: 800; color: var(--texto); }
-.alerta-borde { border-color: #fca5a5; }
+.alerta-borde { border-color: var(--peligro-borde); }
 
 .pestanas { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 2px solid var(--borde); margin-bottom: 1rem; }
 .pestanas button {

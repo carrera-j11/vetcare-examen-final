@@ -2,7 +2,7 @@
   <div>
     <p class="sobre">Alertas automáticas</p>
     <h1>Notificaciones</h1>
-    <p class="descripcion">El sistema revisa cada hora los controles y vacunas próximos o vencidos y las citas del día siguiente.</p>
+    <p class="descripcion">Cada hora el sistema revisa los controles y vacunas próximos o vencidos y las citas del día siguiente: crea la alerta aquí y envía un correo al propietario desde el correo del administrador.</p>
   </div>
   <div class="acciones">
     @if (auth.tieneRol('ADMIN')) {
@@ -37,13 +37,19 @@
 @if (!cargando() && lista().length) {
   <div class="tabla-cont">
     <table class="tabla">
-      <thead><tr><th>Tipo</th><th>Detalle</th><th>Fecha del evento</th><th>Generada</th><th></th></tr></thead>
+      <thead><tr><th>Tipo</th><th>Detalle</th><th>Fecha del evento</th><th>Correo al propietario</th><th>Generada</th><th></th></tr></thead>
       <tbody>
         @for (n of lista(); track n.id) {
           <tr [class.inactivo]="n.leida">
             <td><span class="badge" [class]="'badge badge-' + n.tipo">{{ etiquetas[n.tipo] }}</span></td>
             <td><strong>{{ n.titulo }}</strong><span class="sub">{{ n.mensaje }}</span></td>
             <td>{{ n.fechaEvento | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (n.correoEstado; as ec) {
+                <span class="badge" [class]="'badge ' + estadosCorreo[ec].clase" [title]="n.correoDetalle || ''">{{ estadosCorreo[ec].texto }}</span>
+                @if (n.correoDestino) { <span class="sub">{{ n.correoDestino }}</span> }
+              } @else { <span class="texto-suave">—</span> }
+            </td>
             <td>{{ n.creadoEn | date: 'dd/MM HH:mm' }}</td>
             <td class="acciones-fila">
               <a class="btn btn-texto btn-chico" [routerLink]="n.referenciaTipo === 'cita' ? '/citas' : '/calendario'">Ver</a>

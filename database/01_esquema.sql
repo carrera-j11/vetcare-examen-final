@@ -261,6 +261,11 @@ CREATE TABLE notificaciones (
   referencia_id   INT          NOT NULL,
   fecha_evento    DATE         NOT NULL,
   leida           TINYINT(1)   NOT NULL DEFAULT 0,
+  -- Correo enviado al propietario desde el correo del administrador
+  correo_destino  VARCHAR(120) NULL,
+  correo_estado   ENUM('ENVIADO','ERROR','SIN_CORREO','NO_CONFIGURADO') NULL,
+  correo_detalle  VARCHAR(250) NULL,
+  correo_enviado_en DATETIME   NULL,
   creado_en       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   -- Idempotencia: el job puede ejecutarse muchas veces sin duplicar alertas
   CONSTRAINT uq_notificacion UNIQUE (tipo, referencia_tipo, referencia_id),

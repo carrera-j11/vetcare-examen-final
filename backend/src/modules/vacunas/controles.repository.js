@@ -9,7 +9,7 @@ const SELECT_BASE = `
   SELECT cp.id, cp.tipo, cp.descripcion, cp.fecha_programada AS fechaProgramada, cp.estado, cp.realizado_en AS realizadoEn,
          cp.tipo_vacuna_id AS tipoVacunaId, t.nombre AS tipoVacuna,
          m.id AS mascotaId, m.nombre AS mascota, m.especie,
-         p.id AS propietarioId, CONCAT(p.nombres, ' ', p.apellidos) AS propietario, p.telefono AS propietarioTelefono,
+         p.id AS propietarioId, CONCAT(p.nombres, ' ', p.apellidos) AS propietario, p.telefono AS propietarioTelefono, p.email AS propietarioEmail,
          DATEDIFF(cp.fecha_programada, CURDATE()) AS diasRestantes
     FROM controles_periodicos cp
     JOIN mascotas m ON m.id = cp.mascota_id

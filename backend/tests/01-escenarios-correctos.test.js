@@ -77,3 +77,28 @@ test('C6 · Historial clínico en PDF (innovación) e indicadores del panel', as
   assert.equal(ind.status, 200);
   assert.ok(ind.body.data.totales.mascotasActivas > 0);
 });
+
+test('C7 · El reporte del período incluye las vacunas aplicadas hoy (no solo citas)', async () => {
+  const vet = await h.veterinaria();
+  const { mascota } = await h.crearPropietarioConMascota(await h.recepcion());
+  const hoy = h.fechaTexto(new Date());
+  const v = await h.request(h.app).post('/api/vacunas').set('Authorization', `Bearer ${vet}`)
+    .send({ mascotaId: mascota.id, tipoVacunaId: 1, fechaAplicacion: hoy });
+  assert.equal(v.status, 201);
+  const adm = await h.admin();
+  const r = await h.request(h.app).get('/api/reportes/citas').query({ desde: hoy, hasta: hoy }).set('Authorization', `Bearer ${adm}`);
+  assert.equal(r.status, 200);
+  assert.ok(r.body.data.vacunas.detalle.some((x) => x.id === v.body.data.id), 'la vacuna de hoy aparece en el reporte');
+  const csv = await h.request(h.app).get('/api/reportes/citas').query({ desde: hoy, hasta: hoy, formato: 'csv', seccion: 'vacunas' })
+    .set('Authorization', `Bearer ${adm}`);
+  assert.equal(csv.status, 200);
+  assert.match(csv.text, /fechaAplicacion;tipoVacuna/);
+});
+
+test('C8 · Recordatorio por correo sin configuración de correo → 422 controlado', async () => {
+  const token = await h.admin();
+  const res = await h.request(h.app).post('/api/controles/1/recordatorio').set('Authorization', `Bearer ${token}`);
+  if (require('../src/modules/correo/correo.service').configurado()) return; // con correo configurado no aplica
+  assert.equal(res.status, 422);
+  assert.equal(res.body.error.codigo, 'CORREO_NO_CONFIGURADO');
+});

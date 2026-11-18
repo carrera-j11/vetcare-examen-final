@@ -100,6 +100,10 @@
             @if (e.tipo !== 'VACUNA' && auth.tieneRol('ADMIN', 'VETERINARIO')) {
               <button type="button" class="btn btn-chico" (click)="realizado(e)">Realizado</button>
             }
+            <button type="button" class="btn btn-chico" (click)="enviarRecordatorio(e)" [disabled]="enviandoId() === e.referenciaId"
+                    [attr.aria-label]="'Enviar recordatorio por correo al propietario de ' + e.titulo">
+              ✉ {{ enviandoId() === e.referenciaId ? 'Enviando…' : 'Recordar por correo' }}
+            </button>
             <button type="button" class="btn btn-chico" (click)="iniciarReprogramacion(e)">Reprogramar</button>
             @if (auth.tieneRol('ADMIN', 'VETERINARIO')) {
               <button type="button" class="btn btn-texto btn-chico" (click)="cancelar(e)">Cancelar</button>

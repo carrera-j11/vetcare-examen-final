@@ -1,12 +1,14 @@
 <header class="cabecera">
   <div>
     <p class="sobre">Administración</p>
-    <h1>Reporte de citas</h1>
-    <p class="descripcion">Filtros combinados por fechas, veterinario, especialidad y estado. Exportable a Excel (CSV).</p>
+    <h1>Reportes</h1>
+    <p class="descripcion">Citas, vacunas aplicadas y consultas del período, con filtros combinados. Cada sección se exporta a Excel (CSV).</p>
   </div>
   <div class="acciones no-imprimir">
     <button type="button" class="btn" (click)="imprimir()">🖨️ Imprimir</button>
-    <button type="button" class="btn btn-primario" (click)="exportar()" [disabled]="exportando()">⬇ {{ exportando() ? 'Exportando…' : 'Exportar CSV' }}</button>
+    <button type="button" class="btn btn-primario" (click)="exportar()" [disabled]="exportando() !== null">
+      ⬇ {{ exportando() ? 'Exportando…' : 'Exportar ' + (pestana() === 'citas' ? 'citas' : pestana() === 'vacunas' ? 'vacunas' : 'consultas') + ' (CSV)' }}
+    </button>
   </div>
 </header>
 
@@ -21,14 +23,14 @@
     </select>
   </label>
   <label class="campo">
-    <span>Especialidad</span>
+    <span>Especialidad <small class="texto-suave">(citas)</small></span>
     <select name="especialidadId" [(ngModel)]="filtros.especialidadId">
       <option value="">Todas</option>
       @for (e of especialidades(); track e.id) { <option [value]="e.id">{{ e.nombre }}</option> }
     </select>
   </label>
   <label class="campo">
-    <span>Estado</span>
+    <span>Estado <small class="texto-suave">(citas)</small></span>
     <select name="estado" [(ngModel)]="filtros.estado">
       <option value="">Todos</option>
       <option value="PROGRAMADA">Programada</option>
@@ -43,55 +45,150 @@
 <app-estado-vista [cargando]="cargando()" [error]="error()" (reintentar)="generar()" />
 
 @if (!cargando() && reporte(); as r) {
-  <p class="texto-suave">Período: {{ r.rango.desde | date: 'dd/MM/yyyy' }} – {{ r.rango.hasta | date: 'dd/MM/yyyy' }} · {{ total() }} cita(s)</p>
+  <p class="texto-suave">Período: {{ r.rango.desde | date: 'dd/MM/yyyy' }} – {{ r.rango.hasta | date: 'dd/MM/yyyy' }}</p>
 
-  <div class="rejilla rejilla-2">
-    <section class="tarjeta">
-      <h2>Resumen por estado</h2>
-      <table class="tabla">
-        <thead><tr><th>Estado</th><th class="num">Citas</th><th class="num">%</th></tr></thead>
-        <tbody>
-          @for (e of r.resumen.porEstado; track e.estado) {
-            <tr><td><span class="badge" [class]="'badge badge-' + e.estado">{{ e.estado }}</span></td><td class="num">{{ e.total }}</td><td class="num">{{ porcentaje(e.total) }}%</td></tr>
-          }
-        </tbody>
-      </table>
-    </section>
-    <section class="tarjeta">
-      <h2>Productividad por veterinario</h2>
-      <table class="tabla">
-        <thead><tr><th>Veterinario</th><th class="num">Total</th><th class="num">Atendidas</th><th class="num">Asistencia</th><th class="num">Horas</th></tr></thead>
-        <tbody>
-          @for (v of r.resumen.porVeterinario; track v.veterinarioId) {
-            <tr><td>{{ v.veterinario }}</td><td class="num">{{ v.total }}</td><td class="num">{{ v.atendidas }}</td><td class="num">{{ v.tasaAsistencia !== null ? v.tasaAsistencia + '%' : '—' }}</td><td class="num">{{ v.horasAgendadas }}</td></tr>
-          }
-        </tbody>
-      </table>
-    </section>
+  <!-- Resumen rápido del período -->
+  <section class="rejilla rejilla-3 resumen" aria-label="Resumen del período">
+    <button type="button" class="tarjeta kpi" [class.activa]="pestana() === 'citas'" (click)="pestana.set('citas')">
+      <span class="numero">{{ total() }}</span><span>Citas</span>
+    </button>
+    <button type="button" class="tarjeta kpi" [class.activa]="pestana() === 'vacunas'" (click)="pestana.set('vacunas')">
+      <span class="numero">{{ r.vacunas.detalle.length }}</span><span>Vacunas aplicadas</span>
+    </button>
+    <button type="button" class="tarjeta kpi" [class.activa]="pestana() === 'consultas'" (click)="pestana.set('consultas')">
+      <span class="numero">{{ r.consultas.detalle.length }}</span><span>Consultas atendidas</span>
+    </button>
+  </section>
+
+  <div class="pestanas no-imprimir" role="tablist" aria-label="Secciones del reporte">
+    <button type="button" role="tab" [attr.aria-selected]="pestana() === 'citas'" (click)="pestana.set('citas')">Citas ({{ total() }})</button>
+    <button type="button" role="tab" [attr.aria-selected]="pestana() === 'vacunas'" (click)="pestana.set('vacunas')">Vacunas aplicadas ({{ r.vacunas.detalle.length }})</button>
+    <button type="button" role="tab" [attr.aria-selected]="pestana() === 'consultas'" (click)="pestana.set('consultas')">Consultas ({{ r.consultas.detalle.length }})</button>
   </div>
 
-  <section class="tarjeta mt-1">
-    <h2>Detalle ({{ r.detalle.length }})</h2>
-    @if (r.detalle.length) {
-      <div class="tabla-cont">
-        <table class="tabla">
-          <thead><tr><th>Fecha</th><th>Mascota</th><th>Propietario</th><th>Veterinario</th><th>Especialidad</th><th>Estado</th></tr></thead>
-          <tbody>
-            @for (d of r.detalle; track d.id) {
-              <tr>
-                <td>{{ d.inicio | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ d.mascota }}<span class="sub">{{ d.especie }}</span></td>
-                <td>{{ d.propietario }}<span class="sub">{{ d.telefono }}</span></td>
-                <td>{{ d.veterinario }}</td>
-                <td>{{ d.especialidad }}</td>
-                <td><span class="badge" [class]="'badge badge-' + d.estado">{{ d.estado }}</span></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else {
-      <p class="vacio-texto">No hay citas con los filtros seleccionados.</p>
+  <div role="tabpanel">
+    @switch (pestana()) {
+      @case ('citas') {
+        <div class="rejilla rejilla-2">
+          <section class="tarjeta">
+            <h2>Resumen por estado</h2>
+            @if (r.resumen.porEstado.length) {
+              <table class="tabla">
+                <thead><tr><th>Estado</th><th class="num">Citas</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  @for (e of r.resumen.porEstado; track e.estado) {
+                    <tr><td><span class="badge" [class]="'badge badge-' + e.estado">{{ e.estado }}</span></td><td class="num">{{ e.total }}</td><td class="num">{{ porcentaje(e.total) }}%</td></tr>
+                  }
+                </tbody>
+              </table>
+            } @else { <p class="vacio-texto">Sin citas en el período.</p> }
+          </section>
+          <section class="tarjeta">
+            <h2>Productividad por veterinario</h2>
+            @if (r.resumen.porVeterinario.length) {
+              <table class="tabla">
+                <thead><tr><th>Veterinario</th><th class="num">Total</th><th class="num">Atendidas</th><th class="num">Asistencia</th><th class="num">Horas</th></tr></thead>
+                <tbody>
+                  @for (v of r.resumen.porVeterinario; track v.veterinarioId) {
+                    <tr><td>{{ v.veterinario }}</td><td class="num">{{ v.total }}</td><td class="num">{{ v.atendidas }}</td><td class="num">{{ v.tasaAsistencia !== null ? v.tasaAsistencia + '%' : '—' }}</td><td class="num">{{ v.horasAgendadas }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            } @else { <p class="vacio-texto">Sin datos.</p> }
+          </section>
+        </div>
+
+        <section class="tarjeta mt-1">
+          <h2>Detalle de citas ({{ r.detalle.length }})</h2>
+          @if (r.detalle.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Fecha</th><th>Mascota</th><th>Propietario</th><th>Veterinario</th><th>Especialidad</th><th>Estado</th></tr></thead>
+                <tbody>
+                  @for (d of r.detalle; track d.id) {
+                    <tr>
+                      <td>{{ d.inicio | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ d.mascota }}<span class="sub">{{ d.especie }}</span></td>
+                      <td>{{ d.propietario }}<span class="sub">{{ d.telefono }}</span></td>
+                      <td>{{ d.veterinario }}</td>
+                      <td>{{ d.especialidad }}</td>
+                      <td><span class="badge" [class]="'badge badge-' + d.estado">{{ d.estado }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">No hay citas con los filtros seleccionados.</p> }
+        </section>
+      }
+
+      @case ('vacunas') {
+        <div class="rejilla rejilla-2">
+          <section class="tarjeta">
+            <h2>Vacunas por tipo</h2>
+            @if (r.vacunas.porTipo.length) {
+              <table class="tabla">
+                <thead><tr><th>Vacuna</th><th class="num">Aplicadas</th></tr></thead>
+                <tbody>
+                  @for (t of r.vacunas.porTipo; track t.tipoVacuna) { <tr><td>{{ t.tipoVacuna }}</td><td class="num">{{ t.total }}</td></tr> }
+                </tbody>
+              </table>
+            } @else { <p class="vacio-texto">Sin vacunas en el período.</p> }
+          </section>
+          <section class="tarjeta nota">
+            <h2>¿Qué incluye?</h2>
+            <p class="texto-suave">Todas las vacunas aplicadas entre las fechas elegidas (incluida la de hoy), filtradas por veterinario responsable. Los filtros de especialidad y estado solo aplican a las citas.</p>
+          </section>
+        </div>
+
+        <section class="tarjeta mt-1">
+          <h2>Detalle de vacunas aplicadas ({{ r.vacunas.detalle.length }})</h2>
+          @if (r.vacunas.detalle.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Aplicada</th><th>Vacuna</th><th>Mascota</th><th>Propietario</th><th>Responsable</th><th>Próxima dosis</th></tr></thead>
+                <tbody>
+                  @for (v of r.vacunas.detalle; track v.id) {
+                    <tr>
+                      <td>{{ v.fechaAplicacion | date: 'dd/MM/yyyy' }}</td>
+                      <td class="fuerte">{{ v.tipoVacuna }}<span class="sub">Lote {{ v.lote || '—' }}</span></td>
+                      <td>{{ v.mascota }}<span class="sub">{{ v.especie }}</span></td>
+                      <td>{{ v.propietario }}</td>
+                      <td>{{ v.veterinario }}</td>
+                      <td>{{ v.proximaDosis ? (v.proximaDosis | date: 'dd/MM/yyyy') : 'Dosis única' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">No se aplicaron vacunas en el período.</p> }
+        </section>
+      }
+
+      @case ('consultas') {
+        <section class="tarjeta">
+          <h2>Consultas atendidas ({{ r.consultas.detalle.length }})</h2>
+          @if (r.consultas.detalle.length) {
+            <div class="tabla-cont">
+              <table class="tabla">
+                <thead><tr><th>Fecha</th><th>Mascota</th><th>Propietario</th><th>Veterinario</th><th>Diagnóstico</th><th class="num">Medicamentos</th></tr></thead>
+                <tbody>
+                  @for (c of r.consultas.detalle; track c.id) {
+                    <tr>
+                      <td>{{ c.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ c.mascota }}<span class="sub">{{ c.especie }}</span></td>
+                      <td>{{ c.propietario }}</td>
+                      <td>{{ c.veterinario }}</td>
+                      <td>{{ c.diagnostico.length > 80 ? c.diagnostico.slice(0, 80) + '…' : c.diagnostico }}<span class="sub">{{ c.motivo }}</span></td>
+                      <td class="num">{{ c.totalTratamientos }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="vacio-texto">No hay consultas en el período.</p> }
+        </section>
+      }
     }
-  </section>
+  </div>
 }

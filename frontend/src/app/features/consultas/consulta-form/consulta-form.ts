@@ -14,6 +14,7 @@ import { VeterinariosService } from '../../../core/services/veterinarios.service
 import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errores';
 import { hoyTexto, sumarDias } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
+import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
 
 /**
  * Registro de consulta: anamnesis, signos vitales, diagnóstico, tratamientos y
@@ -21,13 +22,13 @@ import { CampoError } from '../../../shared/components/campo-error/campo-error';
  */
 @Component({
   selector: 'app-consulta-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, SelectorBuscable],
   templateUrl: './consulta-form.html',
   styleUrl: './consulta-form.css',
 })
 export class ConsultaForm implements OnInit {
   private readonly consultas = inject(ConsultasService);
-  private readonly mascotas = inject(MascotasService);
+  protected readonly mascotas = inject(MascotasService);
   private readonly citas = inject(CitasService);
   private readonly veterinariosSrv = inject(VeterinariosService);
   private readonly avisos = inject(AvisosService);
@@ -42,10 +43,8 @@ export class ConsultaForm implements OnInit {
   protected readonly mascota = signal<Mascota | null>(null);
   protected readonly cita = signal<Cita | null>(null);
   protected readonly veterinarios = signal<Veterinario[]>([]);
-  protected readonly resultados = signal<Mascota[]>([]);
   protected readonly guardando = signal(false);
   protected readonly programarControl = signal(false);
-  protected textoMascota = '';
 
   protected readonly form = this.fb.group({
     veterinarioId: [0],
@@ -77,13 +76,8 @@ export class ConsultaForm implements OnInit {
     }
   }
 
-  buscarMascota(): void {
-    const q = this.textoMascota.trim();
-    if (q.length < 2) { this.resultados.set([]); return; }
-    this.mascotas.listar({ q, activo: 'true', tamano: 6 }).subscribe((r) => this.resultados.set(r.data));
-  }
 
-  elegirMascota(m: Mascota): void { this.mascota.set(m); this.resultados.set([]); this.textoMascota = ''; }
+  elegirMascota(m: Mascota): void { this.mascota.set(m);  }
 
   agregarTratamiento(): void {
     this.tratamientos.push(this.fb.group({

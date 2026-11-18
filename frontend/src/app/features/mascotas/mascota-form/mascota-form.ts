@@ -10,6 +10,7 @@ import { PropietariosService } from '../../../core/services/propietarios.service
 import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errores';
 import { hoyTexto } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
+import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
 
 /**
@@ -18,13 +19,13 @@ import { EstadoVista } from '../../../shared/components/estado-vista/estado-vist
  */
 @Component({
   selector: 'app-mascota-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, EstadoVista],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, EstadoVista, SelectorBuscable],
   templateUrl: './mascota-form.html',
   styleUrl: './mascota-form.css',
 })
 export class MascotaForm implements OnInit {
   private readonly servicio = inject(MascotasService);
-  private readonly propietarios = inject(PropietariosService);
+  protected readonly propietarios = inject(PropietariosService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
 
@@ -37,8 +38,6 @@ export class MascotaForm implements OnInit {
   protected readonly guardando = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly propietarioSel = signal<Pick<Propietario, 'id' | 'nombreCompleto' | 'cedula'> | null>(null);
-  protected readonly resultados = signal<Propietario[]>([]);
-  protected textoBusqueda = '';
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     propietarioId: [0, [Validators.required, Validators.min(1)]],
@@ -73,18 +72,12 @@ export class MascotaForm implements OnInit {
     }
   }
 
-  buscarPropietario(): void {
-    const q = this.textoBusqueda.trim();
-    if (q.length < 2) { this.resultados.set([]); return; }
-    this.propietarios.listar({ q, activo: 'true', tamano: 6 }).subscribe((r) => this.resultados.set(r.data));
-  }
 
   seleccionar(p: Pick<Propietario, 'id' | 'nombreCompleto' | 'cedula'>): void {
     this.propietarioSel.set(p);
     this.form.controls.propietarioId.setValue(p.id);
     this.form.controls.propietarioId.markAsTouched();
-    this.resultados.set([]);
-    this.textoBusqueda = '';
+    
   }
 
   quitarPropietario(): void {

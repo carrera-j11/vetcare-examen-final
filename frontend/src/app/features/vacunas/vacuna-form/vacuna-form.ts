@@ -12,6 +12,7 @@ import { VeterinariosService } from '../../../core/services/veterinarios.service
 import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errores';
 import { hoyTexto, sumarDias } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
+import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
 
 /**
  * Aplicar vacuna. RN04: fecha, tipo y responsable obligatorios.
@@ -20,13 +21,13 @@ import { CampoError } from '../../../shared/components/campo-error/campo-error';
  */
 @Component({
   selector: 'app-vacuna-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, SelectorBuscable],
   templateUrl: './vacuna-form.html',
   styleUrl: './vacuna-form.css',
 })
 export class VacunaForm implements OnInit {
   private readonly vacunas = inject(VacunasService);
-  private readonly mascotas = inject(MascotasService);
+  protected readonly mascotas = inject(MascotasService);
   private readonly veterinariosSrv = inject(VeterinariosService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
@@ -38,9 +39,7 @@ export class VacunaForm implements OnInit {
   protected readonly mascota = signal<Mascota | null>(null);
   protected readonly tipos = signal<TipoVacuna[]>([]);
   protected readonly veterinarios = signal<Veterinario[]>([]);
-  protected readonly resultados = signal<Mascota[]>([]);
   protected readonly guardando = signal(false);
-  protected textoMascota = '';
 
   /** RN09: vacunas de la especie de la mascota o de uso general */
   protected readonly tiposCompatibles = computed(() => {
@@ -66,16 +65,10 @@ export class VacunaForm implements OnInit {
     if (this.mascotaId()) this.mascotas.obtener(Number(this.mascotaId())).subscribe((m) => this.mascota.set(m));
   }
 
-  buscarMascota(): void {
-    const q = this.textoMascota.trim();
-    if (q.length < 2) { this.resultados.set([]); return; }
-    this.mascotas.listar({ q, activo: 'true', tamano: 6 }).subscribe((r) => this.resultados.set(r.data));
-  }
 
   elegirMascota(m: Mascota): void {
     this.mascota.set(m);
-    this.resultados.set([]);
-    this.textoMascota = '';
+    
     this.form.patchValue({ tipoVacunaId: 0, proximaDosis: '' });
   }
 

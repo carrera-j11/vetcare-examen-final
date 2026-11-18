@@ -14,7 +14,7 @@ export class NotificacionesService {
   listar(f: FiltrosListado) { return this.api.listar<Notificacion>('/notificaciones', f); }
   marcarLeida(id: number) { return this.api.parche<void>(`/notificaciones/${id}/leida`); }
   marcarTodas() { return this.api.parche<{ actualizadas: number }>('/notificaciones/leer-todas'); }
-  generar() { return this.api.crear<{ revisados: number; creadas: number }>('/notificaciones/generar', {}); }
+  generar() { return this.api.crear<{ revisados: number; creadas: number; correosEnviados?: number }>('/notificaciones/generar', {}); }
 
   actualizarContador(): void {
     this.api.obtener<{ noLeidas: number }>('/notificaciones/resumen').subscribe({

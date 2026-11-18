@@ -11,18 +11,18 @@
 .kpi-aviso .kpi-valor { color: var(--advertencia); }
 
 .lista-alertas, .agenda, .barras { list-style: none; margin: 0; padding: 0; }
-.lista-alertas li { display: grid; gap: .15rem; padding: .6rem 0; border-bottom: 1px solid #eef2f1; }
+.lista-alertas li { display: grid; gap: .15rem; padding: .6rem 0; border-bottom: 1px solid var(--linea); }
 .lista-alertas .badge { justify-self: start; }
-.agenda li { display: flex; gap: .9rem; padding: .55rem 0; border-bottom: 1px solid #eef2f1; align-items: center; }
+.agenda li { display: flex; gap: .9rem; padding: .55rem 0; border-bottom: 1px solid var(--linea); align-items: center; }
 .agenda time { min-width: 68px; display: flex; flex-direction: column; font-size: .78rem; color: var(--texto-suave); text-transform: capitalize; }
 .agenda time strong { font-size: 1rem; color: var(--primario); }
 
 .barras li { display: grid; grid-template-columns: 130px 1fr 36px; gap: .6rem; align-items: center; padding: .3rem 0; }
 .etiqueta { font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.barra { height: 12px; background: #eef2f1; border-radius: 999px; overflow: hidden; }
+.barra { height: 12px; background: var(--linea); border-radius: 999px; overflow: hidden; }
 .relleno { display: block; height: 100%; background: var(--primario); border-radius: 999px; }
 .relleno-ATENDIDA { background: var(--exito); }
-.relleno-CANCELADA { background: #9ca3af; }
+.relleno-CANCELADA { background: var(--neutro-borde); }
 .relleno-NO_ASISTIO { background: var(--peligro); }
 .relleno-PROGRAMADA { background: var(--info); }
 .relleno-suave { background: #2dd4bf; }

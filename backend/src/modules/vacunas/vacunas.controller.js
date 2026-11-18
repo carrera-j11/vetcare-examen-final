@@ -5,6 +5,7 @@
 const tipos = require('./tipos.service');
 const vacunas = require('./vacunas.service');
 const controles = require('./controles.service');
+const notificaciones = require('../notificaciones/notificaciones.service');
 const { contexto } = require('../auditoria/auditoria.service');
 
 module.exports = {
@@ -23,6 +24,8 @@ module.exports = {
   crearControl: async (req, res) => res.status(201).json({ data: await controles.crear(req.body, contexto(req)) }),
   marcarRealizado: async (req, res) => res.json({ data: await controles.cambiarEstado(req.params.id, 'REALIZADO', contexto(req)) }),
   cancelarControl: async (req, res) => res.json({ data: await controles.cambiarEstado(req.params.id, 'CANCELADO', contexto(req)) }),
+  /** Envía ahora un recordatorio por correo al propietario (desde el correo del administrador) */
+  recordatorioControl: async (req, res) => res.json({ data: await notificaciones.enviarRecordatorioControl(req.params.id, contexto(req)) }),
   reprogramarControl: async (req, res) => res.json({ data: await controles.reprogramar(req.params.id, req.body, contexto(req)) }),
 
   // Calendario y alertas (innovación)

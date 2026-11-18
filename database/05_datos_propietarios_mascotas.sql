@@ -5,14 +5,14 @@
 USE vetcare_db;
 
 INSERT INTO propietarios (id, cedula, nombres, apellidos, telefono, email, direccion) VALUES
-(1, '0105678924', 'Daniela',   'Ochoa',     '0984512367', 'daniela.ochoa@mail.com',   'Av. Solano 2-45, Cuenca'),
-(2, '0103456786', 'Pedro',     'Guamán',    '0995123478', 'pedro.guaman@mail.com',    'Calle Larga 8-12, Cuenca'),
-(3, '0107891236', 'Sofía',     'Cordero',   '0967823145', 'sofia.cordero@mail.com',   'Av. Ordóñez Lasso 4-90, Cuenca'),
-(4, '0102233442', 'Luis',      'Merchán',   '0978456123', 'luis.merchan@mail.com',    'Ricaurte, sector Las Orquídeas'),
+(1, '0105678924', 'Daniela',   'Ochoa',     '0984512367', 'daniela.ochoa@example.com',   'Av. Solano 2-45, Cuenca'),
+(2, '0103456786', 'Pedro',     'Guamán',    '0995123478', 'pedro.guaman@example.com',    'Calle Larga 8-12, Cuenca'),
+(3, '0107891236', 'Sofía',     'Cordero',   '0967823145', 'sofia.cordero@example.com',   'Av. Ordóñez Lasso 4-90, Cuenca'),
+(4, '0102233442', 'Luis',      'Merchán',   '0978456123', 'luis.merchan@example.com',    'Ricaurte, sector Las Orquídeas'),
 (5, '0109988774', 'Gabriela',  'Torres',    '0987412563', NULL,                       'Baños, vía a Misicata'),
-(6, '0104455662', 'Esteban',   'Andrade',   '0991478523', 'esteban.andrade@mail.com', 'Av. de las Américas 12-30'),
-(7, '0106677883', 'Valentina', 'Palacios',  '0963258741', 'vpalacios@mail.com',       'El Vecino, calle Tarqui'),
-(8, '0101122331', 'Mateo',     'Sarmiento', '0974125896', 'mateo.sarmiento@mail.com', 'Totoracocha, calle Guapondélig');
+(6, '0104455662', 'Esteban',   'Andrade',   '0991478523', 'esteban.andrade@example.com', 'Av. de las Américas 12-30'),
+(7, '0106677883', 'Valentina', 'Palacios',  '0963258741', 'vpalacios@example.com',       'El Vecino, calle Tarqui'),
+(8, '0101122331', 'Mateo',     'Sarmiento', '0974125896', 'mateo.sarmiento@example.com', 'Totoracocha, calle Guapondélig');
 ALTER TABLE propietarios AUTO_INCREMENT = 100;
 
 INSERT INTO mascotas (id, codigo, propietario_id, nombre, especie, raza, sexo, fecha_nacimiento, peso_kg, color, esterilizado) VALUES

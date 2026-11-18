@@ -13,6 +13,7 @@ import { VeterinariosService } from '../../../core/services/veterinarios.service
 import { codigoError, mensajeError } from '../../../core/utils/errores';
 import { hoyTexto } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
+import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
 
 /**
@@ -23,13 +24,13 @@ import { EstadoVista } from '../../../shared/components/estado-vista/estado-vist
  */
 @Component({
   selector: 'app-cita-form',
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, CampoError, EstadoVista],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, CampoError, EstadoVista, SelectorBuscable],
   templateUrl: './cita-form.html',
   styleUrl: './cita-form.css',
 })
 export class CitaForm implements OnInit {
   private readonly citas = inject(CitasService);
-  private readonly mascotas = inject(MascotasService);
+  protected readonly mascotas = inject(MascotasService);
   private readonly veterinariosSrv = inject(VeterinariosService);
   private readonly avisos = inject(AvisosService);
   private readonly router = inject(Router);
@@ -45,8 +46,6 @@ export class CitaForm implements OnInit {
 
   protected readonly citaOriginal = signal<Cita | null>(null);
   protected readonly mascotaSel = signal<Mascota | null>(null);
-  protected readonly resultadosMascota = signal<Mascota[]>([]);
-  protected textoMascota = '';
 
   protected readonly especialidades = signal<Especialidad[]>([]);
   protected readonly veterinarios = signal<Veterinario[]>([]);
@@ -93,16 +92,10 @@ export class CitaForm implements OnInit {
   }
 
   // ---------- Mascota ----------
-  buscarMascota(): void {
-    const q = this.textoMascota.trim();
-    if (q.length < 2) { this.resultadosMascota.set([]); return; }
-    this.mascotas.listar({ q, activo: 'true', tamano: 6 }).subscribe((r) => this.resultadosMascota.set(r.data));
-  }
 
   elegirMascota(m: Mascota): void {
     this.mascotaSel.set(m);
-    this.resultadosMascota.set([]);
-    this.textoMascota = '';
+    
   }
 
   // ---------- Especialidad / veterinario / fecha ----------

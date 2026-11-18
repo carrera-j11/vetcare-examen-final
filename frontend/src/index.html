@@ -8,6 +8,14 @@
   <meta name="description" content="Sistema de citas, historial clínico y calendario de vacunación para clínicas veterinarias">
   <meta name="theme-color" content="#0f766e">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Aplica el modo nocturno guardado antes de dibujar la página (evita un destello blanco)
+    try {
+      var t = localStorage.getItem('vetcare.tema');
+      if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro';
+      document.documentElement.setAttribute('data-tema', t);
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <app-root></app-root>

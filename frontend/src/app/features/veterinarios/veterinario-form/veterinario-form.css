@@ -1,7 +1,7 @@
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .chip {
   display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .8rem; border-radius: 999px;
-  border: 1px solid var(--borde); cursor: pointer; font-size: .9rem; background: #fff;
+  border: 1px solid var(--borde); cursor: pointer; font-size: .9rem; background: var(--superficie);
 }
 .chip input { width: 16px; min-height: 16px; accent-color: var(--primario); }
 .chip small { color: var(--texto-suave); }

@@ -1,0 +1,11 @@
+.selector { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: .5rem; }
+.buscador { position: relative; display: block; }
+.lupa { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); font-size: .85rem; pointer-events: none; }
+.buscador input { padding-left: 2rem; }
+.desplegable { display: block; }
+.desplegable select { cursor: pointer; }
+.invalido input, .invalido select { border-color: var(--peligro); }
+.ayuda { margin: .3rem 0 0; font-size: .78rem; color: var(--texto-suave); }
+@media (max-width: 640px) {
+  .selector { grid-template-columns: 1fr; }
+}

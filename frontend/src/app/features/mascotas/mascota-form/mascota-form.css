@@ -1,12 +1,4 @@
 .propietario { border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1rem 1rem; margin: 0; }
 .propietario legend { padding: 0 .35rem; }
 .seleccionado { display: flex; justify-content: space-between; align-items: center; gap: .5rem; background: var(--primario-suave); padding: .55rem .8rem; border-radius: 8px; }
-.buscador { position: relative; }
-.resultados {
-  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: .25rem;
-  background: #fff; border: 1px solid var(--borde); border-radius: 8px; box-shadow: var(--sombra-alta);
-}
-.resultados button { width: 100%; text-align: left; border: 0; background: none; padding: .5rem .6rem; border-radius: 6px; cursor: pointer; font: inherit; }
-.resultados button:hover, .resultados button:focus { background: var(--primario-suave); }
-.resultados small { color: var(--texto-suave); }
 .ayuda { font-size: .8rem; color: var(--texto-suave); margin: .4rem 0 0; }
