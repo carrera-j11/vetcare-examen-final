@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { FiltrosListado } from '../models/api.models';
-import { Factura } from '../models/factura.model';
+import { EstadoCorreo, Factura } from '../models/factura.model';
 import { ApiService } from './api.service';
 
 /** Facturas generadas automáticamente por cada atención */
@@ -12,5 +12,6 @@ export class FacturasService {
   obtener(id: number) { return this.api.obtener<Factura>(`/facturas/${id}`); }
   pdf(id: number) { return this.api.descargar(`/facturas/${id}/pdf`); }
   reenviar(id: number) { return this.api.crear<{ estado: string; destino: string }>(`/facturas/${id}/enviar`, {}); }
+  estadoCorreo(id: number) { return this.api.obtener<EstadoCorreo>(`/facturas/${id}/correo-estado`); }
   anular(id: number, motivo: string) { return this.api.parche<Factura>(`/facturas/${id}/anular`, { motivo }); }
 }

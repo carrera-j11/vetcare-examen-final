@@ -3,7 +3,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Meta } from '../../core/models/api.models';
-import { Factura } from '../../core/models/factura.model';
+import { EstadoCorreo, Factura } from '../../core/models/factura.model';
 import { AuthService } from '../../core/services/auth.service';
 import { AvisosService } from '../../core/services/avisos.service';
 import { ConfirmacionService } from '../../core/services/confirmacion.service';
@@ -35,6 +35,7 @@ export class Facturas implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly abierta = signal<Factura | null>(null);
   protected readonly ocupado = signal<number | null>(null);
+  protected readonly entrega = signal<{ id: number; datos: EstadoCorreo | null; cargando: boolean } | null>(null);
 
   protected filtros = { q: '', desde: sumarDias(hoyTexto(), -30), hasta: hoyTexto(), estado: '', origen: '', pagina: 1, tamano: 10 };
 
@@ -65,6 +66,15 @@ export class Facturas implements OnInit {
   verDetalle(f: Factura): void {
     if (this.abierta()?.id === f.id) { this.abierta.set(null); return; }
     this.servicio.obtener(f.id).subscribe((d) => this.abierta.set(d));
+  }
+
+  /** Consulta al proveedor de correo qué pasó realmente con el envío (entregado, rebotado, bloqueado…) */
+  verEntrega(f: Factura): void {
+    this.entrega.set({ id: f.id, datos: null, cargando: true });
+    this.servicio.estadoCorreo(f.id).subscribe({
+      next: (d) => this.entrega.set({ id: f.id, datos: d, cargando: false }),
+      error: (e) => { this.avisos.error(mensajeError(e)); this.entrega.set(null); },
+    });
   }
 
   descargar(f: Factura): void {

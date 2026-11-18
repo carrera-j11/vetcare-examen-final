@@ -55,6 +55,56 @@ async function enviarPorBrevo({ para, asunto, html, texto, adjuntos = [] }) {
     const error = await respuesta.text().catch(() => '');
     throw new Error(`Brevo respondió ${respuesta.status}: ${error.slice(0, 160)}`);
   }
+  const { messageId } = await respuesta.json().catch(() => ({}));
+  return messageId ? `Aceptado por Brevo · id ${messageId}` : undefined;
+}
+
+/** Traducción de los eventos de Brevo para mostrarlos en la app */
+const EVENTOS_BREVO = {
+  requests: 'Aceptado por Brevo', delivered: 'Entregado al buzón', opened: 'Abierto', uniqueOpened: 'Abierto', clicks: 'Clic en enlace',
+  deferred: 'Diferido (el servidor destino lo retrasó)', softBounces: 'Rebote temporal', hardBounces: 'Rebote definitivo (buzón inexistente)',
+  blocked: 'Bloqueado por Brevo', spam: 'Marcado como spam', invalid: 'Correo inválido', error: 'Error de Brevo', unsubscribed: 'Dado de baja',
+};
+
+async function brevoGet(ruta) {
+  const r = await fetch(`https://api.brevo.com/v3${ruta}`, {
+    headers: { 'api-key': env.correo.brevoApiKey, accept: 'application/json' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!r.ok) throw new Error(`Brevo respondió ${r.status}: ${(await r.text().catch(() => '')).slice(0, 160)}`);
+  return r.json();
+}
+
+/**
+ * Diagnóstico de entrega: consulta a Brevo qué pasó realmente con los correos enviados a una
+ * dirección (entregado, diferido, rebotado, bloqueado…) y si el remitente está verificado.
+ * "Enviada" en la app solo significa que Brevo aceptó el mensaje; esto muestra el resultado final.
+ */
+async function estadoEntrega(email, filtroAsunto) {
+  const c = env.correo;
+  const base = { proveedor: c.proveedor || null, remitente: c.remitente, destino: email || null };
+  if (c.proveedor !== 'brevo' || !c.brevoApiKey) {
+    return { ...base, disponible: false, mensaje: 'El diagnóstico de entrega solo está disponible con MAIL_PROVEEDOR=brevo' };
+  }
+  const resultado = { ...base, disponible: true, remitenteVerificado: null, bloqueado: false, eventos: [] };
+  try {
+    const { senders = [] } = await brevoGet('/senders');
+    const s = senders.find((x) => x.email?.toLowerCase() === c.remitente.toLowerCase());
+    resultado.remitenteVerificado = s ? Boolean(s.active) : false;
+  } catch (err) { resultado.errorRemitente = err.message; }
+  if (!email) return resultado;
+  try {
+    const { contacts = [] } = await brevoGet('/smtp/blockedContacts?limit=100');
+    const b = contacts.find((x) => x.email?.toLowerCase() === email.toLowerCase());
+    if (b) { resultado.bloqueado = true; resultado.motivoBloqueo = b.reason?.message || b.reason?.code || 'Contacto bloqueado'; }
+  } catch { /* diagnóstico opcional */ }
+  try {
+    const { events = [] } = await brevoGet(`/smtp/statistics/events?email=${encodeURIComponent(email)}&limit=50&days=30&sort=desc`);
+    resultado.eventos = events
+      .filter((e) => !filtroAsunto || (e.subject || '').includes(filtroAsunto))
+      .map((e) => ({ fecha: e.date, evento: e.event, texto: EVENTOS_BREVO[e.event] || e.event, motivo: e.reason || null, asunto: e.subject, remitente: e.from }));
+  } catch (err) { resultado.errorEventos = err.message; }
+  return resultado;
 }
 
 async function enviarPorSmtp({ para, asunto, html, texto, adjuntos = [] }) {
@@ -91,13 +141,12 @@ async function enviar(mensaje) {
   const asunto = env.correo.redirigirA && destinoOriginal ? `${mensaje.asunto} (para ${destinoOriginal})` : mensaje.asunto;
   try {
     const datos = { ...mensaje, para: destino, asunto };
-    if (env.correo.proveedor === 'brevo') await enviarPorBrevo(datos);
-    else await enviarPorSmtp(datos);
-    return { estado: 'ENVIADO', destino };
+    const detalle = env.correo.proveedor === 'brevo' ? await enviarPorBrevo(datos) : await enviarPorSmtp(datos);
+    return { estado: 'ENVIADO', destino, detalle };
   } catch (err) {
     console.error(`[correo] No se pudo enviar a ${destino}: ${err.message}`);
     return { estado: 'ERROR', destino, detalle: err.message };
   }
 }
 
-module.exports = { enviar, configurado };
+module.exports = { enviar, configurado, estadoEntrega };

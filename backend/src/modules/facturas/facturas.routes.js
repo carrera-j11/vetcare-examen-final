@@ -14,6 +14,8 @@ router.get('/', autorizar(ADMIN, RECEPCION), validar(dto.filtros, 'query'), c.li
 router.get('/:id', autorizar(ADMIN, RECEPCION, VETERINARIO), validar(paramId, 'params'), c.obtener);
 router.get('/:id/pdf', autorizar(ADMIN, RECEPCION, VETERINARIO), validar(paramId, 'params'), c.pdf);
 router.post('/:id/enviar', autorizar(ADMIN, RECEPCION), validar(paramId, 'params'), c.reenviar);
+// Diagnóstico de entrega del correo (consulta los eventos de Brevo: entregado, rebotado, bloqueado…)
+router.get('/:id/correo-estado', autorizar(ADMIN, RECEPCION), validar(paramId, 'params'), c.estadoCorreo);
 // Las facturas no se eliminan: solo el administrador puede anularlas con un motivo
 router.patch('/:id/anular', autorizar(ADMIN), validar(paramId, 'params'), validar(dto.anular), c.anular);
 

@@ -95,6 +95,12 @@ async function enviarPorCorreo(id) {
   return resultado;
 }
 
+/** Diagnóstico: qué pasó realmente con el correo de esta factura según el proveedor (Brevo) */
+async function estadoCorreo(id) {
+  const factura = await obtener(id);
+  return correo.estadoEntrega(factura.correoDestino || factura.propietarioEmail, factura.numero);
+}
+
 /** Reenvío manual desde la pantalla de facturas */
 async function reenviar(id, ctx) {
   const factura = await obtener(id);
@@ -122,4 +128,4 @@ async function listar(filtros) {
   return { data: filas, meta: { ...meta(filtros.pagina, filtros.tamano, total), montoEmitido } };
 }
 
-module.exports = { generar, calcularTotales, obtener, pdf, enviarPorCorreo, reenviar, anular, listar };
+module.exports = { generar, calcularTotales, obtener, pdf, enviarPorCorreo, reenviar, estadoCorreo, anular, listar };

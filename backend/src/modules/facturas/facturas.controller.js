@@ -22,8 +22,12 @@ async function reenviar(req, res) {
   res.json({ data: await servicio.reenviar(req.params.id, contexto(req)) });
 }
 
+async function estadoCorreo(req, res) {
+  res.json({ data: await servicio.estadoCorreo(req.params.id) });
+}
+
 async function anular(req, res) {
   res.json({ data: await servicio.anular(req.params.id, req.body, contexto(req)) });
 }
 
-module.exports = { listar, obtener, pdf, reenviar, anular };
+module.exports = { listar, obtener, pdf, reenviar, estadoCorreo, anular };

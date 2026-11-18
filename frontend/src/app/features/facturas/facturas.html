@@ -88,6 +88,41 @@
                   @if (d.correoDestino) { · Correo: {{ d.correoDestino }} }
                   @if (d.motivoAnulacion) { · <span class="texto-peligro">Anulada: {{ d.motivoAnulacion }}</span> }
                 </p>
+                @if (d.correoEstado === 'ENVIADO' && auth.tieneRol('ADMIN', 'RECEPCION')) {
+                  <button type="button" class="btn btn-chico" (click)="verEntrega(d)" [disabled]="entrega()?.cargando">📬 Ver estado de entrega</button>
+                }
+                @if (entrega(); as en) {
+                  @if (en.id === d.id) {
+                    <div class="entrega" aria-live="polite">
+                      @if (en.cargando) { <p class="texto-suave">Consultando al servicio de correo…</p> }
+                      @else if (en.datos; as e) {
+                        @if (!e.disponible) { <p class="texto-suave">{{ e.mensaje }}</p> }
+                        @else {
+                          <p>Remitente <strong>{{ e.remitente }}</strong>:
+                            @if (e.remitenteVerificado === true) { <span class="badge badge-activo">verificado en Brevo</span> }
+                            @else if (e.remitenteVerificado === false) { <span class="badge badge-vencido">NO verificado en Brevo</span> }
+                            @else { <span class="badge badge-inactivo">sin datos</span> }
+                          </p>
+                          @if (e.bloqueado) {
+                            <p class="texto-peligro">⚠ Brevo tiene bloqueado a {{ e.destino }}: {{ e.motivoBloqueo }}. Desbloquéelo en Brevo → Transactional → Blocked contacts.</p>
+                          }
+                          @if (e.eventos?.length) {
+                            <ul class="eventos">
+                              @for (ev of e.eventos; track $index) {
+                                <li [class.malo]="['blocked','hardBounces','softBounces','spam','invalid','error','deferred'].includes(ev.evento)">
+                                  <span class="texto-suave">{{ ev.fecha | date: 'dd/MM HH:mm' }}</span> {{ ev.texto }}
+                                  @if (ev.motivo) { <span class="sub">{{ ev.motivo }}</span> }
+                                </li>
+                              }
+                            </ul>
+                          } @else {
+                            <p class="texto-suave">Brevo no registra eventos de esta factura para {{ e.destino }}{{ e.errorEventos ? ' (' + e.errorEventos + ')' : '' }}.</p>
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                }
               </td>
             </tr>
           }

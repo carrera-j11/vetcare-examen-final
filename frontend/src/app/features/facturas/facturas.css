@@ -9,3 +9,8 @@
 .interna { max-width: 640px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 8px; }
 .nota { margin: .5rem 0 0; font-size: .82rem; }
 .peligro { color: var(--peligro); }
+.entrega { margin-top: .6rem; padding: .6rem .8rem; max-width: 640px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 8px; font-size: .85rem; }
+.entrega p { margin: .2rem 0; }
+.eventos { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .25rem; }
+.eventos li { padding-left: .6rem; border-left: 3px solid var(--exito, #2e7d32); }
+.eventos li.malo { border-left-color: var(--peligro); }

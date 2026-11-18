@@ -36,3 +36,18 @@ export interface Factura {
   emitidoPor: string;
   detalle?: DetalleFactura[];
 }
+
+/** Diagnóstico de entrega del correo consultado al proveedor (Brevo) */
+export interface EstadoCorreo {
+  disponible: boolean;
+  mensaje?: string;
+  proveedor: string | null;
+  remitente: string;
+  destino: string | null;
+  remitenteVerificado?: boolean | null;
+  errorRemitente?: string;
+  bloqueado?: boolean;
+  motivoBloqueo?: string;
+  errorEventos?: string;
+  eventos?: { fecha: string; evento: string; texto: string; motivo: string | null; asunto: string; remitente: string }[];
+}
