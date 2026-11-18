@@ -19,15 +19,36 @@ function cedulaValida(cedula) {
   return verificador === Number(cedula[9]);
 }
 
+/** Texto libre: sin caracteres de etiquetas/código */
+const SIN_ETIQUETAS = /^[^<>{}\\]*$/;
+/** Letras (con tildes y ñ), espacios, apóstrofo, punto y guion: nombres, apellidos, raza, color */
+const SOLO_LETRAS = /^\p{L}[\p{L}\s'.-]*$/u;
+
 const texto = (min, max, campo) =>
   z.string({ required_error: `${campo} es obligatorio`, invalid_type_error: `${campo} debe ser texto` })
     .trim()
     .min(min, `${campo} debe tener al menos ${min} caracteres`)
-    .max(max, `${campo} admite máximo ${max} caracteres`);
+    .max(max, `${campo} admite máximo ${max} caracteres`)
+    .regex(SIN_ETIQUETAS, `${campo} contiene caracteres no permitidos (< > { } \\)`);
 
 const textoOpcional = (max, campo) =>
-  z.string().trim().max(max, `${campo} admite máximo ${max} caracteres`)
+  z.string({ invalid_type_error: `${campo} debe ser texto` }).trim().max(max, `${campo} admite máximo ${max} caracteres`)
+    .regex(SIN_ETIQUETAS, `${campo} contiene caracteres no permitidos (< > { } \\)`)
     .optional().nullable().transform((v) => (v === '' || v === undefined ? null : v));
+
+/** Nombres de personas o mascotas: solo letras */
+const soloLetras = (min, max, campo) => texto(min, max, campo).regex(SOLO_LETRAS, `Solo se permiten letras en ${campo.toLowerCase()}`);
+
+const soloLetrasOpcional = (max, campo) =>
+  z.string({ invalid_type_error: `${campo} debe ser texto` }).trim().max(max, `${campo} admite máximo ${max} caracteres`)
+    .refine((v) => v === '' || SOLO_LETRAS.test(v), `Solo se permiten letras en ${campo.toLowerCase()}`)
+    .optional().nullable().transform((v) => (v === '' || v === undefined ? null : v));
+
+/** Número (rechaza letras: "12kg" → "El peso debe ser un número") */
+const numero = (campo) => z.coerce.number({ invalid_type_error: `${campo} debe ser un número` });
+
+/** Predicado para .refine(): máximo N decimales (peso 2, temperatura 1, precio 2) */
+const maxDecimales = (n) => (v) => v === null || v === undefined || Math.abs(Math.round(v * 10 ** n) - v * 10 ** n) < 1e-6;
 
 const cedula = z.string({ required_error: 'La cédula es obligatoria' }).trim()
   .refine(cedulaValida, 'La cédula ecuatoriana no es válida');
@@ -49,4 +70,4 @@ const fechaHora = z.string().regex(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?$/
 
 const paramId = z.object({ id });
 
-module.exports = { cedulaValida, texto, textoOpcional, cedula, telefono, emailOpcional, id, fecha, fechaHora, paramId };
+module.exports = { cedulaValida, texto, textoOpcional, soloLetras, soloLetrasOpcional, numero, maxDecimales, cedula, telefono, emailOpcional, id, fecha, fechaHora, paramId };

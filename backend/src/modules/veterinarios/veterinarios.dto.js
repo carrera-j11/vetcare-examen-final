@@ -1,13 +1,13 @@
 const { z } = require('zod');
 const { listadoQuery } = require('../../utils/paginacion');
-const { texto, textoOpcional, cedula, id } = require('../../utils/validadores');
+const { soloLetras, textoOpcional, cedula, id } = require('../../utils/validadores');
 
 const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:00)?$/, 'Hora con formato HH:mm');
 
 const guardar = z.object({
   cedula,
-  nombres: texto(2, 80, 'Los nombres'),
-  apellidos: texto(2, 80, 'Los apellidos'),
+  nombres: soloLetras(2, 80, 'Los nombres'),
+  apellidos: soloLetras(2, 80, 'Los apellidos'),
   registroSenescyt: textoOpcional(30, 'El registro SENESCYT'),
   telefono: z.string().trim().regex(/^0\d{8,9}$/, 'Teléfono no válido').optional().nullable().or(z.literal('').transform(() => null)),
   email: z.string({ required_error: 'El correo es obligatorio' }).trim().toLowerCase().email('Correo electrónico no válido'),

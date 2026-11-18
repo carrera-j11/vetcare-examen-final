@@ -59,16 +59,19 @@ async function espacioLibre(token, veterinarioId, especialidadId, diaIso = 2) {
 }
 
 /** Crea un propietario y una mascota nuevos para aislar cada prueba */
+/** Sufijo único solo con letras (los nombres no admiten números): 1731… → "bhdb…" */
+const letrasUnicas = () => String(Date.now() * 1000 + Math.floor(Math.random() * 1000)).replace(/\d/g, (d) => 'abcdefghij'[d]);
+
 async function crearPropietarioConMascota(token, especie = 'PERRO') {
   const p = await request(app).post('/api/propietarios').set('Authorization', `Bearer ${token}`).send({
-    cedula: cedulaValidaAleatoria(), nombres: 'Prueba', apellidos: `Automatizada ${Date.now()}`, telefono: '0991112233',
+    cedula: cedulaValidaAleatoria(), nombres: 'Prueba', apellidos: `Automatizada ${letrasUnicas()}`, telefono: '0991112233',
   });
   if (p.status !== 201) throw new Error(`No se creó el propietario: ${JSON.stringify(p.body)}`);
   const m = await request(app).post('/api/mascotas').set('Authorization', `Bearer ${token}`).send({
-    propietarioId: p.body.data.id, nombre: `Test${Math.floor(Math.random() * 1e6)}`, especie, sexo: 'MACHO', fechaNacimiento: '2022-01-10',
+    propietarioId: p.body.data.id, nombre: `Test ${letrasUnicas()}`, especie, sexo: 'MACHO', fechaNacimiento: '2022-01-10',
   });
   if (m.status !== 201) throw new Error(`No se creó la mascota: ${JSON.stringify(m.body)}`);
   return { propietario: p.body.data, mascota: m.body.data };
 }
 
-module.exports = { request, app, pool, admin, recepcion, veterinaria, cedulaValidaAleatoria, proximoDia, espacioLibre, crearPropietarioConMascota, fechaTexto };
+module.exports = { request, app, pool, admin, recepcion, veterinaria, cedulaValidaAleatoria, proximoDia, espacioLibre, crearPropietarioConMascota, fechaTexto, letrasUnicas };

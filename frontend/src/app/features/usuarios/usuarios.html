@@ -53,8 +53,8 @@
     <h2>{{ editando() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
     <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
       <div class="fila-campos">
-        <label class="campo"><span>Nombres *</span><input formControlName="nombres" /><app-campo-error [control]="form.controls.nombres" /></label>
-        <label class="campo"><span>Apellidos *</span><input formControlName="apellidos" /><app-campo-error [control]="form.controls.apellidos" /></label>
+        <label class="campo"><span>Nombres *</span><input appEntrada="letras" formControlName="nombres" /><app-campo-error [control]="form.controls.nombres" /></label>
+        <label class="campo"><span>Apellidos *</span><input appEntrada="letras" formControlName="apellidos" /><app-campo-error [control]="form.controls.apellidos" /></label>
       </div>
       <label class="campo"><span>Correo *</span><input type="email" formControlName="email" autocomplete="off" /><app-campo-error [control]="form.controls.email" /></label>
       <label class="campo">

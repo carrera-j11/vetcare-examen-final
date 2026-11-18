@@ -39,7 +39,7 @@
     <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
       <label class="campo">
         <span>Nombre <span class="requerido">*</span></span>
-        <input formControlName="nombre" />
+        <input appEntrada="texto" formControlName="nombre" />
         <app-campo-error [control]="form.controls.nombre" />
       </label>
       <label class="campo">
@@ -49,12 +49,12 @@
       <div class="fila-campos">
         <label class="campo">
           <span>Duración (minutos) <span class="requerido">*</span></span>
-          <input type="number" formControlName="duracionMin" min="10" max="240" step="5" />
+          <input appEntrada="entero" type="number" formControlName="duracionMin" min="10" max="240" step="5" />
           <app-campo-error [control]="form.controls.duracionMin" />
         </label>
         <label class="campo">
           <span>Precio USD sin IVA <span class="requerido">*</span></span>
-          <input type="number" formControlName="precio" min="0" step="0.01" />
+          <input appEntrada="decimal" type="number" formControlName="precio" min="0" step="0.01" />
           <app-campo-error [control]="form.controls.precio" />
         </label>
       </div>

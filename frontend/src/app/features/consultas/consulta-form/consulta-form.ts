@@ -17,14 +17,16 @@ import { aplicarErroresServidor, mensajeError } from '../../../core/utils/errore
 import { hoyTexto, sumarDias } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
 import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
+import { entero, maxDecimales, textoValido } from '../../../core/utils/validadores';
+import { EntradaDirective } from '../../../shared/directives/entrada.directive';
 
 /**
  * Registro de consulta: anamnesis, signos vitales, diagnóstico, tratamientos y
  * próximo control. El Backend guarda todo en UNA transacción y marca la cita como atendida.
- */
+ */
 @Component({
   selector: 'app-consulta-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, SelectorBuscable],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, SelectorBuscable, EntradaDirective],
   templateUrl: './consulta-form.html',
   styleUrl: './consulta-form.css',
 })
@@ -59,16 +61,16 @@ export class ConsultaForm implements OnInit {
 
   protected readonly form = this.fb.group({
     veterinarioId: [0],
-    motivo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(250)]],
+    motivo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(250), textoValido()]],
     anamnesis: ['', Validators.maxLength(2000)],
-    pesoKg: [null as number | null, [Validators.min(0.01), Validators.max(200)]],
-    temperaturaC: [null as number | null, [Validators.min(30), Validators.max(45)]],
-    frecuenciaCardiaca: [null as number | null, [Validators.min(20), Validators.max(400)]],
+    pesoKg: [null as number | null, [Validators.min(0.01), Validators.max(200), maxDecimales(2)]],
+    temperaturaC: [null as number | null, [Validators.min(30), Validators.max(45), maxDecimales(1)]],
+    frecuenciaCardiaca: [null as number | null, [Validators.min(20), Validators.max(400), entero()]],
     diagnostico: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(2000)]],
     observaciones: ['', Validators.maxLength(2000)],
     tratamientos: this.fb.array<FormGroup>([]),
     controlFecha: [''],
-    controlDescripcion: [''],
+    controlDescripcion: ['', [textoValido()]],
   });
 
   get tratamientos(): FormArray<FormGroup> { return this.form.controls.tratamientos; }
@@ -95,12 +97,12 @@ export class ConsultaForm implements OnInit {
   agregarTratamiento(): void {
     this.tratamientos.push(this.fb.group({
       medicamentoId: [0],                // 0 = medicamento externo (no se vende en la clínica)
-      medicamento: ['', [Validators.maxLength(120)]],
-      cantidad: [1, [Validators.min(1), Validators.max(100)]],
-      dosis: ['', [Validators.required, Validators.maxLength(60)]],
-      frecuencia: ['', [Validators.required, Validators.maxLength(60)]],
-      duracionDias: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
-      indicaciones: ['', Validators.maxLength(300)],
+      medicamento: ['', [Validators.maxLength(120), textoValido()]],
+      cantidad: [1, [Validators.min(1), Validators.max(100), entero()]],
+      dosis: ['', [Validators.required, Validators.maxLength(60), textoValido()]],
+      frecuencia: ['', [Validators.required, Validators.maxLength(60), textoValido()]],
+      duracionDias: [7, [Validators.required, Validators.min(1), Validators.max(365), entero()]],
+      indicaciones: ['', [Validators.maxLength(300), textoValido()]],
     }));
   }
 

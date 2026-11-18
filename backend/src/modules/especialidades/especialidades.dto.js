@@ -11,7 +11,7 @@ const guardar = z.object({
   tipo: z.enum(['CLINICO', 'ESTETICA'], { errorMap: () => ({ message: 'El tipo debe ser CLINICO o ESTETICA' }) }).default('CLINICO'),
   precio: z.coerce.number({ invalid_type_error: 'El precio debe ser numérico' })
     .min(0, 'El precio no puede ser negativo').max(10000, 'El precio máximo es 10 000')
-    .transform((v) => Math.round(v * 100) / 100),
+    .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, 'El precio admite máximo 2 decimales').transform((v) => Math.round(v * 100) / 100),
   activo: z.boolean().default(true),
 });
 

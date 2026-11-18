@@ -13,11 +13,13 @@ import { hoyTexto } from '../../core/utils/fechas';
 import { CampoError } from '../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
 import { Paginador } from '../../shared/components/paginador/paginador';
+import { textoValido } from '../../core/utils/validadores';
+import { EntradaDirective } from '../../shared/directives/entrada.directive';
 
 /** Bloqueos de agenda (vacaciones, capacitaciones, feriados): RN03 impide agendar en ellos. */
 @Component({
   selector: 'app-bloqueos',
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, CampoError, EstadoVista, Paginador],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, CampoError, EstadoVista, Paginador, EntradaDirective],
   templateUrl: './bloqueos.html',
 })
 export class Bloqueos implements OnInit {
@@ -40,7 +42,7 @@ export class Bloqueos implements OnInit {
     veterinarioId: [''],
     inicio: ['', Validators.required],
     fin: ['', Validators.required],
-    motivo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+    motivo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150), textoValido()]],
   });
 
   ngOnInit(): void {

@@ -11,11 +11,13 @@ import { VeterinariosService } from '../../../core/services/veterinarios.service
 import { aplicarErroresServidor, cedulaEcuatoriana, mensajeError } from '../../../core/utils/errores';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
+import { soloLetras, telefonoEc, textoValido } from '../../../core/utils/validadores';
+import { EntradaDirective } from '../../../shared/directives/entrada.directive';
 
 /** Alta/edición de veterinario: datos, especialidades (N:M) y horario laboral semanal. */
 @Component({
   selector: 'app-veterinario-form',
-  imports: [ReactiveFormsModule, RouterLink, CampoError, EstadoVista],
+  imports: [ReactiveFormsModule, RouterLink, CampoError, EstadoVista, EntradaDirective],
   templateUrl: './veterinario-form.html',
   styleUrl: './veterinario-form.css',
 })
@@ -38,10 +40,10 @@ export class VeterinarioForm implements OnInit {
 
   protected readonly form = this.fb.group({
     cedula: ['', [Validators.required, cedulaEcuatoriana()]],
-    nombres: ['', [Validators.required, Validators.maxLength(80)]],
-    apellidos: ['', [Validators.required, Validators.maxLength(80)]],
-    registroSenescyt: ['', Validators.maxLength(30)],
-    telefono: ['', Validators.pattern(/^0\d{8,9}$/)],
+    nombres: ['', [Validators.required, Validators.maxLength(80), soloLetras()]],
+    apellidos: ['', [Validators.required, Validators.maxLength(80), soloLetras()]],
+    registroSenescyt: ['', [Validators.maxLength(30), textoValido()]],
+    telefono: ['', [telefonoEc()]],
     email: ['', [Validators.required, Validators.email]],
     usuarioId: [''],
     activo: [true],

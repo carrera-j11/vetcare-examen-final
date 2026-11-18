@@ -29,7 +29,7 @@
     <div class="fila-campos">
       <label class="campo">
         <span>Nombre <span class="requerido">*</span></span>
-        <input formControlName="nombre" />
+        <input appEntrada="letras" formControlName="nombre" />
         <app-campo-error [control]="form.controls.nombre" />
       </label>
       <label class="campo">
@@ -40,7 +40,7 @@
       </label>
       <label class="campo">
         <span>Raza</span>
-        <input formControlName="raza" />
+        <input appEntrada="letras" formControlName="raza" />
       </label>
     </div>
     <div class="fila-campos">
@@ -58,12 +58,12 @@
       </label>
       <label class="campo">
         <span>Peso (kg)</span>
-        <input type="number" step="0.01" min="0" formControlName="pesoKg" />
+        <input appEntrada="decimal" type="number" step="0.01" min="0" formControlName="pesoKg" />
         <app-campo-error [control]="form.controls.pesoKg" />
       </label>
       <label class="campo">
         <span>Color</span>
-        <input formControlName="color" />
+        <input appEntrada="letras" formControlName="color" />
       </label>
     </div>
     <label class="check"><input type="checkbox" formControlName="esterilizado" /> Esterilizado/a</label>

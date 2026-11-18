@@ -7,11 +7,13 @@ import { VeterinariosService } from '../../core/services/veterinarios.service';
 import { aplicarErroresServidor, mensajeError } from '../../core/utils/errores';
 import { CampoError } from '../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
+import { entero, maxDecimales, textoValido } from '../../core/utils/validadores';
+import { EntradaDirective } from '../../shared/directives/entrada.directive';
 
-/** Catálogo de especialidades (solo administrador). La duración define el largo de cada cita. */
+/** Catálogo de especialidades (solo administrador). La duración define el largo de cada cita. */
 @Component({
   selector: 'app-especialidades',
-  imports: [ReactiveFormsModule, CampoError, EstadoVista],
+  imports: [ReactiveFormsModule, CampoError, EstadoVista, EntradaDirective],
   templateUrl: './especialidades.html',
 })
 export class Especialidades implements OnInit {
@@ -26,11 +28,11 @@ export class Especialidades implements OnInit {
   protected readonly guardando = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80), textoValido()]],
     descripcion: ['', Validators.maxLength(250)],
-    duracionMin: [30, [Validators.required, Validators.min(10), Validators.max(240)]],
+    duracionMin: [30, [Validators.required, Validators.min(10), Validators.max(240), entero()]],
     tipo: ['CLINICO' as 'CLINICO' | 'ESTETICA', Validators.required],
-    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000)]],
+    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000), maxDecimales(2)]],
     activo: [true],
   });
 

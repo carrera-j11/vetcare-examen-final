@@ -6,11 +6,11 @@ const { ESPECIES } = require('../mascotas/mascotas.dto');
 const guardar = z.object({
   nombre: texto(3, 80, 'El nombre'),
   especie: z.enum(ESPECIES).optional().nullable(),
-  intervaloDias: z.coerce.number().int().min(7, 'El intervalo mínimo es 7 días').max(1095, 'El intervalo máximo es 3 años').optional().nullable(),
+  intervaloDias: z.coerce.number({ invalid_type_error: 'El intervalo debe ser un número' }).int('El intervalo debe ser un número entero').min(7, 'El intervalo mínimo es 7 días').max(1095, 'El intervalo máximo es 3 años').optional().nullable(),
   descripcion: textoOpcional(250, 'La descripción'),
   precio: z.coerce.number({ invalid_type_error: 'El precio debe ser numérico' })
     .min(0, 'El precio no puede ser negativo').max(10000, 'El precio máximo es 10 000')
-    .transform((v) => Math.round(v * 100) / 100),
+    .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, 'El precio admite máximo 2 decimales').transform((v) => Math.round(v * 100) / 100),
   activo: z.boolean().default(true),
 });
 

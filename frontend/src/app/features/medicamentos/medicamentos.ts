@@ -7,11 +7,13 @@ import { MedicamentosService } from '../../core/services/medicamentos.service';
 import { aplicarErroresServidor, mensajeError } from '../../core/utils/errores';
 import { CampoError } from '../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
+import { entero, maxDecimales, textoValido } from '../../core/utils/validadores';
+import { EntradaDirective } from '../../shared/directives/entrada.directive';
 
 /** Farmacia de la clínica: catálogo de medicamentos, precios y stock (ADMIN). */
 @Component({
   selector: 'app-medicamentos',
-  imports: [FormsModule, ReactiveFormsModule, CampoError, EstadoVista],
+  imports: [FormsModule, ReactiveFormsModule, CampoError, EstadoVista, EntradaDirective],
   templateUrl: './medicamentos.html',
 })
 export class Medicamentos implements OnInit {
@@ -27,14 +29,14 @@ export class Medicamentos implements OnInit {
   protected filtros = { q: '', stockBajo: '', activo: '', tamano: 100 };
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
-    presentacion: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    dosisSugerida: ['', [Validators.required, Validators.maxLength(60)]],
-    frecuenciaSugerida: ['', [Validators.required, Validators.maxLength(60)]],
-    duracionSugerida: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
+    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120), textoValido()]],
+    presentacion: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80), textoValido()]],
+    dosisSugerida: ['', [Validators.required, Validators.maxLength(60), textoValido()]],
+    frecuenciaSugerida: ['', [Validators.required, Validators.maxLength(60), textoValido()]],
+    duracionSugerida: [7, [Validators.required, Validators.min(1), Validators.max(365), entero()]],
     especie: [''],
-    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000)]],
-    stock: [0, [Validators.required, Validators.min(0), Validators.max(100000)]],
+    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000), maxDecimales(2)]],
+    stock: [0, [Validators.required, Validators.min(0), Validators.max(100000), entero()]],
     activo: [true],
   });
 

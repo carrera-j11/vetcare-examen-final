@@ -1,18 +1,18 @@
 const { z } = require('zod');
 const { listadoQuery } = require('../../utils/paginacion');
-const { texto, textoOpcional, id, fecha } = require('../../utils/validadores');
+const { soloLetras, soloLetrasOpcional, numero, maxDecimales, id, fecha } = require('../../utils/validadores');
 
 const ESPECIES = ['PERRO', 'GATO', 'AVE', 'CONEJO', 'REPTIL', 'OTRO'];
 
 const guardar = z.object({
   propietarioId: id,
-  nombre: texto(1, 60, 'El nombre'),
+  nombre: soloLetras(1, 60, 'El nombre'),
   especie: z.enum(ESPECIES, { errorMap: () => ({ message: `La especie debe ser: ${ESPECIES.join(', ')}` }) }),
-  raza: textoOpcional(60, 'La raza'),
+  raza: soloLetrasOpcional(60, 'La raza'),
   sexo: z.enum(['MACHO', 'HEMBRA'], { errorMap: () => ({ message: 'El sexo debe ser MACHO o HEMBRA' }) }),
   fechaNacimiento: fecha.optional().nullable(),
-  pesoKg: z.coerce.number().positive('El peso debe ser mayor a 0').max(200, 'El peso no puede superar 200 kg').optional().nullable(),
-  color: textoOpcional(40, 'El color'),
+  pesoKg: numero('El peso').positive('El peso debe ser mayor a 0').max(200, 'El peso no puede superar 200 kg').refine(maxDecimales(2), 'El peso admite máximo 2 decimales').optional().nullable(),
+  color: soloLetrasOpcional(40, 'El color'),
   esterilizado: z.boolean().default(false),
 });
 

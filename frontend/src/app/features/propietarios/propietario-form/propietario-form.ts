@@ -7,11 +7,13 @@ import { PropietariosService } from '../../../core/services/propietarios.service
 import { aplicarErroresServidor, cedulaEcuatoriana, mensajeError } from '../../../core/utils/errores';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
+import { soloLetras, telefonoEc, textoValido } from '../../../core/utils/validadores';
+import { EntradaDirective } from '../../../shared/directives/entrada.directive';
 
 /** Formulario de registro y edición de propietarios (misma plantilla para ambos casos). */
 @Component({
   selector: 'app-propietario-form',
-  imports: [ReactiveFormsModule, RouterLink, CampoError, EstadoVista],
+  imports: [ReactiveFormsModule, RouterLink, CampoError, EstadoVista, EntradaDirective],
   templateUrl: './propietario-form.html',
 })
 export class PropietarioForm implements OnInit {
@@ -28,11 +30,11 @@ export class PropietarioForm implements OnInit {
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     cedula: ['', [Validators.required, cedulaEcuatoriana()]],
-    nombres: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    apellidos: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    telefono: ['', [Validators.required, Validators.pattern(/^0\d{8,9}$/)]],
+    nombres: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80), soloLetras()]],
+    apellidos: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80), soloLetras()]],
+    telefono: ['', [Validators.required, telefonoEc()]],
     email: ['', [Validators.email, Validators.maxLength(120)]],
-    direccion: ['', [Validators.maxLength(200)]],
+    direccion: ['', [Validators.maxLength(200), textoValido()]],
   });
 
   get editando(): boolean { return !!this.id(); }

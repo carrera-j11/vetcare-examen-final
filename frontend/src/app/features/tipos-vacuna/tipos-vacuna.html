@@ -35,7 +35,7 @@
     <form class="formulario" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
       <label class="campo">
         <span>Nombre <span class="requerido">*</span></span>
-        <input formControlName="nombre" />
+        <input appEntrada="texto" formControlName="nombre" />
         <app-campo-error [control]="form.controls.nombre" />
       </label>
       <div class="fila-campos">
@@ -48,13 +48,13 @@
         </label>
         <label class="campo">
           <span>Refuerzo cada (días)</span>
-          <input type="number" formControlName="intervaloDias" min="7" max="1095" placeholder="Vacío = dosis única" />
+          <input appEntrada="entero" type="number" formControlName="intervaloDias" min="7" max="1095" placeholder="Vacío = dosis única" />
           <app-campo-error [control]="form.controls.intervaloDias" />
         </label>
       </div>
       <label class="campo">
         <span>Precio USD sin IVA <span class="requerido">*</span></span>
-        <input type="number" formControlName="precio" min="0" step="0.01" />
+        <input appEntrada="decimal" type="number" formControlName="precio" min="0" step="0.01" />
         <app-campo-error [control]="form.controls.precio" />
       </label>
       <label class="campo"><span>Descripción</span><textarea formControlName="descripcion" rows="2"></textarea></label>

@@ -12,14 +12,16 @@ import { hoyTexto } from '../../../core/utils/fechas';
 import { CampoError } from '../../../shared/components/campo-error/campo-error';
 import { SelectorBuscable } from '../../../shared/components/selector-buscable/selector-buscable';
 import { EstadoVista } from '../../../shared/components/estado-vista/estado-vista';
+import { maxDecimales, soloLetras } from '../../../core/utils/validadores';
+import { EntradaDirective } from '../../../shared/directives/entrada.directive';
 
 /**
  * Registro / edición de mascota.
  * RN02: obligatoriamente se selecciona un propietario registrado (buscado en la API).
- */
+ */
 @Component({
   selector: 'app-mascota-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, EstadoVista, SelectorBuscable],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, CampoError, EstadoVista, SelectorBuscable, EntradaDirective],
   templateUrl: './mascota-form.html',
   styleUrl: './mascota-form.css',
 })
@@ -41,13 +43,13 @@ export class MascotaForm implements OnInit {
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     propietarioId: [0, [Validators.required, Validators.min(1)]],
-    nombre: ['', [Validators.required, Validators.maxLength(60)]],
+    nombre: ['', [Validators.required, Validators.maxLength(60), soloLetras()]],
     especie: ['PERRO', Validators.required],
-    raza: ['', Validators.maxLength(60)],
+    raza: ['', [Validators.maxLength(60), soloLetras()]],
     sexo: ['MACHO', Validators.required],
     fechaNacimiento: [''],
-    pesoKg: [null as number | null, [Validators.min(0.01), Validators.max(200)]],
-    color: ['', Validators.maxLength(40)],
+    pesoKg: [null as number | null, [Validators.min(0.01), Validators.max(200), maxDecimales(2)]],
+    color: ['', [Validators.maxLength(40), soloLetras()]],
     esterilizado: [false],
   });
 

@@ -7,11 +7,13 @@ import { VacunasService } from '../../core/services/vacunas.service';
 import { aplicarErroresServidor, mensajeError } from '../../core/utils/errores';
 import { CampoError } from '../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
+import { entero, maxDecimales, textoValido } from '../../core/utils/validadores';
+import { EntradaDirective } from '../../shared/directives/entrada.directive';
 
-/** Catálogo de tipos de vacuna (ADMIN): especie e intervalo de refuerzo. */
+/** Catálogo de tipos de vacuna (ADMIN): especie e intervalo de refuerzo. */
 @Component({
   selector: 'app-tipos-vacuna',
-  imports: [ReactiveFormsModule, CampoError, EstadoVista],
+  imports: [ReactiveFormsModule, CampoError, EstadoVista, EntradaDirective],
   templateUrl: './tipos-vacuna.html',
 })
 export class TiposVacuna implements OnInit {
@@ -26,11 +28,11 @@ export class TiposVacuna implements OnInit {
   protected readonly guardando = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80), textoValido()]],
     especie: [''],
-    intervaloDias: [null as number | null, [Validators.min(7), Validators.max(1095)]],
+    intervaloDias: [null as number | null, [Validators.min(7), Validators.max(1095), entero()]],
     descripcion: ['', Validators.maxLength(250)],
-    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000)]],
+    precio: [0, [Validators.required, Validators.min(0), Validators.max(10000), maxDecimales(2)]],
     activo: [true],
   });
 

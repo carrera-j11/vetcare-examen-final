@@ -11,13 +11,15 @@ import { aplicarErroresServidor, mensajeError } from '../../core/utils/errores';
 import { CampoError } from '../../shared/components/campo-error/campo-error';
 import { EstadoVista } from '../../shared/components/estado-vista/estado-vista';
 import { Paginador } from '../../shared/components/paginador/paginador';
+import { soloLetras } from '../../core/utils/validadores';
+import { EntradaDirective } from '../../shared/directives/entrada.directive';
 
 const PASSWORD_SEGURA = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,64}$/;
 
 /** Gestión de cuentas y roles (solo ADMIN). */
 @Component({
   selector: 'app-usuarios',
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, CampoError, EstadoVista, Paginador],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, CampoError, EstadoVista, Paginador, EntradaDirective],
   templateUrl: './usuarios.html',
 })
 export class Usuarios implements OnInit {
@@ -39,8 +41,8 @@ export class Usuarios implements OnInit {
   protected filtros = { q: '', rol: '', activo: '', pagina: 1, tamano: 10 };
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    nombres: ['', [Validators.required, Validators.minLength(2)]],
-    apellidos: ['', [Validators.required, Validators.minLength(2)]],
+    nombres: ['', [Validators.required, Validators.minLength(2), soloLetras()]],
+    apellidos: ['', [Validators.required, Validators.minLength(2), soloLetras()]],
     email: ['', [Validators.required, Validators.email]],
     rol: ['RECEPCION' as Rol, Validators.required],
     activo: [true],

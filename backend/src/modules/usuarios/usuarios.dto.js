@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { listadoQuery } = require('../../utils/paginacion');
-const { texto } = require('../../utils/validadores');
+const { soloLetras } = require('../../utils/validadores');
 
 const ROLES = ['ADMIN', 'RECEPCION', 'VETERINARIO'];
 
@@ -14,8 +14,8 @@ const password = z.string({ required_error: 'La contraseña es obligatoria' })
   .regex(/[^A-Za-z0-9]/, 'La contraseña debe incluir un símbolo');
 
 const base = {
-  nombres: texto(2, 80, 'Los nombres'),
-  apellidos: texto(2, 80, 'Los apellidos'),
+  nombres: soloLetras(2, 80, 'Los nombres'),
+  apellidos: soloLetras(2, 80, 'Los apellidos'),
   email: z.string({ required_error: 'El correo es obligatorio' }).trim().toLowerCase().email('Correo electrónico no válido'),
   rol: z.enum(ROLES, { errorMap: () => ({ message: `El rol debe ser uno de: ${ROLES.join(', ')}` }) }),
 };

@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { listadoQuery } = require('../../utils/paginacion');
-const { texto, textoOpcional, id, fecha } = require('../../utils/validadores');
+const { texto, textoOpcional, numero, maxDecimales, id, fecha } = require('../../utils/validadores');
 
 /**
  * Un tratamiento puede ser de la farmacia de la clínica (medicamentoId: se descuenta
@@ -25,9 +25,9 @@ const crear = z.object({
   veterinarioId: id.optional().nullable(),     // obligatorio solo si registra un administrador
   motivo: texto(3, 250, 'El motivo'),
   anamnesis: textoOpcional(2000, 'La anamnesis'),
-  pesoKg: z.coerce.number().positive('El peso debe ser mayor a 0').max(200).optional().nullable(),
-  temperaturaC: z.coerce.number().min(30, 'Temperatura fuera de rango (30–45 °C)').max(45, 'Temperatura fuera de rango (30–45 °C)').optional().nullable(),
-  frecuenciaCardiaca: z.coerce.number().int().min(20, 'Frecuencia cardiaca fuera de rango').max(400, 'Frecuencia cardiaca fuera de rango').optional().nullable(),
+  pesoKg: numero('El peso').positive('El peso debe ser mayor a 0').max(200, 'El peso no puede superar 200 kg').refine(maxDecimales(2), 'El peso admite máximo 2 decimales').optional().nullable(),
+  temperaturaC: numero('La temperatura').min(30, 'Temperatura fuera de rango (30–45 °C)').max(45, 'Temperatura fuera de rango (30–45 °C)').refine(maxDecimales(1), 'La temperatura admite máximo 1 decimal').optional().nullable(),
+  frecuenciaCardiaca: numero('La frecuencia cardiaca').int('La frecuencia cardiaca debe ser un número entero').min(20, 'Frecuencia cardiaca fuera de rango').max(400, 'Frecuencia cardiaca fuera de rango').optional().nullable(),
   diagnostico: texto(5, 2000, 'El diagnóstico'),
   observaciones: textoOpcional(2000, 'Las observaciones'),
   tratamientos: z.array(tratamiento).max(15, 'Máximo 15 medicamentos por consulta').default([]),

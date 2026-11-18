@@ -75,7 +75,7 @@
         </div>
         <label class="campo">
           <span>Motivo <span class="requerido">*</span></span>
-          <input formControlName="motivo" placeholder="Ej.: Capacitación, vacaciones, feriado" />
+          <input appEntrada="texto" formControlName="motivo" placeholder="Ej.: Capacitación, vacaciones, feriado" />
           <app-campo-error [control]="form.controls.motivo" />
         </label>
         <div class="pie-formulario">

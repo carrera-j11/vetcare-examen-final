@@ -282,3 +282,10 @@ input.ng-invalid.ng-touched, select.ng-invalid.ng-touched, textarea.ng-invalid.n
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------------- Restricción de entrada (directiva appEntrada) ---------------- */
+.pista-entrada { display: block; min-height: 0; font-size: .78rem; color: var(--advertencia, #b45309); }
+.pista-entrada:empty { display: none; }
+input.entrada-rechazada { border-color: var(--advertencia, #b45309); animation: sacudir .25s ease-in-out; }
+@keyframes sacudir { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { input.entrada-rechazada { animation: none; } }

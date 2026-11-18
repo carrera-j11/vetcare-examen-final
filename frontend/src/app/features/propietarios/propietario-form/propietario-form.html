@@ -12,24 +12,24 @@
     <div class="fila-campos">
       <label class="campo">
         <span>Cédula <span class="requerido">*</span></span>
-        <input formControlName="cedula" maxlength="10" inputmode="numeric" placeholder="0102030405" autocomplete="off" />
+        <input appEntrada="digitos" formControlName="cedula" maxlength="10" inputmode="numeric" placeholder="0102030405" autocomplete="off" />
         <app-campo-error [control]="form.controls.cedula" />
       </label>
       <label class="campo">
         <span>Nombres <span class="requerido">*</span></span>
-        <input formControlName="nombres" autocomplete="given-name" />
+        <input appEntrada="letras" formControlName="nombres" autocomplete="given-name" />
         <app-campo-error [control]="form.controls.nombres" />
       </label>
       <label class="campo">
         <span>Apellidos <span class="requerido">*</span></span>
-        <input formControlName="apellidos" autocomplete="family-name" />
+        <input appEntrada="letras" formControlName="apellidos" autocomplete="family-name" />
         <app-campo-error [control]="form.controls.apellidos" />
       </label>
     </div>
     <div class="fila-campos">
       <label class="campo">
         <span>Teléfono <span class="requerido">*</span></span>
-        <input formControlName="telefono" inputmode="tel" maxlength="10" placeholder="0991234567" autocomplete="tel" />
+        <input appEntrada="digitos" formControlName="telefono" inputmode="tel" maxlength="10" placeholder="0991234567" autocomplete="tel" />
         <app-campo-error [control]="form.controls.telefono" />
       </label>
       <label class="campo">
@@ -40,7 +40,7 @@
     </div>
     <label class="campo">
       <span>Dirección</span>
-      <input formControlName="direccion" autocomplete="street-address" />
+      <input appEntrada="texto" formControlName="direccion" autocomplete="street-address" />
       <app-campo-error [control]="form.controls.direccion" />
     </label>
 

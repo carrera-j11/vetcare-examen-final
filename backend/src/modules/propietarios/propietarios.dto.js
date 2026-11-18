@@ -1,11 +1,11 @@
 const { z } = require('zod');
 const { listadoQuery } = require('../../utils/paginacion');
-const { texto, textoOpcional, cedula, telefono, emailOpcional } = require('../../utils/validadores');
+const { soloLetras, textoOpcional, cedula, telefono, emailOpcional } = require('../../utils/validadores');
 
 const guardar = z.object({
   cedula,
-  nombres: texto(2, 80, 'Los nombres'),
-  apellidos: texto(2, 80, 'Los apellidos'),
+  nombres: soloLetras(2, 80, 'Los nombres'),
+  apellidos: soloLetras(2, 80, 'Los apellidos'),
   telefono,
   email: emailOpcional,
   direccion: textoOpcional(200, 'La dirección'),

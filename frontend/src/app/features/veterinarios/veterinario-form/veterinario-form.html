@@ -14,17 +14,17 @@
       <div class="fila-campos">
         <label class="campo">
           <span>Cédula <span class="requerido">*</span></span>
-          <input formControlName="cedula" maxlength="10" inputmode="numeric" />
+          <input appEntrada="digitos" formControlName="cedula" maxlength="10" inputmode="numeric" />
           <app-campo-error [control]="form.controls.cedula" />
         </label>
         <label class="campo">
           <span>Nombres <span class="requerido">*</span></span>
-          <input formControlName="nombres" />
+          <input appEntrada="letras" formControlName="nombres" />
           <app-campo-error [control]="form.controls.nombres" />
         </label>
         <label class="campo">
           <span>Apellidos <span class="requerido">*</span></span>
-          <input formControlName="apellidos" />
+          <input appEntrada="letras" formControlName="apellidos" />
           <app-campo-error [control]="form.controls.apellidos" />
         </label>
       </div>
@@ -36,12 +36,12 @@
         </label>
         <label class="campo">
           <span>Teléfono</span>
-          <input formControlName="telefono" inputmode="tel" maxlength="10" />
+          <input appEntrada="digitos" formControlName="telefono" inputmode="tel" maxlength="10" />
           <app-campo-error [control]="form.controls.telefono" />
         </label>
         <label class="campo">
           <span>Registro SENESCYT</span>
-          <input formControlName="registroSenescyt" />
+          <input appEntrada="texto" formControlName="registroSenescyt" />
         </label>
         <label class="campo">
           <span>Cuenta de acceso (rol VETERINARIO)</span>
